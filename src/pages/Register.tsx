@@ -11,7 +11,8 @@ const formSchema = z.object({
     password: z
     .string()
     .min(6, "Password must be at least 6 characters.")
-    .max(50, "Password must be at most 50 characters")
+    .max(50, "Password must be at most 50 characters"),
+    role: z.enum(["USER", "ADMIN"], {message: "Please select a valid role."}),
 });
 
 function Register () {
@@ -24,6 +25,7 @@ function Register () {
             name: "",
             email: "",
             password: "",
+            role: "USER",
         },
     });
 
@@ -36,10 +38,11 @@ function Register () {
                 name: data.name,
                 email: data.email,
                 password: data.password,
+                role: data.role,
             });
 
             alert("Register success");
-            navigate("/")
+            navigate("/login")
         } catch (error) {
             console.log(error);
             alert("Something went wrong")
@@ -49,44 +52,58 @@ function Register () {
     }
     
     return (
-        <div>
-            <div>
-                <h1>Register</h1>
+        <div className="flex min-h-screen items-center justify-center">
+            <div className="w-full max-w-md rounded-lg bg-[#A855F7] p-6 shadow-md text-white flex flex-col gap-2 items-center">
+                <h1 className="font-bold">Register</h1>
 
-                <form action="" onSubmit={form.handleSubmit(onSubmit)}>
+                <form className="flex flex-col gap-2.5" action="" onSubmit={form.handleSubmit(onSubmit)}>
 
                     {/*INPUT NAME*/}
-                    <div>
-                        <label>Name</label>
-                        <input type="text" {...form.register("name")} />
+                    <div className="flex flex-col gap-2 justify-center">
+                        <label className="font-semibold">Name</label>
+                        <input className="bg-white text-black focus:outline-[#22D3EE] p-2 rounded-lg" type="text" placeholder="Insert your name here..." {...form.register("name")} />
                         {form.formState.errors.name && (
-                            <p>{form.formState.errors.name.message}</p>
+                            <p className="mt-1 text-xs text-red-500">{form.formState.errors.name.message}</p>
                         )}
                     </div>
 
                     {/*INPUT EMAIL*/}
-                    <div>
-                        <label>Email</label>
-                        <input type="text" {...form.register("email")} />
+                    <div className="flex flex-col gap-2 justify-center">
+                        <label className="font-semibold">Email</label>
+                        <input className="bg-white text-black focus:outline-[#22D3EE] p-2 rounded-lg" type="text" placeholder="Insert your email here..." {...form.register("email")} />
                         {form.formState.errors.email && (
-                            <p>{form.formState.errors.email.message}</p>
+                            <p className="mt-1 text-xs text-red-500">{form.formState.errors.email.message}</p>
                         )}
                     </div>
 
+                    {/*PILIH ROLE*/}
+                    <div className="flex flex-col gap-2 justify-center">
+                        <label className="font-semibold" htmlFor="">Role</label>
+                        <select className="bg-white text-black focus:outline-[#22D3EE] p-2 rounded-lg" {...form.register("role")}>
+                            <option value="USER">Customer</option>
+                            <option value="ADMIN">Event Organizer</option>
+                        </select>
+                        {form.formState.errors.role && (
+                            <p className="mt-1 text-xs text-red-500">{form.formState.errors.role.message}</p>
+                        )}
+                    </div>  
+
+
                     {/*INPUT PASSWORD*/}
-                    <div>
-                        <label>Password</label>
-                        <div>
-                            <input type={show ? "text" : "password"} {...form.register("password")} />
+                    <div className="flex flex-col gap-2 justify-center">
+                        <label className="font-semibold">Password</label>
+                        <div className="flex flex-row gap-2 items-center">
+                            <input className="bg-white text-black focus:outline-[#22D3EE] p-2 rounded-lg" placeholder="Insert your password" type={show ? "text" : "password"} {...form.register("password")} />
                             <button type="button" onClick={() => setShow(!show)}>{show? "Hide" : "Show"}</button>
                         </div>
                         {form.formState.errors.password && (
-                            <p>{form.formState.errors.password.message}</p>
+                            <p className="mt-1 text-xs text-red-500">{form.formState.errors.password.message}</p>
                         )}
                     </div>
 
                     {/*TOMBOL SUBMIT*/}
                     <button
+                    className="bg-[#2C0051] p-2 rounded-lg hover:bg-[#6900B3] hover:cursor-pointer"
                     type="submit"
                     disabled={isPending}>{isPending? "Loading..." : "Register"}</button>
                 </form>
