@@ -1,4 +1,4 @@
-import { eventApi } from "../../api/event.api";
+import { eventApi } from "../api/event.api";
 
 export const getEvents = async () => {
   const res = await eventApi.getAll();
