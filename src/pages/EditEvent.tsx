@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { useEditEvent } from "../stores/useEditEvent";
 import DeleteEventModal from "../components/DeleteEvent/DeleteEventModal";
 
@@ -33,7 +33,7 @@ export default function EditEventPage() {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         eventId={eventId}
-        eventName={formData.title || "This Event"}
+        eventName={formData.name || "This Event"}
         onSuccess={() => navigate("/")}
       />
     </div>

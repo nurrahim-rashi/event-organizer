@@ -1,4 +1,4 @@
-import { Navigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router";
 import React, { useEffect, useState } from "react";
 import { getEvent } from "../services/event.service";
 
@@ -12,7 +12,6 @@ export default function OwnerProtectedRoute({
   const { id } = useParams<{ id: string }>();
   const [isOwner, setIsOwner] = useState<boolean | null>(null);
 
-  // Simulasi mengambil data user yang sedang login dari localStorage/Context
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
@@ -44,8 +43,7 @@ export default function OwnerProtectedRoute({
   }
 
   if (!currentUser || !isOwner) {
-    // Tendang ke home atau page un-authorized jika bukan pemilik
-    return <Navigate to="/" replace />;
+    return <Link to="/" replace />;
   }
 
   return <>{children}</>;

@@ -1,4 +1,34 @@
-export default function Hero() {
+import { useState, useEffect } from "react";
+import { useDebounce } from "../../stores/useDebounce";
+
+interface HeroProps {
+  onFilterChange: (filters: {
+    search: string;
+    location: string;
+    category: string;
+  }) => void;
+}
+
+export default function Hero({ onFilterChange }: HeroProps) {
+  const [searchInput, setSearchInput] = useState("");
+  const [locationInput, setLocationInput] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+
+  const debouncedSearch = useDebounce(searchInput, 500);
+  const debouncedLocation = useDebounce(locationInput, 500);
+
+  useEffect(() => {
+    onFilterChange({
+      search: debouncedSearch,
+      location: debouncedLocation,
+      category: selectedCategory,
+    });
+  }, [debouncedSearch, debouncedLocation, selectedCategory, onFilterChange]);
+
+  const handleCategoryClick = (categoryName: string) => {
+    setSelectedCategory((prev) => (prev === categoryName ? "" : categoryName));
+  };
+
   return (
     <section className="relative min-h-[600px] flex items-center overflow-hidden px-6 py-24 bg-gradient-to-tr from-[#171021] via-[#231d2e] to-[#171021]">
       <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#ddb7ff]/10 rounded-full blur-3xl animate-pulse"></div>
@@ -33,20 +63,24 @@ export default function Hero() {
                 search
               </span>
               <input
-                className="w-full border-none focus:ring-0 bg-transparent text-[#eadef6] placeholder-[#cfc2d6]/50 outline-none"
+                className="w-full border-none focus:ring-0 bg-transparent text-[#eadef6] placeholder-[#cfc2d6]/50 outline-none py-3"
                 placeholder="Search concerts, festivals, workshops..."
                 type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
             </div>
             <div className="h-8 w-[1px] bg-[#4d4354]/50 hidden md:block mx-2"></div>
-            <div className="flex-1 items-center px-4 gap-3 hidden md:flex w-full">
+            <div className="flex flex-1 items-center px-4 gap-3 w-full">
               <span className="material-symbols-outlined text-[#cfc2d6]">
                 location_on
               </span>
               <input
-                className="w-full border-none focus:ring-0 bg-transparent text-[#eadef6] placeholder-[#cfc2d6]/50 outline-none"
+                className="w-full border-none focus:ring-0 bg-transparent text-[#eadef6] placeholder-[#cfc2d6]/50 outline-none py-3"
                 placeholder="All Locations"
                 type="text"
+                value={locationInput}
+                onChange={(e) => setLocationInput(e.target.value)}
               />
             </div>
             <button className="w-full md:w-auto bg-[#ddb7ff] text-[#490080] px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-[#ddb7ff]/10">
@@ -54,37 +88,33 @@ export default function Hero() {
             </button>
           </div>
 
+          {/* Quick Tags Kategori */}
           <div className="flex flex-wrap gap-3">
-            <button className="px-4 py-2 rounded-full border border-[#4d4354] bg-[#1f1929] hover:border-[#ddb7ff] hover:text-[#ddb7ff] transition-all text-sm flex items-center gap-2 text-[#cfc2d6]">
-              <span className="material-symbols-outlined text-[18px]">
-                music_note
-              </span>{" "}
-              Music
-            </button>
-            <button className="px-4 py-2 rounded-full border border-[#4d4354] bg-[#1f1929] hover:border-[#ddb7ff] hover:text-[#ddb7ff] transition-all text-sm flex items-center gap-2 text-[#cfc2d6]">
-              <span className="material-symbols-outlined text-[18px]">
-                school
-              </span>{" "}
-              Workshop
-            </button>
-            <button className="px-4 py-2 rounded-full border border-[#4d4354] bg-[#1f1929] hover:border-[#ddb7ff] hover:text-[#ddb7ff] transition-all text-sm flex items-center gap-2 text-[#cfc2d6]">
-              <span className="material-symbols-outlined text-[18px]">
-                sports_soccer
-              </span>{" "}
-              Sports
-            </button>
-            <button className="px-4 py-2 rounded-full border border-[#4d4354] bg-[#1f1929] hover:border-[#ddb7ff] hover:text-[#ddb7ff] transition-all text-sm flex items-center gap-2 text-[#cfc2d6]">
-              <span className="material-symbols-outlined text-[18px]">
-                theaters
-              </span>{" "}
-              Art
-            </button>
-            <button className="px-4 py-2 rounded-full border border-[#4d4354] bg-[#1f1929] hover:border-[#ddb7ff] hover:text-[#ddb7ff] transition-all text-sm flex items-center gap-2 text-[#cfc2d6]">
-              <span className="material-symbols-outlined text-[18px]">
-                restaurant
-              </span>{" "}
-              Culinary
-            </button>
+            {[
+              { id: "MUSIC", label: "Music", icon: "music_note" },
+              { id: "BUSINESS", label: "Workshop", icon: "school" },
+              { id: "SPORTS", label: "Sports", icon: "sports_soccer" },
+              { id: "ART", label: "Art", icon: "theaters" },
+              { id: "FOOD", label: "Culinary", icon: "restaurant" },
+            ].map((cat) => {
+              const isSelected = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => handleCategoryClick(cat.id)}
+                  className={`px-4 py-2 rounded-full border transition-all text-sm flex items-center gap-2 ${
+                    isSelected
+                      ? "border-[#ddb7ff] bg-[#ddb7ff]/20 text-[#ddb7ff] font-medium"
+                      : "border-[#4d4354] bg-[#1f1929] text-[#cfc2d6] hover:border-[#ddb7ff] hover:text-[#ddb7ff]"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {cat.icon}
+                  </span>{" "}
+                  {cat.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
