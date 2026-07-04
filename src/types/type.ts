@@ -16,18 +16,20 @@ export interface TicketType {
 }
 
 export interface EventData {
-  id: number;
-  name: string;
-  description: string;
+  id?: number;
+  title: string;
+  category: string;
+  capacity: number;
   location: string;
-  category: EventCategory;
-  bannerImage: string;
+  description: string;
+  mediaUrl?: string;
   startDate: string;
+  startTime: string;
   endDate: string;
+  endTime: string;
+  isPaid: boolean;
+  price: number;
   organizerId: number;
-  createdAt: string;
-  updatedAt: string;
-  ticketTypes?: TicketType[];
 }
 
 export interface EventFormState {
@@ -43,4 +45,10 @@ export interface EventFormState {
   endTime: string;
   isPaid: boolean;
   price: string;
+}
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
 }
