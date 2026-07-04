@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { getEvent, updateEvent } from "../services/event.service";
-import type { EventData } from "../types/type";
+import type { Event } from "../types/type";
 
 export const useEditEvent = (eventId: number) => {
-  const [formData, setFormData] = useState<EventData>({
+  const [formData, setFormData] = useState<Event>({
+    id: 0,
     title: "",
-    category: "",
+    category: "OTHER",
     capacity: 0,
     location: "",
+    city: "",
     description: "",
     startDate: "",
     startTime: "",
@@ -40,7 +42,10 @@ export const useEditEvent = (eventId: number) => {
     >,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "capacity" || name === "price" ? Number(value) : value,
+    }));
   };
 
   const handleTogglePaid = (isPaid: boolean) => {

@@ -9,18 +9,36 @@ export type EventCategory =
   | "HEALTH"
   | "OTHER";
 
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export interface Organizer {
+  id: number;
+  name: string;
+  logo: string;
+  rating: number;
+  reviewsCount: string;
+  bio: string;
+}
+
 export interface TicketType {
   id: number;
   name: string;
   price: number;
+  description: string;
+  isAvailable: boolean;
 }
 
-export interface EventData {
-  id?: number;
+export interface Event {
+  id: number;
   title: string;
-  category: string;
+  category: EventCategory;
   capacity: number;
   location: string;
+  city: string;
   description: string;
   mediaUrl?: string;
   startDate: string;
@@ -30,11 +48,19 @@ export interface EventData {
   isPaid: boolean;
   price: number;
   organizerId: number;
+  isTrending?: boolean;
+  ticketsLeft?: number;
+  perks?: string[];
+  accessibilityDesc?: string;
+  parkingDesc?: string;
+  serviceFeeFixed?: number;
+  tickets?: TicketType[];
+  organizer?: Organizer;
 }
 
 export interface EventFormState {
   name: string;
-  category: string;
+  category: EventCategory | "";
   capacity: number;
   location: string;
   description: string;
@@ -45,10 +71,4 @@ export interface EventFormState {
   endTime: string;
   isPaid: boolean;
   price: string;
-}
-
-export interface User {
-  id: number;
-  name: string;
-  email: string;
 }
