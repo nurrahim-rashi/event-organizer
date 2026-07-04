@@ -5,6 +5,7 @@ import z from "zod";
 import { useNavigate } from "react-router";
 import {userAuth} from "../stores/useAuth"
 import { api } from "../api/axios";
+import { Link } from "react-router";
 
 const formSchema = z.object({
     email: z.email(),
@@ -58,18 +59,18 @@ function Login () {
     }
     
     return (
-        <div>
-            <div>
-                <div>
-                    <h1>Login</h1>
-                    <p>Please login to your account</p>
+        <div className="flex min-h-screen items-center justify-center">
+            <div className="w-full max-w-md rounded-lg bg-[#A855F7] p-6 shadow-md text-white flex flex-col gap-2 items-center">
+                <div className="flex flex-col gap-0.5 items-center">
+                    <h1 className="text-xl font-bold">Login</h1>
+                    <p className="text-lg">Please login to your account</p>
                 </div>
 
-                <form onSubmit={form.handleSubmit(onSubmit)}>
+                <form className="flex flex-col gap-2.5" onSubmit={form.handleSubmit(onSubmit)}>
                     {/*INPUT EMAIL */}
-                    <div>
-                        <label htmlFor="">Email</label>
-                        <input type="email" {...form.register("email")} placeholder="example@mail.com" />
+                    <div className="flex flex-col gap-2 justify-center">
+                        <label htmlFor="" className="font-semibold">Email</label>
+                        <input className="bg-white text-black focus:outline-[#22D3EE] p-2 rounded-lg" type="email" {...form.register("email")} placeholder="example@mail.com" />
                         {form.formState.errors.email && (
                             <p>
                                 {form.formState.errors.email.message}
@@ -78,10 +79,10 @@ function Login () {
                     </div>
 
                     {/*INPUT PASSWORD */}
-                    <div>
-                        <label htmlFor="">Password</label>
-                        <div>
-                            <input type={show? "text" : "password"} {...form.register("password")} placeholder="Pasword here..." />
+                    <div className="flex flex-col gap-2">
+                        <label htmlFor="" className="font-semibold">Password</label>
+                        <div className="flex flex-row gap-1.5">
+                            <input className="bg-white text-black focus:outline-[#22D3EE] p-2 rounded-lg" type={show? "text" : "password"} {...form.register("password")} placeholder="Pasword here..." />
                             <button type="button" onClick={() => setShow(!show)}>{show ? "Hide" : "Show"}</button>
                         </div>
                         {form.formState.errors.password && (
@@ -92,8 +93,12 @@ function Login () {
                     </div>
 
                     {/*TOMBOL SUBMIT */}
-                    <button type="submit" disabled={isPending}>{isPending ? "Loading..." : "Login"}</button>
+                    <button className="bg-[#2C0051] p-2 rounded-lg hover:bg-[#6900B3] hover:cursor-pointer" type="submit" disabled={isPending}>{isPending ? "Loading..." : "Login"}</button>
                 </form>
+
+                <div>
+                    <Link to="/register" className="text-xs underline">Don't have an account? sign-up here</Link>
+                </div>
             </div>
         </div>
     )
