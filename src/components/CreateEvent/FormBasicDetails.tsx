@@ -42,7 +42,7 @@ export function FormBasicAndMedia({
               required
             />
           </div>
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm text-[#cfc2d6] mb-2">
               Event Category
             </label>
@@ -64,20 +64,6 @@ export function FormBasicAndMedia({
               <option value="HEALTH">Health</option>
               <option value="OTHER">Other</option>
             </select>
-          </div>
-          <div>
-            <label className="block text-sm text-[#cfc2d6] mb-2">
-              Capacity (Seats)
-            </label>
-            <input
-              name="capacity"
-              value={formData.capacity || ""}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 rounded-lg border border-[#4d4354] bg-[#2e2738] text-[#eadef6] focus:border-[#ddb7ff] focus:ring-[4px] focus:ring-[#ddb7ff]/10 outline-none"
-              placeholder="0"
-              type="number"
-              required
-            />
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm text-[#cfc2d6] mb-2">

@@ -1,9 +1,10 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import OwnerProtectedRoute from "./routes/OwnerProtectedRoute";
 import LandingPage from "./pages/LandingPage";
-import CreateEventPage from "./pages/CreateEvent";
+import CreateEvent from "./pages/CreateEvent";
 import EditEventPage from "./pages/EditEvent";
+import EventDetail from "./pages/EventDetail";
 import "./index.css";
 
 const router = createBrowserRouter([
@@ -12,10 +13,14 @@ const router = createBrowserRouter([
     element: <LandingPage />,
   },
   {
+    path: "/events/:id",
+    element: <EventDetail />,
+  },
+  {
     path: "/create-event",
     element: (
       <ProtectedRoute>
-        <CreateEventPage />
+        <CreateEvent />
       </ProtectedRoute>
     ),
   },

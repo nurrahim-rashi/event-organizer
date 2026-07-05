@@ -1,9 +1,8 @@
-import { userAuth } from "../../stores/useAuth"
+import { userAuth } from "../../stores/useAuth";
 import { Link } from "react-router";
 
 export default function Navbar() {
-  const {user, logout} = userAuth()
-
+  const { user, logout } = userAuth();
 
   return (
     <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#171021]/80 backdrop-blur-xl border-b border-[#4d4354]/10">
@@ -46,12 +45,19 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           {user ? (
             <div>
-              <button className="bg-[#A855F7] py-2 px-4 text-sm font-semibold rounded-xl hover:bg-[#22D3EE] hover:cursor-pointer" onClick={logout}>Logout</button>
+              <button
+                className="bg-[#A855F7] py-2 px-4 text-sm font-semibold rounded-xl hover:bg-[#22D3EE] hover:cursor-pointer"
+                onClick={logout}
+              >
+                Logout
+              </button>
             </div>
           ) : (
             <div>
               <Link to="/login">
-                <button className="bg-[#A855F7] py-2 px-4 text-sm font-semibold rounded-xl hover:bg-[#22D3EE] hover:cursor-pointer">Login</button>
+                <button className="bg-[#A855F7] py-2 px-4 text-sm font-semibold rounded-xl hover:bg-[#22D3EE] hover:cursor-pointer">
+                  Login
+                </button>
               </Link>
             </div>
           )}

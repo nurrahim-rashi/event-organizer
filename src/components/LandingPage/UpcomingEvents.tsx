@@ -1,16 +1,24 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { getEvents } from "../../services/event.service";
-import type { TicketType, EventData } from "../../types/type";
+import type { TicketType, Event } from "../../types/type";
 
 export default function UpcomingEvents() {
-  const [events, setEvents] = useState<EventData[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const data = await getEvents();
-        setEvents(Array.isArray(data) ? data : data.events || []);
+        const response = await getEvents();
+
+        if (response && response.data && Array.isArray(response.data)) {
+          setEvents(response.data);
+        } else if (Array.isArray(response)) {
+          setEvents(response);
+        } else {
+          setEvents([]);
+        }
       } catch (error) {
         console.error("Failed to fetch upcoming events:", error);
       } finally {
@@ -31,7 +39,10 @@ export default function UpcomingEvents() {
   };
 
   const formatPrice = (ticketTypes?: TicketType[]) => {
-    if (!ticketTypes || ticketTypes.length === 0) return "Free";
+    if (!ticketTypes || ticketTypes.length === 0) {
+      return "Rp 0";
+    }
+
     const prices = ticketTypes.map((t) => t.price);
     const minPrice = Math.min(...prices);
     if (minPrice === 0) return "Free";
@@ -83,12 +94,16 @@ export default function UpcomingEvents() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {events.map((event) => {
             const { day, month } = getEventDateParts(event.startDate);
-            const priceDisplay = formatPrice(event.ticketTypes);
+
+            // Mengamankan pembacaan data tiket dari backend jika namanya sedikit berbeda (misal: ticket_types)
+            const tickets = event.ticketTypes || (event as any).ticket_types;
+            const priceDisplay = formatPrice(tickets);
 
             return (
-              <div
+              <Link
                 key={event.id}
-                className="group bg-[#231d2e] rounded-xl overflow-hidden shadow-lg border border-[#4d4354]/10 hover:-translate-y-2 transition-all duration-300"
+                to={`/events/${event.id}`}
+                className="group bg-[#231d2e] rounded-xl overflow-hidden shadow-lg border border-[#4d4354]/10 hover:-translate-y-2 transition-all duration-300 block cursor-pointer"
               >
                 {/* Banner */}
                 <div className="relative h-48 overflow-hidden">
@@ -142,14 +157,9 @@ export default function UpcomingEvents() {
                         {priceDisplay}
                       </p>
                     </div>
-                    <button className="w-10 h-10 rounded-lg bg-[#393244] flex items-center justify-center hover:bg-[#ddb7ff] hover:text-[#490080] transition-colors text-[#cfc2d6]">
-                      <span className="material-symbols-outlined">
-                        favorite
-                      </span>
-                    </button>
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
