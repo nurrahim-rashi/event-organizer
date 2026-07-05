@@ -1,18 +1,42 @@
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
+import { useEffect, useState } from "react";
 import { useEventDetail } from "../stores/useEventDetail";
+import { userAuth } from "../stores/useAuth";
+import {
+  createTransaction,
+  getTransactionsByEvent,
+} from "../services/transaction.service";
+import type { Transaction } from "../types/type";
+import Navbar from "../components/layout/Navbar";
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const { user } = userAuth();
+  const [userTransactions, setUserTransactions] = useState<Transaction[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   const { event, loading, selectedTicket, setSelectedTicket } = useEventDetail(
     id ?? "",
   );
 
+  useEffect(() => {
+    if (user && id) {
+      getTransactionsByEvent(Number(id)).then((data) => {
+        setUserTransactions(data);
+      });
+    }
+  }, [user, id]);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#171021] flex items-center justify-center text-[#eadef6]">
-        <div className="animate-pulse font-medium">
-          Loading event details...
+      <div className="min-h-screen bg-[#171021]">
+        <Navbar />
+        <div className="h-[calc(100vh-64px)] flex items-center justify-center text-[#eadef6]">
+          <div className="animate-pulse font-medium">
+            Loading event details...
+          </div>
         </div>
       </div>
     );
@@ -20,31 +44,22 @@ export default function EventDetail() {
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-[#171021] flex items-center justify-center text-[#eadef6]">
-        <div className="text-center">
-          <p className="text-xl font-bold mb-2">Event Not Found</p>
-          <a href="/" className="text-[#5de6ff] underline text-sm">
-            Back to Home
-          </a>
+      <div className="min-h-screen bg-[#171021]">
+        <Navbar />
+        <div className="h-[calc(100vh-64px)] flex items-center justify-center text-[#eadef6]">
+          <div className="text-center">
+            <p className="text-xl font-bold mb-2">Event Not Found</p>
+            <a href="/" className="text-[#5de6ff] underline text-sm">
+              Back to Home
+            </a>
+          </div>
         </div>
       </div>
     );
   }
 
-  // --- PEMETAAN DATA MURNI CAMELCASE ---
-  const eventName = event.name ?? "";
-  const eventCategory = event.category ?? "OTHER";
-  const eventDescription = event.description ?? "";
-  const eventLocation = event.location ?? "";
-  const eventCity = event.city ?? "Local Venue";
-  const bannerImg =
-    event.bannerImage ??
-    "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=1200";
-  const rawStartDate = event.startDate;
   const tickets = event.ticketTypes ?? [];
-  const organizerData = event.organizer;
 
-  // --- PERHITUNGAN TIKET ---
   const totalTicketsLeft = Array.isArray(tickets)
     ? tickets.reduce(
         (acc, ticket) =>
@@ -56,6 +71,43 @@ export default function EventDetail() {
   const ticketPrice = selectedTicket ? selectedTicket.price : 0;
   const serviceFee = ticketPrice > 0 ? ticketPrice * 0.05 : 0;
   const totalPayment = ticketPrice + serviceFee;
+
+  const handleBuyTicket = async () => {
+    if (!user) {
+      alert("Please login first to buy tickets!");
+      navigate("/login");
+      return;
+    }
+    if (!selectedTicket) return;
+
+    try {
+      setSubmitting(true);
+      const payload = {
+        eventId: Number(id),
+        items: [
+          {
+            ticketTypeId: selectedTicket.id,
+            qty: 1,
+          },
+        ],
+      };
+
+      const res = await createTransaction(payload);
+
+      if (res.success) {
+        alert("Transaction created successfully!");
+        navigate(`/dashboard/transactions/${res.data.id}`);
+      }
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      alert(
+        error.response?.data?.message ||
+          "Failed to process ticket purchase. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const formatDate = (isoString: string) => {
     if (!isoString) return "Date not available";
@@ -75,6 +127,8 @@ export default function EventDetail() {
 
   return (
     <div className="bg-[#171021] text-[#eadef6] min-h-screen selection:bg-[#ddb7ff] selection:text-[#490080]">
+      <Navbar />
+
       <main className="pt-24 pb-16 px-6 max-w-[1280px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column */}
@@ -82,20 +136,55 @@ export default function EventDetail() {
             <section className="space-y-6">
               <div className="w-full h-[400px] rounded-xl overflow-hidden shadow-[0px_8px_32px_rgba(0,0,0,0.4)] relative group">
                 <img
-                  alt={eventName}
+                  alt={event.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  src={bannerImg}
+                  src={
+                    event.bannerImage ||
+                    "https://images.unsplash.com/photo-1501281667745-f7f57925c3b4?q=80&w=1200"
+                  }
                 />
                 <div className="absolute top-4 left-4 flex gap-2">
                   <span className="px-4 py-1.5 bg-[#ddb7ff] text-[#490080] rounded-full font-bold text-xs uppercase tracking-wider">
-                    {eventCategory}
+                    {event.category || "OTHER"}
                   </span>
                 </div>
               </div>
 
+              {user && userTransactions.length > 0 && (
+                <div className="p-4 bg-[#2e2738] border-l-4 border-[#5de6ff] rounded-r-xl">
+                  <h4 className="font-bold text-sm text-[#5de6ff] mb-1">
+                    Your Transaction Status for this Event:
+                  </h4>
+                  <div className="space-y-1">
+                    {userTransactions.map((tx) => (
+                      <div
+                        key={tx.id}
+                        className="text-xs flex justify-between items-center bg-[#171021]/50 p-2 rounded"
+                      >
+                        <span>
+                          Inv #{tx.id} (
+                          {tx.items?.[0]?.ticketType?.name || "Ticket"})
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded font-black uppercase text-[10px] ${
+                            tx.status === "PAID" || tx.status === "DONE"
+                              ? "bg-green-500/20 text-green-400"
+                              : tx.status === "WAITING_PAYMENT"
+                                ? "bg-yellow-500/20 text-yellow-400"
+                                : "bg-red-500/20 text-red-400"
+                          }`}
+                        >
+                          {tx.status.replace("_", " ")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-4">
                 <h1 className="text-4xl md:text-5xl font-black text-[#eadef6] leading-tight">
-                  {eventName}
+                  {event.name}
                 </h1>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex items-center gap-3 p-4 bg-[#231d2e] rounded-xl border border-[#4d4354]/50">
@@ -107,7 +196,7 @@ export default function EventDetail() {
                         Date &amp; Time
                       </p>
                       <p className="text-xs text-[#eadef6] mt-0.5">
-                        {formatDate(rawStartDate)}
+                        {formatDate(event.startDate)}
                       </p>
                     </div>
                   </div>
@@ -117,9 +206,11 @@ export default function EventDetail() {
                     </span>
                     <div>
                       <p className="text-sm font-bold text-[#eadef6] truncate max-w-[180px]">
-                        {eventLocation}
+                        {event.location}
                       </p>
-                      <p className="text-xs text-[#cfc2d6]">{eventCity}</p>
+                      <p className="text-xs text-[#cfc2d6]">
+                        {event.city || "Local Venue"}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-4 bg-[#231d2e] rounded-xl border border-[#4d4354]/50">
@@ -144,7 +235,7 @@ export default function EventDetail() {
                 About the Event
               </h2>
               <div className="space-y-4 text-[#cfc2d6] leading-relaxed">
-                <p>{eventDescription || "No description provided."}</p>
+                <p>{event.description || "No description provided."}</p>
               </div>
             </section>
 
@@ -170,7 +261,7 @@ export default function EventDetail() {
                       location_on
                     </span>
                     <span className="font-bold text-[#eadef6] truncate">
-                      {eventLocation}, {eventCity}
+                      {event.location}, {event.city || "Local Venue"}
                     </span>
                   </div>
                 </div>
@@ -253,28 +344,23 @@ export default function EventDetail() {
                 )}
 
                 <button
-                  disabled={
-                    !selectedTicket ||
-                    (selectedTicket &&
-                      (selectedTicket.booked ?? 0) >=
-                        (selectedTicket.totalTicket ?? 0))
-                  }
+                  onClick={handleBuyTicket}
                   className="w-full py-4 bg-[#ddb7ff] text-[#490080] rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#f0dbff] transition-all active:scale-[0.98] shadow-lg shadow-[#ddb7ff]/20 disabled:opacity-40 disabled:pointer-events-none"
                 >
-                  Buy Tickets Now
+                  {submitting ? "Processing..." : "Buy Tickets Now"}
                 </button>
               </div>
             </aside>
 
-            {organizerData && (
+            {event.organizer && (
               <section className="bg-[#2e2738] p-6 rounded-xl shadow-lg border border-[#4d4354]/30 space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#ddb7ff]/20 bg-[#171021] flex items-center justify-center">
                     <img
-                      alt={organizerData.name}
+                      alt={event.organizer.name}
                       className="w-full h-full object-cover"
                       src={
-                        organizerData.profilePic ??
+                        event.organizer.profilePic ??
                         "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150"
                       }
                     />
@@ -284,10 +370,10 @@ export default function EventDetail() {
                       Hosted By
                     </p>
                     <h4 className="font-bold text-[#eadef6] text-lg">
-                      {organizerData.name}
+                      {event.organizer.name}
                     </h4>
                     <p className="text-xs text-[#cfc2d6]">
-                      {organizerData.email}
+                      {event.organizer.email}
                     </p>
                   </div>
                 </div>

@@ -3,6 +3,8 @@ export type Role = "USER" | "ADMIN" | "SUPERADMIN";
 export type TransactionStatus =
   "WAITING_PAYMENT" | "PAID" | "CANCELLED" | "EXPIRED" | "DONE";
 
+export type TicketName = "GOLD" | "SILVER" | "BRONZE" | "  EARLY_BIRD";
+
 export type EventCategory =
   | "MUSIC"
   | "SPORTS"
@@ -26,7 +28,7 @@ export interface User {
 
 export interface TicketType {
   id: number;
-  name: string;
+  name: TicketName;
   price: number;
   booked: number;
   totalTicket: number;
@@ -67,4 +69,23 @@ export interface EventFormState {
     price: number;
     totalTicket: number;
   }[];
+}
+
+export interface TransactionItem {
+  id: number;
+  transactionId: number;
+  ticketTypeId: number;
+  qty: number;
+  price: number;
+  ticketType?: TicketType;
+}
+
+export interface Transaction {
+  id: number;
+  userId: number;
+  eventId: number;
+  status: TransactionStatus;
+  totalPrice: number;
+  createdAt: string;
+  items: TransactionItem[];
 }
