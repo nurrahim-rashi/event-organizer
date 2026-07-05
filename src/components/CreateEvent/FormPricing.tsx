@@ -3,30 +3,59 @@ import type { EventFormState } from "../../types/type";
 
 interface FormPricingAndPromotionsProps {
   formData: EventFormState;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleTogglePrice: (isPaid: boolean) => void;
+  setFormData: React.Dispatch<React.SetStateAction<EventFormState>>;
 }
 
 export function FormPricingAndPromotions({
   formData,
-  handleInputChange,
-  handleTogglePrice,
+  setFormData,
 }: FormPricingAndPromotionsProps) {
-  const cleanPrice = formData.price.replace(/[^\d.]/g, "");
-  const priceAmount = parseFloat(cleanPrice) || 0;
-  const capacity = formData.capacity || 100;
-  const totalRevenue = priceAmount * capacity;
+  const handleTicketChange = (
+    index: number,
+    field: string,
+    value: string | number,
+  ) => {
+    setFormData((prev) => {
+      const updatedTickets = [...prev.ticketTypes];
+      updatedTickets[index] = {
+        ...updatedTickets[index],
+        [field]: value,
+      };
+      return { ...prev, ticketTypes: updatedTickets };
+    });
+  };
+
+  const addTicketType = () => {
+    setFormData((prev) => ({
+      ...prev,
+      ticketTypes: [
+        ...prev.ticketTypes,
+        { name: "", price: 0, totalTicket: 0 },
+      ],
+    }));
+  };
+
+  const removeTicketType = (index: number) => {
+    if (formData.ticketTypes.length === 1) return;
+    setFormData((prev) => ({
+      ...prev,
+      ticketTypes: prev.ticketTypes.filter((_, i) => i !== index),
+    }));
+  };
+
+  const totalCapacity = formData.ticketTypes.reduce(
+    (acc, t) => acc + (t.totalTicket || 0),
+    0,
+  );
+  const totalRevenue = formData.ticketTypes.reduce(
+    (acc, t) => acc + (t.price || 0) * (t.totalTicket || 0),
+    0,
+  );
   const serviceFee = totalRevenue * 0.05;
   const netEarnings = totalRevenue - serviceFee;
 
   const formatCurrency = (amount: number) => {
-    return (
-      "$" +
-      amount.toLocaleString("en-US", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      })
-    );
+    return "Rp " + amount.toLocaleString("id-ID");
   };
 
   return (
@@ -39,50 +68,98 @@ export function FormPricingAndPromotions({
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-[#ddb7ff]">
-              payments
+              confirmation_number
             </span>
-            <h2 className="text-xl font-bold">4. Ticketing &amp; Pricing</h2>
+            <h2 className="text-xl font-bold">4. Ticket Tiers &amp; Pricing</h2>
           </div>
-          <div className="flex bg-[#2e2738] rounded-full p-1 border border-[#4d4354]">
-            <button
-              type="button"
-              className={`px-6 py-2 rounded-full font-bold text-sm transition-all ${!formData.isPaid ? "bg-[#231d2e] text-[#ddb7ff] shadow-sm" : "text-[#cfc2d6] hover:text-[#ddb7ff]"}`}
-              onClick={() => handleTogglePrice(false)}
-            >
-              Free
-            </button>
-            <button
-              type="button"
-              className={`px-6 py-2 rounded-full font-bold text-sm transition-all ${formData.isPaid ? "bg-[#231d2e] text-[#ddb7ff] shadow-sm" : "text-[#cfc2d6] hover:text-[#ddb7ff]"}`}
-              onClick={() => handleTogglePrice(true)}
-            >
-              Paid
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={addTicketType}
+            className="flex items-center gap-2 text-sm bg-[#ddb7ff]/10 text-[#ddb7ff] px-4 py-2 rounded-xl font-bold border border-[#ddb7ff]/20 hover:bg-[#ddb7ff]/20 transition-all"
+          >
+            <span className="material-symbols-outlined text-sm">add</span> Add
+            Ticket Tier
+          </button>
         </div>
 
-        {formData.isPaid ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            <div className="space-y-6">
+        <div className="space-y-6 mb-8">
+          {formData.ticketTypes.map((ticket, index) => (
+            <div
+              key={index}
+              className="p-5 rounded-xl border border-[#4d4354] bg-[#2e2738]/50 relative grid grid-cols-1 md:grid-cols-3 gap-4"
+            >
               <div>
-                <label className="block text-sm text-[#cfc2d6] mb-2">
-                  Ticket Price (USD)
+                <label className="block text-xs text-[#cfc2d6] mb-1">
+                  Ticket Name
                 </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-[#cfc2d6] opacity-60">
-                    $
-                  </span>
+                <input
+                  type="text"
+                  placeholder="e.g., VIP, Regular, Early Bird"
+                  value={ticket.name}
+                  onChange={(e) =>
+                    handleTicketChange(index, "name", e.target.value)
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-[#4d4354] bg-[#2e2738] text-[#eadef6] focus:border-[#ddb7ff] text-sm outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-[#cfc2d6] mb-1">
+                  Total Quantity / Quota
+                </label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={ticket.totalTicket || ""}
+                  onChange={(e) =>
+                    handleTicketChange(
+                      index,
+                      "totalTicket",
+                      parseInt(e.target.value) || 0,
+                    )
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-[#4d4354] bg-[#2e2738] text-[#eadef6] focus:border-[#ddb7ff] text-sm outline-none"
+                  required
+                />
+              </div>
+              <div className="relative">
+                <label className="block text-xs text-[#cfc2d6] mb-1">
+                  Price (IDR){" "}
+                  <span className="text-gray-400">(0 for Free)</span>
+                </label>
+                <div className="flex gap-2 items-center">
                   <input
-                    name="price"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-4 rounded-lg border border-[#4d4354] bg-[#2e2738] text-[#eadef6] focus:border-[#ddb7ff] text-xl font-bold outline-none"
-                    placeholder="100.00"
-                    type="text"
-                    required={formData.isPaid}
+                    type="number"
+                    placeholder="0"
+                    value={ticket.price || ""}
+                    onChange={(e) =>
+                      handleTicketChange(
+                        index,
+                        "price",
+                        parseInt(e.target.value) || 0,
+                      )
+                    }
+                    className="w-full px-4 py-2.5 rounded-lg border border-[#4d4354] bg-[#2e2738] text-[#eadef6] focus:border-[#ddb7ff] text-sm font-bold outline-none"
+                    required
                   />
+                  {formData.ticketTypes.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeTicketType(index)}
+                      className="p-2 text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      <span className="material-symbols-outlined">delete</span>
+                    </button>
+                  )}
                 </div>
               </div>
+            </div>
+          ))}
+        </div>
+
+        {totalRevenue > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start pt-4 border-t border-[#4d4354]/40">
+            <div className="space-y-4">
               <div className="bg-[#1f1929] p-4 rounded-lg border border-[#4d4354] flex items-center justify-between">
                 <div>
                   <p className="text-sm text-[#cfc2d6]">Service Fee (5%)</p>
@@ -90,9 +167,6 @@ export function FormPricingAndPromotions({
                     {formatCurrency(serviceFee)}
                   </p>
                 </div>
-                <span className="material-symbols-outlined text-[#988d9f] cursor-help">
-                  help_outline
-                </span>
               </div>
             </div>
             <div className="bg-[#b76dff] p-6 rounded-xl border-l-4 border-[#ddb7ff] text-[#400071]">
@@ -103,15 +177,16 @@ export function FormPricingAndPromotions({
                 {formatCurrency(netEarnings)}
               </p>
               <p className="text-xs opacity-80">
-                Calculated based on full capacity ({capacity} sold out).
+                Calculated based on full capacity ({totalCapacity} total tickets
+                sold out).
               </p>
             </div>
           </div>
         ) : (
           <div className="bg-[#1f1929] p-6 rounded-xl border border-dashed border-[#4d4354] text-center">
             <p className="text-[#cfc2d6]">
-              Free events will appear in the "Free Pass" category and have zero
-              administration fees.
+              All created ticket classes are free. Free events will have zero
+              platform administration fees.
             </p>
           </div>
         )}
@@ -129,13 +204,6 @@ export function FormPricingAndPromotions({
             </span>
             <h2 className="text-xl font-bold">5. Vouchers &amp; Promotion</h2>
           </div>
-          <button
-            type="button"
-            className="flex items-center gap-2 text-[#ddb7ff] font-bold hover:underline transition-all"
-          >
-            <span className="material-symbols-outlined">add_circle</span>
-            Add Promo Code
-          </button>
         </div>
         <div className="space-y-4">
           <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-[#4d4354] rounded-xl opacity-60">
@@ -144,25 +212,9 @@ export function FormPricingAndPromotions({
             </span>
             <p className="font-medium">No active vouchers yet.</p>
             <p className="text-sm">
-              Add promo codes to increase sales conversions.
+              Add promo codes later on dashboard panel to increase sales
+              conversions.
             </p>
-          </div>
-          <div className="flex items-center gap-4 p-4 rounded-xl border border-[#4d4354] bg-[#2e2738] shadow-sm">
-            <div className="w-12 h-12 rounded-lg bg-[#b76dff] flex items-center justify-center text-[#400071]">
-              <span className="material-symbols-outlined">campaign</span>
-            </div>
-            <div className="flex-1">
-              <p className="font-bold">Boost Event Visibility</p>
-              <p className="text-sm text-[#cfc2d6]">
-                Feature your event on the homepage for 3 days.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="px-4 py-2 rounded-lg border border-[#ddb7ff] text-[#ddb7ff] font-bold text-sm hover:bg-[#ddb7ff] hover:text-[#490080] transition-all"
-            >
-              Enable Boost
-            </button>
           </div>
         </div>
       </section>

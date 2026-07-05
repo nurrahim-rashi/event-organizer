@@ -3,7 +3,11 @@ import type { EventFormState } from "../../types/type";
 
 interface FormScheduleProps {
   formData: EventFormState;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleInputChange: (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => void;
 }
 
 export function FormSchedule({

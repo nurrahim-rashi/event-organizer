@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import ProtectedRoute from "../routes/ProtectedRoute";
+import { useNavigate } from "react-router";
 import { createEvent } from "../services/event.service";
 import type { EventFormState } from "../types/type";
 
@@ -9,7 +8,7 @@ import { FormBasicAndMedia } from "../components/CreateEvent/FormBasicDetails";
 import { FormSchedule } from "../components/CreateEvent/FormSchedule";
 import { FormPricingAndPromotions } from "../components/CreateEvent/FormPricing";
 
-export function CreateEvent() {
+export default function CreateEvent() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +17,6 @@ export function CreateEvent() {
   const [formData, setFormData] = useState<EventFormState>({
     name: "",
     category: "",
-    capacity: 0,
     location: "",
     description: "",
     bannerImage: null,
@@ -26,8 +24,7 @@ export function CreateEvent() {
     startTime: "",
     endDate: "",
     endTime: "",
-    isPaid: false,
-    price: "",
+    ticketTypes: [{ name: "Regular", price: 0, totalTicket: 100 }],
   });
 
   const handleInputChange = (
@@ -38,15 +35,7 @@ export function CreateEvent() {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "capacity" ? parseInt(value) || 0 : value,
-    }));
-  };
-
-  const handleTogglePrice = (isPaid: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      isPaid,
-      price: isPaid ? prev.price : "",
+      [name]: value,
     }));
   };
 
@@ -63,6 +52,11 @@ export function CreateEvent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.category) {
+      setError("Please select an event category.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -73,18 +67,17 @@ export function CreateEvent() {
       const endDateTime = new Date(
         `${formData.endDate}T${formData.endTime}`,
       ).toISOString();
-      const cleanPrice = formData.price.replace(/[^\d.]/g, "");
 
       const payload = {
         name: formData.name,
         category: formData.category,
-        capacity: formData.capacity,
         location: formData.location,
         description: formData.description,
+        bannerImage: formData.bannerImage ? "URL_CONVERTED_OR_UPLOADED" : "",
         startDate: startDateTime,
         endDate: endDateTime,
-        price: formData.isPaid ? parseFloat(cleanPrice) || 0 : 0,
         organizerId: 1,
+        ticketTypes: formData.ticketTypes,
       };
 
       const res = await createEvent(payload);
@@ -103,77 +96,53 @@ export function CreateEvent() {
   };
 
   return (
-    <div className="bg-[#171021] min-h-screen text-[#eadef6] font-['Hanken_Grotesk'] selection:bg-[#ddb7ff] selection:text-[#490080]">
-      {/* TopNavBar */}
-      <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#231d2e] border-b border-[#4d4354]">
-        <div className="flex items-center gap-8">
-          <span className="text-2xl font-extrabold text-[#ddb7ff]">
-            EventSync
-          </span>
-        </div>
-      </nav>
+    <main className="pt-24 pb-12 px-6 max-w-[1280px] mx-auto min-h-screen">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col lg:flex-row gap-10"
+      >
+        <FormSidebar
+          activeStep={activeStep}
+          loading={loading}
+          error={error}
+          scrollToSection={scrollToSection}
+        />
 
-      <main className="pt-24 pb-12 px-6 max-w-[1280px] mx-auto min-h-screen">
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col lg:flex-row gap-10"
-        >
-          {/* 1. Sidebar Stepper */}
-          <FormSidebar
-            activeStep={activeStep}
-            loading={loading}
-            error={error}
-            scrollToSection={scrollToSection}
+        <div className="flex-1 space-y-12">
+          <FormBasicAndMedia
+            formData={formData}
+            handleInputChange={handleInputChange}
+            setFormData={setFormData}
           />
 
-          {/* Form Content */}
-          <div className="flex-1 space-y-12">
-            {/* 2. Basic Details & Media */}
-            <FormBasicAndMedia
-              formData={formData}
-              handleInputChange={handleInputChange}
-              setFormData={setFormData}
-            />
+          <FormSchedule
+            formData={formData}
+            handleInputChange={handleInputChange}
+          />
 
-            {/* 3. Schedule */}
-            <FormSchedule
-              formData={formData}
-              handleInputChange={handleInputChange}
-            />
+          <FormPricingAndPromotions
+            formData={formData}
+            setFormData={setFormData}
+          />
 
-            {/* 4. Pricing & Promotions */}
-            <FormPricingAndPromotions
-              formData={formData}
-              handleInputChange={handleInputChange}
-              handleTogglePrice={handleTogglePrice}
-            />
-
-            {/* Footer Actions */}
-            <div className="flex items-center justify-end gap-4 pt-6">
-              <button
-                type="button"
-                className="px-8 py-3 rounded-xl border border-[#4d4354] font-bold text-[#cfc2d6] hover:bg-[#2e2738] transition-all active:scale-95"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="px-8 py-3 rounded-xl bg-[#2e2738] border border-[#4d4354] font-bold text-[#eadef6] hover:bg-[#393244] active:scale-95 transition-all"
-              >
-                Save Draft
-              </button>
-            </div>
+          <div className="flex items-center justify-end gap-4 pt-6">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="px-8 py-3 rounded-xl border border-[#4d4354] font-bold text-[#cfc2d6] hover:bg-[#2e2738] transition-all active:scale-95"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-3 rounded-xl bg-[#ddb7ff] text-[#490080] border border-[#4d4354] font-bold hover:bg-[#c296f0] active:scale-95 transition-all disabled:opacity-50"
+            >
+              {loading ? "Publishing..." : "Publish Event"}
+            </button>
           </div>
-        </form>
-      </main>
-    </div>
-  );
-}
-
-export default function CreateEventPage() {
-  return (
-    <ProtectedRoute>
-      <CreateEvent />
-    </ProtectedRoute>
+        </div>
+      </form>
+    </main>
   );
 }

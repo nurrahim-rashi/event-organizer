@@ -1,3 +1,10 @@
+export type Role = "USER" | "ADMIN" | "SUPERADMIN";
+
+export type TransactionStatus =
+  "WAITING_PAYMENT" | "PAID" | "CANCELLED" | "EXPIRED" | "DONE";
+
+export type TicketName = "GOLD" | "SILVER" | "BRONZE" | "  EARLY_BIRD";
+
 export type EventCategory =
   | "MUSIC"
   | "SPORTS"
@@ -13,55 +20,43 @@ export interface User {
   id: number;
   name: string;
   email: string;
-}
-
-export interface Organizer {
-  id: number;
-  name: string;
-  logo: string;
-  rating: number;
-  reviewsCount: string;
-  bio: string;
+  profilePic?: string | null;
+  role: Role;
+  referralCode: string;
+  createdAt: string;
 }
 
 export interface TicketType {
   id: number;
-  name: string;
+  name: TicketName;
   price: number;
-  description: string;
-  isAvailable: boolean;
+  booked: number;
+  totalTicket: number;
+  eventId: number;
+  deletedAt?: string | null;
 }
 
 export interface Event {
   id: number;
-  title: string;
-  category: EventCategory;
-  capacity: number;
-  location: string;
-  city: string;
+  name: string;
   description: string;
-  mediaUrl?: string;
+  location: string;
+  category: EventCategory;
+  bannerImage: string;
   startDate: string;
-  startTime: string;
   endDate: string;
-  endTime: string;
-  isPaid: boolean;
-  price: number;
   organizerId: number;
-  isTrending?: boolean;
-  ticketsLeft?: number;
-  perks?: string[];
-  accessibilityDesc?: string;
-  parkingDesc?: string;
-  serviceFeeFixed?: number;
-  tickets?: TicketType[];
-  organizer?: Organizer;
+  organizer?: User;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+  ticketTypes?: TicketType[];
+  city?: string;
 }
 
 export interface EventFormState {
   name: string;
   category: EventCategory | "";
-  capacity: number;
   location: string;
   description: string;
   bannerImage: File | null;
@@ -69,6 +64,28 @@ export interface EventFormState {
   startTime: string;
   endDate: string;
   endTime: string;
-  isPaid: boolean;
-  price: string;
+  ticketTypes: {
+    name: string;
+    price: number;
+    totalTicket: number;
+  }[];
+}
+
+export interface TransactionItem {
+  id: number;
+  transactionId: number;
+  ticketTypeId: number;
+  qty: number;
+  price: number;
+  ticketType?: TicketType;
+}
+
+export interface Transaction {
+  id: number;
+  userId: number;
+  eventId: number;
+  status: TransactionStatus;
+  totalPrice: number;
+  createdAt: string;
+  items: TransactionItem[];
 }

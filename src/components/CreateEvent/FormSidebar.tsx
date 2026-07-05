@@ -59,7 +59,9 @@ export function FormSidebar({
             disabled={loading}
             className="w-full bg-[#ddb7ff] disabled:bg-[#4d4354] text-[#490080] disabled:text-gray-400 py-3 px-6 rounded-xl font-bold shadow-lg shadow-[#ddb7ff]/20 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
-            <span className="material-symbols-outlined animate-spin-slow">
+            <span
+              className={`material-symbols-outlined ${loading ? "animate-spin" : ""}`}
+            >
               {loading ? "sync" : "rocket_launch"}
             </span>
             {loading ? "Publishing..." : "Publish Event"}
@@ -67,9 +69,6 @@ export function FormSidebar({
           {error && (
             <p className="text-xs text-red-400 mt-2 text-center">{error}</p>
           )}
-          <p className="text-center text-xs text-[#cfc2d6] mt-4">
-            Draft saved at: 12:45
-          </p>
         </div>
       </div>
     </aside>

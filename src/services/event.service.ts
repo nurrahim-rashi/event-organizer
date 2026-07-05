@@ -7,6 +7,9 @@ export const getEvents = async () => {
 
 export const getEvent = async (id: number) => {
   const res = await eventApi.getById(id);
+  if (res.data && res.data.data) {
+    return res.data.data;
+  }
   return res.data;
 };
 

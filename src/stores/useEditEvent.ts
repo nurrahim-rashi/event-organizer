@@ -1,32 +1,49 @@
 import { useState, useEffect } from "react";
 import { getEvent, updateEvent } from "../services/event.service";
-import type { Event } from "../types/type";
+import type { Event, EventFormState } from "../types/type";
 
 export const useEditEvent = (eventId: number) => {
-  const [formData, setFormData] = useState<Event>({
-    id: 0,
-    title: "",
+  const [formData, setFormData] = useState<EventFormState>({
+    name: "",
     category: "OTHER",
-    capacity: 0,
     location: "",
-    city: "",
     description: "",
+    bannerImage: null,
     startDate: "",
     startTime: "",
     endDate: "",
     endTime: "",
-    isPaid: false,
-    price: 0,
-    organizerId: 0,
+    ticketTypes: [],
   });
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchEventData = async () => {
       try {
-        const data = await getEvent(eventId);
-        setFormData(data);
+        const data: Event = await getEvent(eventId);
+
+        const startDateTime = new Date(data.startDate);
+        const endDateTime = new Date(data.endDate);
+
+        setFormData({
+          name: data.name,
+          category: data.category,
+          location: data.location,
+          description: data.description,
+          bannerImage: null,
+          startDate: startDateTime.toISOString().split("T")[0],
+          startTime: startDateTime.toTimeString().substring(0, 5),
+          endDate: endDateTime.toISOString().split("T")[0],
+          endTime: endDateTime.toTimeString().substring(0, 5),
+          ticketTypes:
+            data.ticketTypes?.map((t) => ({
+              name: t.name,
+              price: t.price,
+              totalTicket: t.totalTicket,
+            })) || [],
+        });
       } catch (error) {
         console.error("Failed to load event data", error);
       } finally {
@@ -44,22 +61,28 @@ export const useEditEvent = (eventId: number) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "capacity" || name === "price" ? Number(value) : value,
-    }));
-  };
-
-  const handleTogglePaid = (isPaid: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      isPaid,
-      price: isPaid ? prev.price : 0,
+      [name]: value,
     }));
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateEvent(eventId, formData);
+      const updatedEventPayload = {
+        name: formData.name,
+        category: formData.category,
+        location: formData.location,
+        description: formData.description,
+        startDate: new Date(
+          `${formData.startDate}T${formData.startTime}`,
+        ).toISOString(),
+        endDate: new Date(
+          `${formData.endDate}T${formData.endTime}`,
+        ).toISOString(),
+        ticketTypes: formData.ticketTypes,
+      };
+
+      await updateEvent(eventId, updatedEventPayload);
       alert("Changes saved successfully!");
     } catch (error) {
       console.error("Failed to update event", error);
@@ -68,19 +91,18 @@ export const useEditEvent = (eventId: number) => {
     }
   };
 
-  const capacity = formData.capacity || 100;
-  const totalRevenue = formData.price * capacity;
-  const serviceFee = formData.isPaid ? totalRevenue * 0.05 : 0;
-  const netEarnings = formData.isPaid ? totalRevenue - serviceFee : 0;
+  const capacity = formData.ticketTypes.reduce(
+    (sum, t) => sum + t.totalTicket,
+    0,
+  );
 
   return {
     formData,
+    setFormData,
     loading,
     saving,
-    serviceFee,
-    netEarnings,
+    capacity,
     handleChange,
-    handleTogglePaid,
     handleSave,
   };
 };

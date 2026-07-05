@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Link } from "react-router";
 
 export default function ProtectedRoute({
   children,
@@ -8,7 +8,7 @@ export default function ProtectedRoute({
   const isAuthenticated = true;
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Link to="/login" replace />;
   }
 
   return <>{children}</>;
