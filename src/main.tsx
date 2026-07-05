@@ -8,7 +8,10 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import ProfileEdit from "./components/Profile/ProfileEdit";
 import EventDetail from "./pages/EventDetail";
+import BrowseEvents from "./pages/BrowseEvents";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import CreateEvent from "./pages/CreateEvent";
+import EditEvent from "./pages/EditEvent";
 import OwnerProtectedRoute from "./routes/OwnerProtectedRoute";
 
 const router = createBrowserRouter([
@@ -17,8 +20,29 @@ const router = createBrowserRouter([
     element: <LandingPage />,
   },
   {
+    path: "/events",
+    element: <BrowseEvents />,
+  },
+
+  {
     path: "/events/:id",
     element: <EventDetail />,
+  },
+  {
+    path: "/create-event",
+    element: (
+      <ProtectedRoute>
+        <CreateEvent />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/edit-event/:id",
+    element: (
+      <OwnerProtectedRoute>
+        <EditEvent />
+      </OwnerProtectedRoute>
+    ),
   },
   {
     path: "/register",
