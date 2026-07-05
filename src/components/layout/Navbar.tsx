@@ -36,6 +36,12 @@ export default function Navbar() {
           >
             Favorites
           </a>
+
+          {user && (
+            <>
+            <Link to="/profile">Profile ({user.name})</Link>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-4">
           {user ? (
