@@ -96,7 +96,7 @@ export default function CreateEvent() {
   };
 
   return (
-    <main className="pt-24 pb-12 px-6 max-w-[1280px] mx-auto min-h-screen">
+    <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto min-h-screen">
       <form
         onSubmit={handleSubmit}
         className="flex flex-col lg:flex-row gap-10"
