@@ -78,24 +78,38 @@ function ProfileEdit () {
     }; 
 
     return (
-        <div>
-            <div>
-                <h1>Edit Profile</h1>
+        <div className="px-6 py-24 flex items-center justify-center">
+            <div className="w-full max-w-md bg-[#2C0051] rounded-2xl p-8 border border-purple-900/40 shadow-2xl">
+                <h1 className="text-2xl font-bold text-center text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-indigo-400 mb-6 tracking-wide">
+                    Edit Profile
+                </h1>
 
                 {message && (
-                    <div>
+                    <div className={`p-3 mb-5 rounded-xl text-sm font-medium text-center border transition-all duration-200 ${
+                    message.toLowerCase().includes("berhasil") || message.toLowerCase().includes("success")
+                    ? "bg-green-500/10 border-green-500/30 text-green-400" 
+                    : "bg-red-500/10 border-red-500/30 text-red-400"
+                    }`}>
                         {message}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} className="space-y-5">
                     {/*PREVIEW IMAGE*/}
-                    <div>
-                        {previewUrl ? (<img src={previewUrl} alt="preview" />
+                    <div className="relative group flex flex-col gap-2 items-center justify-center">
+                        {previewUrl ? (<img 
+                        src={previewUrl} 
+                        alt="preview"
+                        className="relative w-32 h-32 rounded-full object-cover border-4 border-purple-600/50 shadow-md" />
                         ) : (
-                        <div>No image</div>
+                        <div className="relative w-32 h-32 rounded-full bg-gray-800 border-4 border-gray-700 flex items-center justify-center text-gray-400 text-xs shadow-md">
+                            No image
+                        </div>
                         )}
-                        <label htmlFor="avatarInput">
+                        <label 
+                        htmlFor="avatarInput"
+                        className="cursor-pointer text-xs font-semibold bg-purple-600/20 hover:bg-purple-600 border border-purple-500/40 hover:border-purple-500 text-purple-300 hover:text-white px-4 py-2 rounded-xl transition-all duration-200"
+                        >
                             Select profile picture
                             <input
                             id="avatarInput" 
@@ -107,29 +121,36 @@ function ProfileEdit () {
                     </div>
 
                     {/*INPUT NAMA*/}
-                    <div>
-                        <label>Name</label>
+                    <div className="flex flex-col space-y-1.5">
+                        <label className="text-xs font-semibold text-purple-300/80 uppercase tracking-wider pl-1">
+                            Name
+                        </label>
                         <input 
                         type="text" 
                         value={name}
+                        className="w-full px-4 py-3 bg-[#1e1932] border border-purple-950/60 focus:border-purple-500 rounded-xl text-gray-200 text-sm placeholder-gray-600 focus:outline-none transition-all duration-200 shadow-inner"
                         onChange={(e) => setName(e.target.value)}
                         required />
                     </div>
 
                     {/*INPUT EMAIL*/}
-                    <div>
-                        <label>Email</label>
+                    <div className="flex flex-col space-y-1.5">
+                        <label className="text-xs font-semibold text-purple-300/80 uppercase tracking-wider pl-1">
+                            Email
+                        </label>
                         <input 
                         type="email" 
                         value={email}
+                        className="w-full px-4 py-3 bg-[#1e1932] border border-purple-950/60 focus:border-purple-500 rounded-xl text-gray-200 text-sm placeholder-gray-600 focus:outline-none transition-all duration-200 shadow-inner"
                         onChange={(e) => setEmail(e.target.value)}
                         required />
                     </div>      
 
                     {/*SUBMIT BUTTON*/}
-                    <div>
+                    <div className="pt-2">
                         <button
                         type="submit"
+                        className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-700 disabled:to-gray-800 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-purple-900/20 active:scale-[0.98] transition-all duration-200 disabled:cursor-not-allowed"
                         disabled={loading}
                         >
                             {loading ? "Saving changes..." : "Save changes"}
