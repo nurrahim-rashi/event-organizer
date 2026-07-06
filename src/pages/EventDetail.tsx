@@ -8,6 +8,73 @@ import {
 } from "../services/transaction.service";
 import type { Transaction } from "../types/type";
 import Navbar from "../components/layout/Navbar";
+import Breadcrumb from "../components/layout/Breadcrumb";
+
+// Komponen Skeleton untuk Detail Event
+function EventDetailSkeleton() {
+  return (
+    <div className="bg-[#171021] text-[#eadef6] min-h-screen animate-pulse">
+      <Navbar />
+      <main className="pt-24 pb-16 px-6 max-w-[1280px] mx-auto space-y-6">
+        {/* Breadcrumb Skeleton */}
+        <div className="h-4 bg-[#2e2738] rounded w-1/3 mb-6" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Column Skeleton */}
+          <div className="lg:col-span-8 space-y-8">
+            <div className="space-y-6">
+              {/* Image Banner Skeleton */}
+              <div className="w-full h-[400px] bg-[#231d2e] rounded-xl" />
+
+              {/* Title & Info Skeleton */}
+              <div className="space-y-4">
+                <div className="h-10 bg-[#231d2e] rounded w-3/4 md:w-1/2" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="h-20 bg-[#231d2e] rounded-xl" />
+                  <div className="h-20 bg-[#231d2e] rounded-xl" />
+                  <div className="h-20 bg-[#231d2e] rounded-xl" />
+                </div>
+              </div>
+            </div>
+
+            {/* About Section Skeleton */}
+            <div className="bg-[#2e2738]/50 p-8 rounded-xl space-y-4">
+              <div className="h-6 bg-[#32293d] rounded w-1/4" />
+              <div className="space-y-2">
+                <div className="h-4 bg-[#32293d] rounded w-full" />
+                <div className="h-4 bg-[#32293d] rounded w-11/12" />
+                <div className="h-4 bg-[#32293d] rounded w-4/5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column Skeleton */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Organizer Card Skeleton */}
+            <div className="bg-[#2e2738]/50 p-6 rounded-xl flex items-center gap-4">
+              <div className="w-14 h-14 bg-[#32293d] rounded-full shrink-0" />
+              <div className="flex-grow space-y-2">
+                <div className="h-3 bg-[#32293d] rounded w-1/4" />
+                <div className="h-5 bg-[#32293d] rounded w-2/3" />
+                <div className="h-3 bg-[#32293d] rounded w-1/2" />
+              </div>
+            </div>
+
+            {/* Ticket Card Skeleton */}
+            <div className="bg-[#231d2e]/50 rounded-xl overflow-hidden border border-white/5">
+              <div className="p-6 bg-[#32293d] h-20" />
+              <div className="p-6 space-y-4">
+                <div className="h-24 bg-[#32293d]/50 rounded-xl" />
+                <div className="h-24 bg-[#32293d]/50 rounded-xl" />
+                <div className="h-12 bg-[#32293d] rounded-xl mt-6" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +83,9 @@ export default function EventDetail() {
   const { user } = userAuth();
   const [userTransactions, setUserTransactions] = useState<Transaction[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // Menambahkan pengunci lokal awal agar menghindari kedipan/flash empty state
+  const [isInitialMount, setIsInitialMount] = useState(true);
 
   const { event, loading, selectedTicket, setSelectedTicket } = useEventDetail(
     id ?? "",
@@ -29,17 +99,16 @@ export default function EventDetail() {
     }
   }, [user, id]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#171021]">
-        <Navbar />
-        <div className="h-[calc(100vh-64px)] flex items-center justify-center text-[#eadef6]">
-          <div className="animate-pulse font-medium">
-            Loading event details...
-          </div>
-        </div>
-      </div>
-    );
+  useEffect(() => {
+    // Matikan initial mount loader jika status loading bawaan store sudah selesai
+    if (!loading) {
+      setIsInitialMount(false);
+    }
+  }, [loading]);
+
+  // Evaluasi status loading yang sesungguhnya
+  if (loading || isInitialMount) {
+    return <EventDetailSkeleton />;
   }
 
   if (!event) {
@@ -125,11 +194,31 @@ export default function EventDetail() {
     }
   };
 
+  const toTitleCase = (str: string) => {
+    if (!str) return "";
+    return str
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  const breadcrumbItems = [
+    { label: "Events", path: "/events" },
+    {
+      label: event.category || "Other",
+      path: `/events?category=${event.category}`,
+    },
+    { label: event.name },
+  ];
+
   return (
     <div className="bg-[#171021] text-[#eadef6] min-h-screen selection:bg-[#ddb7ff] selection:text-[#490080]">
       <Navbar />
 
       <main className="pt-24 pb-16 px-6 max-w-[1280px] mx-auto">
+        <Breadcrumb items={breadcrumbItems} />
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column */}
           <div className="lg:col-span-8 space-y-8">
@@ -195,7 +284,7 @@ export default function EventDetail() {
                       <p className="text-xs text-[#cfc2d6] uppercase tracking-wider font-bold">
                         Date &amp; Time
                       </p>
-                      <p className="text-xs text-[#eadef6] mt-0.5">
+                      <p className="text-md text-[#eadef6] mt-0.5">
                         {formatDate(event.startDate)}
                       </p>
                     </div>
@@ -205,11 +294,11 @@ export default function EventDetail() {
                       location_on
                     </span>
                     <div>
-                      <p className="text-sm font-bold text-[#eadef6] truncate max-w-[180px]">
-                        {event.location}
+                      <p className="text-xs text-[#cfc2d6] uppercase tracking-wider font-bold">
+                        Venue
                       </p>
-                      <p className="text-xs text-[#cfc2d6]">
-                        {event.city || "Local Venue"}
+                      <p className="text-md text-[#eadef6] mt-0.5">
+                        {event.location}
                       </p>
                     </div>
                   </div>
@@ -218,11 +307,11 @@ export default function EventDetail() {
                       confirmation_number
                     </span>
                     <div>
-                      <p className="text-sm font-bold text-[#eadef6]">
-                        Remaining
+                      <p className="text-xs text-[#cfc2d6] uppercase tracking-wider font-bold">
+                        Remaining tickets
                       </p>
-                      <p className="text-xs text-[#cfc2d6]">
-                        {totalTicketsLeft} Tickets left
+                      <p className="text-md text-[#eadef6] mt-0.5">
+                        {totalTicketsLeft} tickets left
                       </p>
                     </div>
                   </div>
@@ -240,9 +329,7 @@ export default function EventDetail() {
             </section>
 
             <section className="bg-[#2e2738] p-8 rounded-xl shadow-lg space-y-6">
-              <h2 className="text-2xl font-bold text-[#eadef6]">
-                Venue Location
-              </h2>
+              <h2 className="text-2xl font-bold text-[#eadef6]">Venue</h2>
               <div className="w-full h-80 rounded-xl overflow-hidden border border-[#4d4354] relative">
                 <div
                   className="absolute inset-0 bg-cover bg-center grayscale contrast-125 opacity-70"
@@ -261,7 +348,7 @@ export default function EventDetail() {
                       location_on
                     </span>
                     <span className="font-bold text-[#eadef6] truncate">
-                      {event.location}, {event.city || "Local Venue"}
+                      {event.location}
                     </span>
                   </div>
                 </div>
@@ -271,6 +358,45 @@ export default function EventDetail() {
 
           {/* Right Column */}
           <div className="lg:col-span-4 space-y-6">
+            <section className="bg-[#2e2738] p-6 rounded-xl shadow-lg border border-[#4d4354]/30 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#ddb7ff]/20 bg-[#171021] flex items-center justify-center">
+                  <img
+                    alt={event.organizer?.name || "Organizer"}
+                    className="w-full h-full object-cover"
+                    src={
+                      event.organizer?.profilePic ??
+                      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150"
+                    }
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-[#ddb7ff] uppercase font-bold tracking-wider">
+                      Hosted By
+                    </p>
+                  </div>
+                  <h4 className="font-bold text-[#eadef6] text-lg truncate">
+                    {toTitleCase(event.organizer?.name || "Organizer")}{" "}
+                    <span className="text-[10px] bg-[#1f1929] px-2 py-0.5 rounded text-[#988d9f] border border-[#4d4354]/40 font-mono">
+                      ID: {event.organizerId}
+                    </span>
+                  </h4>
+                  <p className="text-xs text-[#cfc2d6] truncate">
+                    {event.organizer?.email || "No email available"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => navigate(`/organizer/${event.organizerId}`)}
+                  className="w-full py-2 bg-transparent border border-[#ddb7ff] text-[#ddb7ff] rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-[#ddb7ff]/10 transition-colors"
+                >
+                  View Profile
+                </button>
+              </div>
+            </section>
+
             <aside className="sticky top-24 bg-[#231d2e] rounded-xl shadow-lg border border-[#4d4354]/30 overflow-hidden">
               <div className="p-6 bg-[#b76dff] text-[#400071]">
                 <h3 className="text-xl font-bold">Select Tickets</h3>
@@ -289,7 +415,11 @@ export default function EventDetail() {
                       return (
                         <label
                           key={t.id}
-                          className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedTicket?.id === t.id ? "border-[#ddb7ff] bg-[#ddb7ff]/10" : "border-[#4d4354] opacity-80"} ${isSoldOut ? "pointer-events-none opacity-40 bg-black/20" : ""}`}
+                          className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                            selectedTicket?.id === t.id
+                              ? "border-[#ddb7ff] bg-[#ddb7ff]/10"
+                              : "border-[#4d4354] opacity-80"
+                          } ${isSoldOut ? "pointer-events-none opacity-40 bg-black/20" : ""}`}
                           onClick={() => !isSoldOut && setSelectedTicket(t)}
                         >
                           <div className="flex justify-between items-start mb-2">
@@ -303,10 +433,15 @@ export default function EventDetail() {
                             </span>
                           </div>
                           <p className="text-xs text-[#cfc2d6] mb-3">
-                            Sisa kuota: {total - booked} / {total} Tiket
+                            Remaining tickets: {total - booked} / {total}{" "}
+                            tickets
                           </p>
                           <span
-                            className={`px-2 py-0.5 rounded font-bold text-[10px] tracking-widest uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
+                            className={`px-2 py-0.5 rounded font-bold text-[10px] tracking-widest uppercase ${
+                              !isSoldOut
+                                ? "bg-[#5de6ff]/20 text-[#5de6ff]"
+                                : "bg-[#ffb4ab]/20 text-[#ffb4ab]"
+                            }`}
                           >
                             {!isSoldOut ? "Available" : "Sold Out"}
                           </span>
@@ -319,7 +454,6 @@ export default function EventDetail() {
                     </div>
                   )}
                 </div>
-
                 {selectedTicket && (
                   <div className="pt-4 border-t border-[#4d4354]/30 space-y-2">
                     <div className="flex justify-between text-sm text-[#cfc2d6]">
@@ -342,48 +476,17 @@ export default function EventDetail() {
                     </div>
                   </div>
                 )}
-
                 <button
                   onClick={handleBuyTicket}
+                  disabled={
+                    submitting || tickets.length === 0 || !selectedTicket
+                  }
                   className="w-full py-4 bg-[#ddb7ff] text-[#490080] rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#f0dbff] transition-all active:scale-[0.98] shadow-lg shadow-[#ddb7ff]/20 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   {submitting ? "Processing..." : "Buy Tickets Now"}
                 </button>
               </div>
             </aside>
-
-            {event.organizer && (
-              <section className="bg-[#2e2738] p-6 rounded-xl shadow-lg border border-[#4d4354]/30 space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#ddb7ff]/20 bg-[#171021] flex items-center justify-center">
-                    <img
-                      alt={event.organizer.name}
-                      className="w-full h-full object-cover"
-                      src={
-                        event.organizer.profilePic ??
-                        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150"
-                      }
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-[#ddb7ff] uppercase font-bold tracking-wider">
-                      Hosted By
-                    </p>
-                    <h4 className="font-bold text-[#eadef6] text-lg">
-                      {event.organizer.name}
-                    </h4>
-                    <p className="text-xs text-[#cfc2d6]">
-                      {event.organizer.email}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <button className="flex-1 py-2 bg-transparent border border-[#ddb7ff] text-[#ddb7ff] rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-[#ddb7ff]/10 transition-colors">
-                    View Profile
-                  </button>
-                </div>
-              </section>
-            )}
           </div>
         </div>
       </main>

@@ -123,7 +123,7 @@ export default function Navbar() {
               onClick={handleCreateEventClick}
               className="text-sm font-semibold text-[#cfc2d6] hover:text-[#ddb7ff] transition-colors text-left"
             >
-              Create Event
+              Create an Event
             </button>
 
             {/* Logged-In Specific Navigation */}
