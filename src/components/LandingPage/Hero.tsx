@@ -1,10 +1,60 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate, Link } from "react-router";
+import { useEvents } from "../../stores/useEvents";
+import type { Event } from "../../types/type";
 
 export default function Hero() {
   const navigate = useNavigate();
+  const { events, fetchEvents } = useEvents();
   const [searchInput, setSearchInput] = useState("");
   const [locationInput, setLocationInput] = useState("");
+
+  // State untuk melacak indeks banner yang sedang aktif
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  // Filter event: Hanya ambil yang tanggalnya >= hari ini, lalu urutkan dari yang paling dekat
+  const upcomingEvents = useMemo(() => {
+    if (!events) return [];
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const safeEvents: Event[] = Array.isArray(events)
+      ? events
+      : typeof events === "object" &&
+          "data" in events &&
+          Array.isArray((events as any).data)
+        ? (events as any).data
+        : [];
+
+    return safeEvents
+      .filter((event) => {
+        if (!event.startDate) return false;
+        return new Date(event.startDate) >= now;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.startDate!).getTime();
+        const dateB = new Date(b.startDate!).getTime();
+        return dateA - dateB;
+      });
+  }, [events]);
+
+  // Efek untuk rotasi otomatis banner setiap 5 detik
+  useEffect(() => {
+    if (upcomingEvents.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentBannerIndex(
+        (prevIndex) => (prevIndex + 1) % upcomingEvents.length,
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [upcomingEvents]);
 
   const handleSearchSubmit = (categoryOverride?: string) => {
     const params = new URLSearchParams();
@@ -19,6 +69,15 @@ export default function Hero() {
     navigate(`/events?${params.toString()}`);
   };
 
+  const currentEvent = upcomingEvents[currentBannerIndex];
+
+  const getLowestTicketPrice = (event: Event) => {
+    if (!event.ticketTypes || event.ticketTypes.length === 0) return "Free";
+    const prices = event.ticketTypes.map((t) => t.price);
+    const minPrice = Math.min(...prices);
+    return minPrice === 0 ? "Free" : `IDR ${minPrice.toLocaleString()}`;
+  };
+
   return (
     <section className="relative min-h-[600px] flex items-center overflow-hidden px-6 py-24 bg-gradient-to-tr from-[#171021] via-[#231d2e] to-[#171021]">
       <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#ddb7ff]/10 rounded-full blur-3xl animate-pulse"></div>
@@ -27,8 +86,9 @@ export default function Hero() {
         style={{ animationDelay: "1s" }}
       ></div>
 
-      <div className="max-w-[1280px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        <div className="z-10 space-y-8">
+      <div className="max-w-[1280px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        {/* Kolom Kiri - Form & Pencarian */}
+        <div className="z-10 space-y-8 lg:col-span-7">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#2e2738] text-[#ddb7ff] rounded-full text-xs font-semibold tracking-wider uppercase">
             <span className="material-symbols-outlined text-[18px]">
               auto_awesome
@@ -46,7 +106,6 @@ export default function Hero() {
             workshops, and sporting experiences.
           </p>
 
-          {/* Form Pencarian */}
           <div className="flex flex-col md:flex-row items-center p-2 bg-[#231d2e] rounded-xl border border-[#4d4354]/30 max-w-2xl gap-2 md:gap-0 shadow-lg">
             <div className="flex flex-1 items-center px-4 gap-3 w-full">
               <span className="material-symbols-outlined text-[#cfc2d6]">
@@ -83,7 +142,6 @@ export default function Hero() {
             </button>
           </div>
 
-          {/* Quick Tags Kategori */}
           <div className="flex flex-wrap gap-3">
             {[
               { id: "MUSIC", label: "Music", icon: "music_note" },
@@ -91,29 +149,81 @@ export default function Hero() {
               { id: "SPORTS", label: "Sports", icon: "sports_soccer" },
               { id: "ART", label: "Art", icon: "theaters" },
               { id: "FOOD", label: "Culinary", icon: "restaurant" },
-            ].map((cat) => {
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => handleSearchSubmit(cat.id)}
-                  className="px-4 py-2 rounded-full border border-[#4d4354] bg-[#1f1929] text-[#cfc2d6] hover:border-[#ddb7ff] hover:text-[#ddb7ff] transition-all text-sm flex items-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-[18px]">
-                    {cat.icon}
-                  </span>{" "}
-                  {cat.label}
-                </button>
-              );
-            })}
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => handleSearchSubmit(cat.id)}
+                className="px-4 py-2 rounded-full border border-[#4d4354] bg-[#1f1929] text-[#cfc2d6] hover:border-[#ddb7ff] hover:text-[#ddb7ff] transition-all text-sm flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  {cat.icon}
+                </span>{" "}
+                {cat.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="hidden lg:block relative z-10 rounded-3xl overflow-hidden shadow-2xl border-4 border-[#231d2e]">
-          <img
-            alt="Festival Crowd"
-            className="w-full aspect-[4/5] object-cover"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDORGsAkkAPyoTQdNyBE75feb8W0g0PVkIvy9t8U-J9i7X2Mt_cjS4UfXmT91ilD51MkgR8wLbywLRUpFTVuWyndzWT0lPRPgU4PI2IRaGcwOYAooBGZi_xet31eKEFDRDDFVH7yuMzxC7mOCgJsH-GYWApORL-HUc_iRDv9URHJbuNNTzC8cq71jO3Dug9MOuq7fb3DGhOvpWzYje5HWFAJ1vGvJ-aT077F3Oi0sCcZDxAAXUYSpt_dV1kKo14HxvvTofKdWYho_I"
-          />
+        {/* Kolom Kanan - Rotasi Banner Terdekat */}
+        <div className="hidden lg:block lg:col-span-5 relative z-10 w-full">
+          {currentEvent ? (
+            <div className="relative w-full h-[480px] rounded-2xl overflow-hidden border-4 border-[#231d2e] shadow-2xl group transition-all duration-500">
+              <Link
+                to={`/events/${currentEvent.id}`}
+                className="absolute inset-0 z-0 block"
+              >
+                <div
+                  className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                  style={{
+                    backgroundImage: `url(${currentEvent.bannerImage || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=1200"})`,
+                  }}
+                ></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#171021] via-[#171021]/60 to-transparent"></div>
+              </Link>
+
+              <div className="absolute bottom-0 left-0 p-8 z-10 w-full pointer-events-none">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="bg-[#ddb7ff] text-[#490080] text-[10px] font-extrabold uppercase tracking-widest px-2 py-1 rounded-sm">
+                    Upcoming
+                  </span>
+                  <span className="bg-[#00cbe6]/30 backdrop-blur-md text-[#5de6ff] text-[10px] font-extrabold uppercase tracking-widest px-2 py-1 rounded-sm border border-[#5de6ff]/20">
+                    {currentEvent.category}
+                  </span>
+                </div>
+
+                <h3
+                  className="text-2xl md:text-3xl font-black mb-2 leading-tight text-white line-clamp-2"
+                  style={{ textShadow: "0 0 15px rgba(221,183,255,0.4)" }}
+                >
+                  {currentEvent.name}
+                </h3>
+
+                <p className="text-sm text-[#cfc2d6] mb-6 line-clamp-2">
+                  {currentEvent.description || "No description provided."}
+                </p>
+              </div>
+
+              {/* Indikator Slider Dot */}
+              {upcomingEvents.length > 1 && (
+                <div className="absolute top-4 right-4 flex gap-1.5 z-20 pointer-events-auto bg-[#171021]/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/5">
+                  {upcomingEvents.slice(0, 5).map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentBannerIndex(idx)}
+                      className={`h-2 rounded-full transition-all ${
+                        idx === currentBannerIndex
+                          ? "w-4 bg-[#ddb7ff]"
+                          : "w-2 bg-[#cfc2d6]/40"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Skeleton Fallback jika data belum termuat */
+            <div className="w-full h-[480px] bg-[#231d2e] rounded-2xl animate-pulse border-4 border-[#231d2e]" />
+          )}
         </div>
       </div>
     </section>
