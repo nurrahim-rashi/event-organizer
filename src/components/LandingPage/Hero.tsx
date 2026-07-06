@@ -1,32 +1,22 @@
-import { useState, useEffect } from "react";
-import { useDebounce } from "../../stores/useDebounce";
+import { useState } from "react";
+import { useNavigate } from "react-router";
 
-interface HeroProps {
-  onFilterChange: (filters: {
-    search: string;
-    location: string;
-    category: string;
-  }) => void;
-}
-
-export default function Hero({ onFilterChange }: HeroProps) {
+export default function Hero() {
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   const [locationInput, setLocationInput] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
 
-  const debouncedSearch = useDebounce(searchInput, 500);
-  const debouncedLocation = useDebounce(locationInput, 500);
+  const handleSearchSubmit = (categoryOverride?: string) => {
+    const params = new URLSearchParams();
 
-  useEffect(() => {
-    onFilterChange({
-      search: debouncedSearch,
-      location: debouncedLocation,
-      category: selectedCategory,
-    });
-  }, [debouncedSearch, debouncedLocation, selectedCategory, onFilterChange]);
+    if (searchInput.trim()) params.append("search", searchInput.trim());
+    if (locationInput.trim()) params.append("location", locationInput.trim());
 
-  const handleCategoryClick = (categoryName: string) => {
-    setSelectedCategory((prev) => (prev === categoryName ? "" : categoryName));
+    if (categoryOverride) {
+      params.append("category", categoryOverride);
+    }
+
+    navigate(`/events?${params.toString()}`);
   };
 
   return (
@@ -68,6 +58,7 @@ export default function Hero({ onFilterChange }: HeroProps) {
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
               />
             </div>
             <div className="h-8 w-[1px] bg-[#4d4354]/50 hidden md:block mx-2"></div>
@@ -81,9 +72,13 @@ export default function Hero({ onFilterChange }: HeroProps) {
                 type="text"
                 value={locationInput}
                 onChange={(e) => setLocationInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
               />
             </div>
-            <button className="w-full md:w-auto bg-[#ddb7ff] text-[#490080] px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-[#ddb7ff]/10">
+            <button
+              onClick={() => handleSearchSubmit()}
+              className="w-full md:w-auto bg-[#ddb7ff] text-[#490080] px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-[#ddb7ff]/10"
+            >
               Search
             </button>
           </div>
@@ -97,16 +92,11 @@ export default function Hero({ onFilterChange }: HeroProps) {
               { id: "ART", label: "Art", icon: "theaters" },
               { id: "FOOD", label: "Culinary", icon: "restaurant" },
             ].map((cat) => {
-              const isSelected = selectedCategory === cat.id;
               return (
                 <button
                   key={cat.id}
-                  onClick={() => handleCategoryClick(cat.id)}
-                  className={`px-4 py-2 rounded-full border transition-all text-sm flex items-center gap-2 ${
-                    isSelected
-                      ? "border-[#ddb7ff] bg-[#ddb7ff]/20 text-[#ddb7ff] font-medium"
-                      : "border-[#4d4354] bg-[#1f1929] text-[#cfc2d6] hover:border-[#ddb7ff] hover:text-[#ddb7ff]"
-                  }`}
+                  onClick={() => handleSearchSubmit(cat.id)}
+                  className="px-4 py-2 rounded-full border border-[#4d4354] bg-[#1f1929] text-[#cfc2d6] hover:border-[#ddb7ff] hover:text-[#ddb7ff] transition-all text-sm flex items-center gap-2"
                 >
                   <span className="material-symbols-outlined text-[18px]">
                     {cat.icon}

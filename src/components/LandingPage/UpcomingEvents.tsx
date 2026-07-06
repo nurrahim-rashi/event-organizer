@@ -74,15 +74,15 @@ export default function UpcomingEvents() {
             Don't miss out on these exciting moments.
           </p>
         </div>
-        <a
+        <Link
+          to={`/events/`}
           className="flex items-center gap-2 text-[#ddb7ff] font-bold group transition-colors"
-          href="#"
         >
           View All{" "}
           <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">
             arrow_forward
           </span>
-        </a>
+        </Link>
       </div>
 
       {/* Event Card */}

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router";
 import { useEditEvent } from "../stores/useEditEvent";
 import DeleteEventModal from "../components/DeleteEvent/DeleteEventModal";
 
-export default function EditEventPage() {
+export default function EditEvent() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const eventId = Number(id);
