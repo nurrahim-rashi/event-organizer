@@ -2,12 +2,35 @@ import React, { useState, useEffect } from "react";
 import { userAuth } from "../stores/useAuth"; // Sesuaikan dengan store kelompokmu
 import { Link } from "react-router";
 import axios from "axios";
+import Navbar from "../components/layout/Navbar";
 
 interface DashboardStats {
     activeEventCounts?: number;
     ticketsSold?: number;
     totalEarnings?: number;
+    totalAvailableEvents?: number;
     totalTicketsOwned?: number;
+    managedEvents?: Array<{
+      id: number;
+      name: string;
+      startDate: string;
+    }>;
+    upcomingTickets?: Array<{
+      id: number;
+      event: {
+        id: number,
+        name: string,
+        startDate: string,
+        location: string,
+      };
+    }>;
+    recommendedEvents?: Array<{
+      id: number;
+      name: string;
+      startDate: string;
+      location: string;
+      price?: number;
+    }>;
 }
 
 export default function DashboardPage() {
@@ -62,6 +85,7 @@ export default function DashboardPage() {
   if (user.role === "ADMIN") {
     return (
       <div className="min-h-screen bg-[#0d0a16] text-white p-6 md:p-10">
+        <Navbar />
         <div className="max-w-6xl mx-auto space-y-8">
           
           {/* Header Dashboard EO */}
@@ -113,24 +137,40 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="text-sm text-gray-300 divide-y divide-purple-950/40">
-                  <tr>
-                    <td className="py-4 font-medium text-white pl-2">K-Pop Symphony Festival 2026</td>
-                    <td className="py-4 text-gray-400">Aug 12, 2026</td>
-                    <td className="py-4">98 / 200</td>
-                    <td className="py-4 text-right pr-2">
-                      <button className="text-xs bg-purple-600/20 hover:bg-purple-600 border border-purple-500/30 px-3 py-1.5 rounded-lg text-purple-300 hover:text-white transition-all mr-2">Edit</button>
-                      <button className="text-xs bg-red-600/20 hover:bg-red-600 border border-red-500/30 px-3 py-1.5 rounded-lg text-red-400 hover:text-white transition-all">End</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-medium text-white pl-2">Tech Web3 Conference</td>
-                    <td className="py-4 text-gray-400">Sep 05, 2026</td>
-                    <td className="py-4">44 / 100</td>
-                    <td className="py-4 text-right pr-2">
-                      <button className="text-xs bg-purple-600/20 hover:bg-purple-600 border border-purple-500/30 px-3 py-1.5 rounded-lg text-purple-300 hover:text-white transition-all mr-2">Edit</button>
-                      <button className="text-xs bg-red-600/20 hover:bg-red-600 border border-red-500/30 px-3 py-1.5 rounded-lg text-red-400 hover:text-white transition-all">End</button>
-                    </td>
-                  </tr>
+                  {stats.managedEvents && stats.managedEvents.length > 0 ? (
+                    stats.managedEvents.map((event) => (
+                      <tr key={event.id} className="border-b border-purple-950/40 text-sm text-gray-300">
+
+                        {/*NAMA EVENT*/}
+                        <td className="py-4 font-medium text-white pl-2">
+                          {event.name}
+                        </td>
+
+                        {/*TANGGA: EVENT*/}
+                        <td>
+                          {new Date(event.startDate).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </td>
+
+                        <td className="py-4">
+                          0
+                        </td>
+
+                        <td className="py-4 text-right pr-2">
+                          <button>Delete</button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-gray-500 italic">
+                        You haven't managed any events yet.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -163,12 +203,59 @@ export default function DashboardPage() {
             </div>
             <Link to="/my-tickets" className="text-xs text-purple-400 hover:underline">View All &rarr;</Link>
           </div>
+
           <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">Saved Wishlist</p>
-              <p className="text-3xl font-bold text-gray-100 mt-1">5</p>
+              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">Active Events</p>
+              <p className="text-3xl font-bold text-gray-100 mt-1">{stats.totalAvailableEvents ?? 0}</p>
             </div>
             <Link to="/favorites" className="text-xs text-purple-400 hover:underline">Browse &rarr;</Link>
+          </div>
+        </div>
+
+        {/*RECOMMENED EVENTS*/}
+        <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl flex items-center justify-between">
+          <h3 className="text-lg font-bold text-white mb-4">Recommended for you</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+              {stats.recommendedEvents && stats.recommendedEvents.length > 0 ? (
+              stats.recommendedEvents.map((event) => (
+              <div
+              key={event.id}
+              className="bg-[#161224] border border-purple-900/30 rounded-2xl p-5 shadow-xl flex flex-col justify-between"
+              >
+                <div>
+                  <h4 className="font-semibold text-white text-base">{event.name}</h4>
+                  <p className="text-gray-400 text-xs mt-1.5 flex items-center gap-1">{event.location}</p>
+                  <p className="text-purple-400 text-xs mt-3 font-medium">
+                    {new Date(event.startDate).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    })}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between mt-5 pt-4 border-t border-purple-950/40">
+                  <span className="text-sm font-bold text-gray-200">
+                    {event.price === 0 ? "Free" : event.price ? `Rp ${event.price.toLocaleString("id-ID")}` : "Tickets Available"}
+                  </span>
+
+                  <Link 
+                  to={`/events/${event.id}`}
+                  className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl transition-all font-semibold shadow-md shadow-purple-900/20"
+                  >
+                    Buy Ticket
+                  </Link>
+                </div>
+              </div>
+              ))
+              ) : (
+                <div className="col-span-1 md:col-span-2 text-center py-8 px-4 bg-[#161224]/50 border border-dashed border-purple-900/20 rounded-2xl">
+                  <p className="text-sm text-gray-500 italic">No recommended events available right now.</p>
+                </div>  
+              )}
           </div>
         </div>
 
@@ -177,37 +264,41 @@ export default function DashboardPage() {
           <h3 className="text-lg font-bold mb-4 text-gray-200">Your Upcoming Events</h3>
           
           <div className="space-y-4">
-            {/* Kartu Tiket 1 */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#1e1932] border border-purple-950 rounded-xl gap-4">
-              <div className="flex items-center space-x-4">
-                <div className="bg-purple-600/20 text-purple-400 p-3 rounded-xl text-center font-bold text-xs w-14">
-                  JUL <span className="block text-lg">24</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white">Rock Nation Festival 2026</h4>
-                  <p className="text-gray-400 text-xs mt-0.5">Gelora Bung Karno, Jakarta</p>
-                </div>
-              </div>
-              <button className="bg-purple-600 hover:bg-purple-700 text-xs font-semibold px-4 py-2 rounded-xl text-white transition-all self-start sm:self-center">
-                View Ticket QR
-              </button>
-            </div>
+            {/* EVENT CARD */}
+            {stats.upcomingTickets && stats.upcomingTickets.length > 0 ? (
+              stats.upcomingTickets.map((ticket) => {
+                const eventDate = new Date(ticket.event.startDate);
+                const day = eventDate.getDate();
 
-            {/* Kartu Tiket 2 */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#1e1932] border border-purple-950 rounded-xl gap-4">
-              <div className="flex items-center space-x-4">
-                <div className="bg-indigo-600/20 text-indigo-400 p-3 rounded-xl text-center font-bold text-xs w-14">
-                  OCT <span className="block text-lg">11</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white">Anime & Cosplay Gathering</h4>
-                  <p className="text-gray-400 text-xs mt-0.5">ICE BSD, Tangerang</p>
-                </div>
-              </div>
-              <button className="bg-purple-600 hover:bg-purple-700 text-xs font-semibold px-4 py-2 rounded-xl text-white transition-all self-start sm:self-center">
-                View Ticket QR
-              </button>
-            </div>
+                const month = eventDate.toLocaleDateString("id-ID", {month: "short"}).toUpperCase();
+
+                return (
+                  <div key={ticket.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#1e1932] border border-purple-950 rounded-xl">
+                    <div className="flex items-center space-x-4">
+                        {/*KOTAK TANGGAL*/}
+                        <div className="bg-purple-600/20 text-purple-400 p-3 rounded-xl text-center font-bold text-xs w-14">
+                            {month} <span className="block text-lg">{day}</span>
+                        </div>
+
+                        {/*EVENT DETAIL*/}
+                        <div>
+                          <h4 className="font-semibold text-white">{ticket.event.name}</h4>
+                          <p className="text-gray-400 text-xs mt-0.5">{ticket.event.location}</p>
+                        </div>
+                    </div>
+
+                    {/*BUTTON ACTION*/}
+                    <button className="bg-purple-600 hover:bg-purple-700 text-xs font-semibold px-4 py-2 rounded-xl text-white transition-all mt-4 sm:mt-0">
+                      View ticket QR
+                    </button>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-gray-500 italic text-center py-4">
+                You don't have any upcoming events
+              </p>
+            )}
           </div>
 
         </div>
