@@ -13,6 +13,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import CreateEvent from "./pages/CreateEvent";
 import EditEvent from "./pages/EditEvent";
 import OwnerProtectedRoute from "./routes/OwnerProtectedRoute";
+import OrganizerProfile from "./pages/OrganizerProfile";
 
 const router = createBrowserRouter([
   {
@@ -23,10 +24,13 @@ const router = createBrowserRouter([
     path: "/events",
     element: <BrowseEvents />,
   },
-
   {
     path: "/events/:id",
     element: <EventDetail />,
+  },
+  {
+    path: "/organizers/:id",
+    element: <OrganizerProfile />,
   },
   {
     path: "/create-event",

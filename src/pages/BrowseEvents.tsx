@@ -1,20 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import { useEvents } from "../stores/useEvents";
-import { useDebounce } from "../stores/useDebounce";
+import { useEvents } from "../hooks/useEvents";
+import { useDebounce } from "../hooks/useDebounce";
 import type { Event, EventCategory } from "../types/type";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import SidebarFilter from "../components/BrowseEvents/SidebarFilter";
 import FeaturedBanner from "../components/BrowseEvents/FeaturedBanner";
 import EventCard from "../components/BrowseEvents/EventCard";
+import Breadcrumb from "../components/layout/Breadcrumb";
 
 function EventCardSkeleton() {
   return (
     <div className="bg-[#231d2e]/50 border border-white/5 rounded-xl overflow-hidden animate-pulse">
-      {/* Image Skeleton */}
       <div className="w-full h-48 bg-[#32293d]" />
-      {/* Content Skeleton */}
       <div className="p-5 space-y-4">
         <div className="h-4 bg-[#32293d] rounded w-1/4" />
         <div className="space-y-2">
@@ -44,7 +43,6 @@ function FeaturedBannerSkeleton() {
 export default function BrowseEvents() {
   const { events, fetchEvents, isLoading } = useEvents();
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [isInitialMount, setIsInitialMount] = useState(true);
 
   const searchQuery = searchParams.get("search") || "";
@@ -57,7 +55,6 @@ export default function BrowseEvents() {
     .getAll("category")
     .map((c) => c.toUpperCase()) as EventCategory[];
 
-  // Debounce input untuk mengoptimalkan kinerja penyaringan data lokal
   const debouncedSearchQuery = useDebounce<string>(searchQuery, 300);
   const debouncedLocationQuery = useDebounce<string>(locationQuery, 300);
 
@@ -89,12 +86,10 @@ export default function BrowseEvents() {
     const filtered = safeEvents.filter((event) => {
       if (!event) return false;
 
-      // 1. Keyword Search Match
       const matchesSearch = event.name
         ? event.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
         : false;
 
-      // 2. Category Match
       const eventCategoryUpper = (
         event.category || ""
       ).toUpperCase() as EventCategory;
@@ -102,14 +97,12 @@ export default function BrowseEvents() {
         selectedCategories.length === 0 ||
         selectedCategories.includes(eventCategoryUpper);
 
-      // 3. Location Match (Mendukung pencarian kota maupun tempat spesifik)
       const eventLocation = event.location?.toLowerCase() || "";
       const eventCity = event.city?.toLowerCase() || "";
       const filterLoc = debouncedLocationQuery.toLowerCase();
       const matchesLocation =
         eventLocation.includes(filterLoc) || eventCity.includes(filterLoc);
 
-      // 4. Price Range Match
       let eventPrice = 0;
       if (event.price !== undefined) {
         eventPrice = Number(event.price);
@@ -122,12 +115,11 @@ export default function BrowseEvents() {
       }
       const matchesPrice = eventPrice <= maxPriceParam;
 
-      // 5. Date Option Range Match
       let matchesDate = true;
       if (dateFilter && event.startDate) {
         const eventDate = new Date(event.startDate);
         const now = new Date();
-        now.setHours(0, 0, 0, 0); // Reset jam agar kalkulasi presisi hari ini
+        now.setHours(0, 0, 0, 0);
 
         if (dateFilter === "this-week") {
           const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -158,7 +150,6 @@ export default function BrowseEvents() {
       );
     });
 
-    // Jalankan pengurutan (sorting) data langsung di memori
     return [...filtered].sort((a, b) => {
       if (sortBy === "Price: Low to High") {
         const priceA = a.price || 0;
@@ -236,174 +227,184 @@ export default function BrowseEvents() {
   };
 
   const isReallyLoading = isInitialMount || isLoading;
+  const breadcrumbItems = [{ label: "Events", path: "/events" }];
 
   return (
     <div className="bg-[#171021] text-[#eadef6] min-h-screen font-sans selection:bg-[#ddb7ff]/30">
       <Navbar />
-      <main className="pt-24 pb-12 px-6 max-w-[1440px] mx-auto flex flex-col lg:flex-row gap-8">
-        <div className="w-full lg:w-1/4 shrink-0">
-          <SidebarFilter
-            searchParams={searchParams}
-            setSearchParams={setSearchParams}
-          />
-        </div>
 
-        <div className="flex-grow flex flex-col gap-12 min-w-0 w-full lg:w-3/4">
-          {isReallyLoading ? (
-            <>
-              <FeaturedBannerSkeleton />
-              <section>
-                <div className="h-8 bg-[#32293d] rounded w-48 mb-8 animate-pulse" />
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {Array.from({ length: 6 }).map((_, idx) => (
-                    <EventCardSkeleton key={idx} />
-                  ))}
-                </div>
-              </section>
-            </>
-          ) : (
-            <>
-              {filteredEvents.length > 0 && featuredEvent && (
-                <FeaturedBanner event={featuredEvent} />
-              )}
+      {/* 👈 Hapus 'flex flex-col gap-4' dan ganti pb-12 menjadi pb-16 agar struktur kontainer main identik dengan EventDetail */}
+      <main className="pt-24 pb-16 px-6 max-w-[1280px] mx-auto">
+        <Breadcrumb items={breadcrumbItems} />
 
-              <section>
-                {filteredEvents.length > 0 && (
-                  <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-2xl font-bold">Recommended for You</h2>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-[#988d9f]">Sort by:</span>
-                      <select
-                        value={sortBy}
-                        onChange={(e) => handleSortChange(e.target.value)}
-                        className="bg-[#231d2e] border border-transparent text-[#eadef6] text-sm py-1.5 px-4 pr-10 rounded-lg focus:ring-[#ddb7ff] focus:border-[#ddb7ff] cursor-pointer outline-none"
-                      >
-                        <option>Closest Date</option>
-                        <option>Price: Low to High</option>
-                        <option>Most Popular</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
+        {/* 👈 Hapus 'mt-4' agar jarak murni mengikuti alur block-level bawaan Breadcrumb seperti di EventDetail */}
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="w-full lg:w-1/4 shrink-0">
+            <SidebarFilter
+              searchParams={searchParams}
+              setSearchParams={setSearchParams}
+            />
+          </div>
 
-                {filteredEvents.length === 0 ? (
-                  <div className="space-y-12">
-                    <div className="bg-[#231d2e]/70 backdrop-blur-md border border-white/5 min-h-[500px] rounded-xl flex flex-col items-center justify-center text-center p-6 lg:p-12 relative overflow-hidden shadow-[0_0_20px_rgba(221,183,255,0.05)]">
-                      <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#ddb7ff]/10 rounded-full blur-[100px]"></div>
-                      <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[#5de6ff]/10 rounded-full blur-[100px]"></div>
-
-                      <div className="mb-8 relative group">
-                        <div className="absolute inset-0 bg-[#ddb7ff]/20 blur-3xl group-hover:bg-[#ddb7ff]/30 transition-all rounded-full"></div>
-                        <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-full border-2 border-dashed border-[#4d4354] flex items-center justify-center">
-                          <div className="w-4/5 h-4/5 rounded-full overflow-hidden shadow-2xl shadow-[#ddb7ff]/10">
-                            <img
-                              className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-700"
-                              alt="Empty stage illustration"
-                              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAW4LxSzg4z2lDaFE7V5NPDVFeH7yPe82Eax9WZN4zC03Q0YZitHcYr4xPWOB4Tc1XoY6KSKvDCkrFyLaPKi6R4Obyz1jsEaspfQ2DwECUoIYI9MdwxJ9_VkQ92r8TwY5oEpkqvjK_HOK0bgSU6_Fk_BUxe3rRyv5ZcTK9KioE3zYMAiFkI13dKc4E-KeXTCirzMWFQFkTPZ6rFTp4qfDOFMZutkzjzQXbRITOYGXCdPbYsvqb41Xpf_4-GY7vstJ5kNSuBDyfMpkY"
-                            />
-                          </div>
-                          <div className="absolute top-2 right-2 p-2 bg-[#231d2e]/90 border border-white/10 backdrop-blur-sm rounded-lg -rotate-12 animate-bounce">
-                            <span className="material-symbols-outlined text-[#5de6ff] text-lg block">
-                              search_off
-                            </span>
-                          </div>
-                          <div className="absolute bottom-6 left-0 p-2.5 bg-[#231d2e]/90 border border-white/10 backdrop-blur-sm rounded-xl rotate-6 animate-pulse">
-                            <span className="material-symbols-outlined text-[#ffafd3] text-lg block">
-                              event_busy
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="max-w-md mx-auto space-y-4">
-                        <h2 className="text-3xl font-bold text-[#eadef6]">
-                          No Events Found
-                        </h2>
-                        <p className="text-base text-[#cfc2d6] leading-relaxed">
-                          We couldn't find any matches for{" "}
-                          <span className="text-[#ddb7ff] font-semibold">
-                            "{searchQuery || "your filter criteria"}"
-                          </span>
-                        </p>
-                        <p className="text-sm text-[#988d9f]">
-                          Don't worry! Check out some of our curated alternative
-                          suggestions down below.
-                        </p>
-                      </div>
-
-                      <div className="mt-8 flex flex-col sm:flex-row gap-4 z-10">
-                        <button
-                          onClick={handleClearFilters}
-                          className="px-6 py-3.5 bg-[#ddb7ff] text-[#400071] rounded-lg font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#ddb7ff]/20 flex items-center justify-center gap-2"
-                        >
-                          <span className="material-symbols-outlined text-xl">
-                            filter_alt_off
-                          </span>
-                          Clear All Filters
-                        </button>
-                        <button
-                          onClick={handleClearFilters}
-                          className="px-6 py-3.5 bg-[#393244] text-[#eadef6] border border-[#4d4354] rounded-lg font-bold hover:bg-[#3d3648] transition-all"
-                        >
-                          Browse All Events
-                        </button>
-                      </div>
-
-                      <div className="mt-12 w-full z-10">
-                        <p className="text-xs font-bold text-[#988d9f] uppercase tracking-widest mb-4">
-                          Try these popular searches
-                        </p>
-                        <div className="flex flex-wrap justify-center gap-3">
-                          {[
-                            "Tech Meetups",
-                            "Virtual Workshops",
-                            "Live Concerts",
-                            "Jazz Festival",
-                          ].map((tag) => (
-                            <button
-                              key={tag}
-                              onClick={() => handleQuickSearch(tag)}
-                              className="px-4 py-2 rounded-lg bg-[#1f1929] hover:bg-[#2e2738] border border-[#4d4354]/40 text-[#cfc2d6] text-sm transition-colors"
-                            >
-                              {tag}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {suggestedEvents.length > 0 && (
-                      <div className="w-full text-left pt-4">
-                        <div className="border-b border-white/5 pb-4 mb-6">
-                          <h3 className="text-2xl font-bold text-[#eadef6] flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[#5de6ff]">
-                              explore
-                            </span>
-                            Try Other Events
-                          </h3>
-                          <p className="text-sm text-[#988d9f] mt-1">
-                            Explore these highly recommended events available on
-                            EventSync right now.
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                          {suggestedEvents.map((event: Event) => (
-                            <EventCard key={event.id} event={event} />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
+          <div className="flex-grow flex flex-col gap-12 min-w-0 w-full lg:w-3/4">
+            {isReallyLoading ? (
+              <>
+                <FeaturedBannerSkeleton />
+                <section>
+                  <div className="h-8 bg-[#32293d] rounded w-48 mb-8 animate-pulse" />
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredEvents.map((event: Event) => (
-                      <EventCard key={event.id} event={event} />
+                    {Array.from({ length: 6 }).map((_, idx) => (
+                      <EventCardSkeleton key={idx} />
                     ))}
                   </div>
+                </section>
+              </>
+            ) : (
+              <>
+                {filteredEvents.length > 0 && featuredEvent && (
+                  <FeaturedBanner event={featuredEvent} />
                 )}
-              </section>
-            </>
-          )}
+
+                <section>
+                  {filteredEvents.length > 0 && (
+                    <div className="flex items-center justify-between mb-8">
+                      <h2 className="text-2xl font-bold">
+                        Recommended for You
+                      </h2>
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm text-[#988d9f]">Sort by:</span>
+                        <select
+                          value={sortBy}
+                          onChange={(e) => handleSortChange(e.target.value)}
+                          className="bg-[#231d2e] border border-transparent text-[#eadef6] text-sm py-1.5 px-4 pr-10 rounded-lg focus:ring-[#ddb7ff] focus:border-[#ddb7ff] cursor-pointer outline-none"
+                        >
+                          <option>Closest Date</option>
+                          <option>Price: Low to High</option>
+                          <option>Most Popular</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {filteredEvents.length === 0 ? (
+                    <div className="space-y-12">
+                      <div className="bg-[#231d2e]/70 backdrop-blur-md border border-white/5 min-h-[500px] rounded-xl flex flex-col items-center justify-center text-center p-6 lg:p-12 relative overflow-hidden shadow-[0_0_20px_rgba(221,183,255,0.05)]">
+                        <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#ddb7ff]/10 rounded-full blur-[100px]"></div>
+                        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[#5de6ff]/10 rounded-full blur-[100px]"></div>
+
+                        <div className="mb-8 relative group">
+                          <div className="absolute inset-0 bg-[#ddb7ff]/20 blur-3xl group-hover:bg-[#ddb7ff]/30 transition-all rounded-full"></div>
+                          <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-full border-2 border-dashed border-[#4d4354] flex items-center justify-center">
+                            <div className="w-4/5 h-4/5 rounded-full overflow-hidden shadow-2xl shadow-[#ddb7ff]/10">
+                              <img
+                                className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-700"
+                                alt="Empty stage illustration"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAW4LxSzg4z2lDaFE7V5NPDVFeH7yPe82Eax9WZN4zC03Q0YZitHcYr4xPWOB4Tc1XoY6KSKvDCkrFyLaPKi6R4Obyz1jsEaspfQ2DwECUoIYI9MdwxJ9_VkQ92r8TwY5oEpkqvjK_HOK0bgSU6_Fk_BUxe3rRyv5ZcTK9KioE3zYMAiFkI13dKc4E-KeXTCirzMWFQFkTPZ6rFTp4qfDOFMZutkzjzQXbRITOYGXCdPbYsvqb41Xpf_4-GY7vstJ5kNSuBDyfMpkY"
+                              />
+                            </div>
+                            <div className="absolute top-2 right-2 p-2 bg-[#231d2e]/90 border border-white/10 backdrop-blur-sm rounded-lg -rotate-12 animate-bounce">
+                              <span className="material-symbols-outlined text-[#5de6ff] text-lg block">
+                                search_off
+                              </span>
+                            </div>
+                            <div className="absolute bottom-6 left-0 p-2.5 bg-[#231d2e]/90 border border-white/10 backdrop-blur-sm rounded-xl rotate-6 animate-pulse">
+                              <span className="material-symbols-outlined text-[#ffafd3] text-lg block">
+                                event_busy
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="max-w-md mx-auto space-y-4">
+                          <h2 className="text-3xl font-bold text-[#eadef6]">
+                            No Events Found
+                          </h2>
+                          <p className="text-base text-[#cfc2d6] leading-relaxed">
+                            We couldn't find any matches for{" "}
+                            <span className="text-[#ddb7ff] font-semibold">
+                              "{searchQuery || "your filter criteria"}"
+                            </span>
+                          </p>
+                          <p className="text-sm text-[#988d9f]">
+                            Don't worry! Check out some of our curated
+                            alternative suggestions down below.
+                          </p>
+                        </div>
+
+                        <div className="mt-8 flex flex-col sm:flex-row gap-4 z-10">
+                          <button
+                            onClick={handleClearFilters}
+                            className="px-6 py-3.5 bg-[#ddb7ff] text-[#400071] rounded-lg font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#ddb7ff]/20 flex items-center justify-center gap-2"
+                          >
+                            <span className="material-symbols-outlined text-xl">
+                              filter_alt_off
+                            </span>
+                            Clear All Filters
+                          </button>
+                          <button
+                            onClick={handleClearFilters}
+                            className="px-6 py-3.5 bg-[#393244] text-[#eadef6] border border-[#4d4354] rounded-lg font-bold hover:bg-[#3d3648] transition-all"
+                          >
+                            Browse All Events
+                          </button>
+                        </div>
+
+                        <div className="mt-12 w-full z-10">
+                          <p className="text-xs font-bold text-[#988d9f] uppercase tracking-widest mb-4">
+                            Try these popular searches
+                          </p>
+                          <div className="flex flex-wrap justify-center gap-3">
+                            {[
+                              "Tech Meetups",
+                              "Virtual Workshops",
+                              "Live Concerts",
+                              "Jazz Festival",
+                            ].map((tag) => (
+                              <button
+                                key={tag}
+                                onClick={() => handleQuickSearch(tag)}
+                                className="px-4 py-2 rounded-lg bg-[#1f1929] hover:bg-[#2e2738] border border-[#4d4354]/40 text-[#cfc2d6] text-sm transition-colors"
+                              >
+                                {tag}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {suggestedEvents.length > 0 && (
+                        <div className="w-full text-left pt-4">
+                          <div className="border-b border-white/5 pb-4 mb-6">
+                            <h3 className="text-2xl font-bold text-[#eadef6] flex items-center gap-2">
+                              <span className="material-symbols-outlined text-[#5de6ff]">
+                                explore
+                              </span>
+                              Try Other Events
+                            </h3>
+                            <p className="text-sm text-[#988d9f] mt-1">
+                              Explore these highly recommended events available
+                              on MyEvent right now.
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {suggestedEvents.map((event: Event) => (
+                              <EventCard key={event.id} event={event} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {filteredEvents.map((event: Event) => (
+                        <EventCard key={event.id} event={event} />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              </>
+            )}
+          </div>
         </div>
       </main>
       <Footer />

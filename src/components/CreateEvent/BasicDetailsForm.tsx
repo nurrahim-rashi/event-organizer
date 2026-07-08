@@ -1,24 +1,36 @@
 import React from "react";
-import type { EventFormState } from "../../types/type";
+
+interface LocalEventFormState {
+  name: string;
+  category: any;
+  location: string;
+  description: string;
+  bannerImage: File | null | string;
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+  ticketTypes: any[];
+  vouchers: any[];
+}
 
 interface FormBasicAndMediaProps {
-  formData: EventFormState;
+  formData: LocalEventFormState;
   handleInputChange: (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) => void;
-  setFormData: React.Dispatch<React.SetStateAction<EventFormState>>;
+  setFormData: React.Dispatch<React.SetStateAction<LocalEventFormState>>;
 }
 
-export function FormBasicAndMedia({
+export function BasicDetailsForm({
   formData,
   handleInputChange,
   setFormData,
 }: FormBasicAndMediaProps) {
   return (
     <>
-      {/* Section 1: Basic Details */}
       <section
         className="bg-[#231d2e] p-8 rounded-xl border border-[#4d4354]"
         id="basic-details"
@@ -129,9 +141,10 @@ export function FormBasicAndMedia({
               cloud_upload
             </span>
             <p className="text-[#cfc2d6]">
-              {formData.bannerImage ? (
+              {formData.bannerImage &&
+              typeof formData.bannerImage !== "string" ? (
                 <span className="text-[#5de6ff] font-bold">
-                  {formData.bannerImage.name}
+                  {(formData.bannerImage as File).name}
                 </span>
               ) : (
                 <>

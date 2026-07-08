@@ -8,7 +8,6 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // State untuk Interaktivitas UI
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -28,7 +27,15 @@ export default function Navbar() {
     "OTHER",
   ];
 
-  // Efek klik di luar untuk menutup dropdown & search bar
+  const toTitleCase = (str: string) => {
+    if (!str) return "";
+    return str
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -49,20 +56,10 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [searchQuery]);
 
-  // Handler Submit Pencarian
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/events?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
-
-  // Handler Navigasi Create Event
-  const handleCreateEventClick = () => {
-    if (user) {
-      navigate("/create-event");
-    } else {
-      navigate("/login");
     }
   };
 
@@ -76,34 +73,34 @@ export default function Navbar() {
             to="/"
             className="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-[#ddb7ff] to-[#5de6ff] bg-clip-text text-transparent whitespace-nowrap hover:opacity-90 transition-opacity"
           >
-            EventSync
+            MyEvent
           </Link>
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-6">
-            <Link
-              to="/events"
-              className="text-sm font-semibold text-[#cfc2d6] hover:text-[#ddb7ff] transition-colors"
-            >
-              Discover
-            </Link>
-
             {/* Dropdown Categories */}
             <div className="relative" ref={categoryDropdownRef}>
-              <button
-                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                className="text-sm font-semibold text-[#cfc2d6] hover:text-[#ddb7ff] transition-colors flex items-center gap-1.5 focus:outline-none"
-              >
-                Categories
-                <span
-                  className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${isCategoryOpen ? "rotate-180" : ""}`}
+              <div className="flex items-center gap-1.5 py-2">
+                <Link
+                  to="/events"
+                  className="text-sm font-semibold text-[#cfc2d6] hover:text-[#ddb7ff] transition-colors"
                 >
-                  keyboard_arrow_down
-                </span>
-              </button>
+                  Discover
+                </Link>
+                <button
+                  onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                  className="text-[#cfc2d6] hover:text-[#ddb7ff] transition-colors focus:outline-none flex items-center"
+                >
+                  <span
+                    className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${isCategoryOpen ? "rotate-180" : ""}`}
+                  >
+                    keyboard_arrow_down
+                  </span>
+                </button>
+              </div>
 
               {isCategoryOpen && (
-                <div className="absolute top-full left-0 mt-3 w-56 bg-[#231d2e] border border-white/10 rounded-xl shadow-2xl p-2 z-50 grid grid-cols-1 divide-y divide-white/5 animate-fade-in">
+                <div className="absolute top-full left-0 mt-1 w-56 bg-[#231d2e] border border-white/10 rounded-xl shadow-2xl p-2 z-50 grid grid-cols-1 divide-y divide-white/5 animate-fade-in">
                   {categories.map((cat) => (
                     <Link
                       key={cat}
@@ -118,14 +115,6 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* General Link (Selalu ada di logged-in/logged-out) */}
-            <button
-              onClick={handleCreateEventClick}
-              className="text-sm font-semibold text-[#cfc2d6] hover:text-[#ddb7ff] transition-colors text-left"
-            >
-              Create an Event
-            </button>
-
             {/* Logged-In Specific Navigation */}
             {user && (
               <>
@@ -136,17 +125,11 @@ export default function Navbar() {
                   My Tickets
                 </Link>
                 <Link
-                  to="/my-events"
-                  className="text-sm font-semibold text-[#cfc2d6] hover:text-[#ddb7ff] transition-colors"
-                >
-                  My Events
-                </Link>
-                <Link
                   to="/wishlist"
                   className="text-sm font-semibold text-[#cfc2d6] hover:text-[#ddb7ff] transition-colors"
                 >
                   Wishlist
-                </Link>
+                </Link>{" "}
               </>
             )}
           </div>
@@ -187,7 +170,6 @@ export default function Navbar() {
             </form>
           </div>
 
-          {/* User Auth Controls */}
           {user ? (
             <div className="flex items-center gap-4">
               <Link
@@ -197,7 +179,7 @@ export default function Navbar() {
                 <span className="material-symbols-outlined text-[18px]">
                   account_circle
                 </span>
-                {user.name}
+                <span>{toTitleCase(user.name)}</span>
               </Link>
               <button
                 onClick={logout}

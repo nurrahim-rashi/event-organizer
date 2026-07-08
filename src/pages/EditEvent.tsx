@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
-import { useEditEvent } from "../stores/useEditEvent";
+import { useEditEvent } from "../hooks/useEditEvent";
 import DeleteEventModal from "../components/DeleteEvent/DeleteEventModal";
 
 export default function EditEvent() {

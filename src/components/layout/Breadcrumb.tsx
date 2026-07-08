@@ -32,7 +32,7 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
         to="/"
         className="flex items-center gap-1 hover:text-[#ddb7ff] transition-colors shrink-0"
       >
-        EventSync
+        MyEvent
       </Link>
 
       {items.map((item, index) => {

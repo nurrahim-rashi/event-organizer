@@ -1,15 +1,60 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { createEvent } from "../services/event.service";
-import type { EventFormState } from "../types/type";
+import { userAuth } from "../stores/useAuth";
 
-import { FormSidebar } from "../components/CreateEvent/FormSidebar";
-import { FormBasicAndMedia } from "../components/CreateEvent/FormBasicDetails";
-import { FormSchedule } from "../components/CreateEvent/FormSchedule";
-import { FormPricingAndPromotions } from "../components/CreateEvent/FormPricing";
+import { Sidebar } from "../components/CreateEvent/Sidebar";
+import { BasicDetailsForm } from "../components/CreateEvent/BasicDetailsForm";
+import { ScheduleForm } from "../components/CreateEvent/ScheduleForm";
+import { TicketingForm } from "../components/CreateEvent/TicketingForm";
+import { PromotionForm } from "../components/CreateEvent/PromotionForm";
+import Navbar from "../components/layout/Navbar";
+import Breadcrumb from "../components/layout/Breadcrumb";
+
+export type EventCategory =
+  | "MUSIC"
+  | "SPORTS"
+  | "BUSINESS"
+  | "EDUCATION"
+  | "TECHNOLOGY"
+  | "FOOD"
+  | "ART"
+  | "HEALTH"
+  | "OTHER";
+
+export interface TicketTypeState {
+  name: string;
+  price: number;
+  totalTicket: number;
+}
+
+export interface VoucherState {
+  code: string;
+  discount: number | string;
+  quota: number | string;
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+}
+
+export interface EventFormState {
+  name: string;
+  category: EventCategory | "";
+  location: string;
+  description: string;
+  bannerImage: File | null | string;
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+  ticketTypes: TicketTypeState[];
+  vouchers: VoucherState[];
+}
 
 export default function CreateEvent() {
   const navigate = useNavigate();
+  const { user } = userAuth(); // Ambil user dari store
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState<string>("basic-details");
@@ -24,7 +69,8 @@ export default function CreateEvent() {
     startTime: "",
     endDate: "",
     endTime: "",
-    ticketTypes: [{ name: "Regular", price: 0, totalTicket: 100 }],
+    ticketTypes: [{ name: "GOLD", price: 0, totalTicket: 100 }],
+    vouchers: [],
   });
 
   const handleInputChange = (
@@ -33,25 +79,26 @@ export default function CreateEvent() {
     >,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const scrollToSection = (id: string) => {
     setActiveStep(id);
     const target = document.getElementById(id);
     if (target) {
-      window.scrollTo({
-        top: target.offsetTop - 100,
-        behavior: "smooth",
-      });
+      window.scrollTo({ top: target.offsetTop - 100, behavior: "smooth" });
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validasi session
+    if (!user) {
+      setError("Session expired. Please login again.");
+      return;
+    }
+
     if (!formData.category) {
       setError("Please select an event category.");
       return;
@@ -68,6 +115,21 @@ export default function CreateEvent() {
         `${formData.endDate}T${formData.endTime}`,
       ).toISOString();
 
+      const formattedVouchers =
+        formData.vouchers?.map((v: VoucherState) => ({
+          code: v.code.toUpperCase(),
+          discount: Number(v.discount),
+          quota: Number(v.quota),
+          startDate: new Date(`${v.startDate}T${v.startTime}`).toISOString(),
+          endDate: new Date(`${v.endDate}T${v.endTime}`).toISOString(),
+        })) || [];
+
+      const formattedTicketTypes = formData.ticketTypes.map((t) => ({
+        name: t.name.toUpperCase().replace(" ", "_"),
+        price: Number(t.price),
+        totalTicket: Number(t.totalTicket),
+      }));
+
       const payload = {
         name: formData.name,
         category: formData.category,
@@ -76,8 +138,9 @@ export default function CreateEvent() {
         bannerImage: formData.bannerImage ? "URL_CONVERTED_OR_UPLOADED" : "",
         startDate: startDateTime,
         endDate: endDateTime,
-        organizerId: 1,
-        ticketTypes: formData.ticketTypes,
+        organizerId: user.id, // 👈 Menggunakan ID dari Zustand Store (Samantha = 4)
+        ticketTypes: formattedTicketTypes,
+        vouchers: formattedVouchers,
       };
 
       const res = await createEvent(payload);
@@ -87,21 +150,38 @@ export default function CreateEvent() {
       }
     } catch (err: any) {
       console.error("Error creating event:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to create event",
-      );
+      setError(err.response?.data?.message || "Failed to create event");
     } finally {
       setLoading(false);
     }
   };
 
+  const isFormInvalid =
+    !formData.name.trim() ||
+    !formData.category ||
+    !formData.location.trim() ||
+    !formData.description.trim() ||
+    !formData.startDate ||
+    !formData.startTime ||
+    !formData.endDate ||
+    !formData.endTime ||
+    formData.ticketTypes.length === 0;
+
   return (
-    <main className="pt-24 pb-12 px-6 max-w-[1280px] mx-auto min-h-screen">
+    <main className="pt-24 pb-12 px-6 max-w-[1280px] mx-auto min-h-screen text-[#eadef6]">
+      <Navbar />
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", path: "/dashboard" },
+          { label: "Create New Event" },
+        ]}
+      />
+
       <form
         onSubmit={handleSubmit}
         className="flex flex-col lg:flex-row gap-10"
       >
-        <FormSidebar
+        <Sidebar
           activeStep={activeStep}
           loading={loading}
           error={error}
@@ -109,34 +189,36 @@ export default function CreateEvent() {
         />
 
         <div className="flex-1 space-y-12">
-          <FormBasicAndMedia
+          {error && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 text-sm text-red-400 rounded-xl">
+              {error}
+            </div>
+          )}
+
+          <BasicDetailsForm
             formData={formData}
             handleInputChange={handleInputChange}
             setFormData={setFormData}
           />
-
-          <FormSchedule
+          <ScheduleForm
             formData={formData}
             handleInputChange={handleInputChange}
           />
-
-          <FormPricingAndPromotions
-            formData={formData}
-            setFormData={setFormData}
-          />
+          <TicketingForm formData={formData} setFormData={setFormData} />
+          <PromotionForm formData={formData} setFormData={setFormData} />
 
           <div className="flex items-center justify-end gap-4 pt-6">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="px-8 py-3 rounded-xl border border-[#4d4354] font-bold text-[#cfc2d6] hover:bg-[#2e2738] transition-all active:scale-95"
+              className="px-8 py-3 rounded-xl border border-[#4d4354] font-bold text-[#cfc2d6]"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="px-8 py-3 rounded-xl bg-[#ddb7ff] text-[#490080] border border-[#4d4354] font-bold hover:bg-[#c296f0] active:scale-95 transition-all disabled:opacity-50"
+              disabled={loading || isFormInvalid}
+              className="px-8 py-3 rounded-xl bg-[#ddb7ff] text-[#490080] font-bold"
             >
               {loading ? "Publishing..." : "Publish Event"}
             </button>

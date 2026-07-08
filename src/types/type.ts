@@ -89,3 +89,33 @@ export interface Transaction {
   createdAt: string;
   items: TransactionItem[];
 }
+
+export interface Review {
+  id: number;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  user: {
+    name: string;
+    profilePic?: string | null;
+  };
+  transaction: {
+    event: {
+      name: string;
+    };
+  };
+}
+
+export interface Organizer {
+  organizer: User;
+  bio?: string;
+  eventsCount: number;
+  followersCount: number;
+  averageRating: number;
+  totalReviews: number;
+  ratingDistribution: {
+    stars: number;
+    percentage: number;
+  }[];
+  reviews: Review[];
+}
