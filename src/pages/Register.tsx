@@ -13,6 +13,7 @@ const formSchema = z.object({
     .min(6, "Password must be at least 6 characters.")
     .max(50, "Password must be at most 50 characters"),
     role: z.enum(["USER", "ADMIN"], {message: "Please select a valid role."}),
+    referredByCode: z.string().optional().or(z.literal("")),
 });
 
 function Register () {
@@ -26,6 +27,7 @@ function Register () {
             email: "",
             password: "",
             role: "USER",
+            referredByCode: "",
         },
     });
 
@@ -99,6 +101,25 @@ function Register () {
                         {form.formState.errors.password && (
                             <p className="mt-1 text-xs text-red-500">{form.formState.errors.password.message}</p>
                         )}
+                    </div>
+
+                    {/*INPUR REFERRAL CODE*/}
+                    <div className="flex flex-col gap-2 mt-4">
+                        <label className="text-sm font-medium text-gray-200">
+                            Referral Code <span className="text-gray-500 text-xs">(Optional)</span>
+                        </label>
+                        <input
+                        type="text"
+                        placeholder="e.g., REF-XXXXXX"
+                        {...form.register("referredByCode")}
+                        className="p-3 bg-[#161224] border border-purple-900/40 rounded-xl text-white outline-none focus:border-purple-600 transition-all uppercase placeholder:normal-case"
+                        />
+                            {/* Menampilkan pesan error dari Zod jika ada */}
+                            {form.formState.errors.referredByCode && (
+                            <p className="text-xs text-red-500 mt-1">
+                                {form.formState.errors.referredByCode.message}
+                            </p>
+                            )}  
                     </div>
 
                     {/*TOMBOL SUBMIT*/}
