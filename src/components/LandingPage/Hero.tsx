@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router";
-import { useEvents } from "../../stores/useEvents";
+import { useEvents } from "../../hooks/useEvents";
 import type { Event } from "../../types/type";
 
 export default function Hero() {
@@ -71,13 +71,6 @@ export default function Hero() {
 
   const currentEvent = upcomingEvents[currentBannerIndex];
 
-  const getLowestTicketPrice = (event: Event) => {
-    if (!event.ticketTypes || event.ticketTypes.length === 0) return "Free";
-    const prices = event.ticketTypes.map((t) => t.price);
-    const minPrice = Math.min(...prices);
-    return minPrice === 0 ? "Free" : `IDR ${minPrice.toLocaleString()}`;
-  };
-
   return (
     <section className="relative min-h-[600px] flex items-center overflow-hidden px-6 py-24 bg-gradient-to-tr from-[#171021] via-[#231d2e] to-[#171021]">
       <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#ddb7ff]/10 rounded-full blur-3xl animate-pulse"></div>
@@ -93,7 +86,7 @@ export default function Hero() {
             <span className="material-symbols-outlined text-[18px]">
               auto_awesome
             </span>
-            <span>Discover Your Next Adventure</span>
+            <span>Discover Your Next Adventures</span>
           </div>
 
           <h1 className="text-5xl lg:text-6xl font-extrabold text-[#eadef6] max-w-xl leading-tight tracking-tight">

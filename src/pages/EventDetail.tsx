@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
-import { useEventDetail } from "../stores/useEventDetail";
+import { useEventDetail } from "../hooks/useEventDetail";
 import { userAuth } from "../stores/useAuth";
 import {
   createTransaction,
@@ -10,23 +10,16 @@ import type { Transaction } from "../types/type";
 import Navbar from "../components/layout/Navbar";
 import Breadcrumb from "../components/layout/Breadcrumb";
 
-// Komponen Skeleton untuk Detail Event
 function EventDetailSkeleton() {
   return (
     <div className="bg-[#171021] text-[#eadef6] min-h-screen animate-pulse">
       <Navbar />
       <main className="pt-24 pb-16 px-6 max-w-[1280px] mx-auto space-y-6">
-        {/* Breadcrumb Skeleton */}
         <div className="h-4 bg-[#2e2738] rounded w-1/3 mb-6" />
-
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column Skeleton */}
           <div className="lg:col-span-8 space-y-8">
             <div className="space-y-6">
-              {/* Image Banner Skeleton */}
               <div className="w-full h-[400px] bg-[#231d2e] rounded-xl" />
-
-              {/* Title & Info Skeleton */}
               <div className="space-y-4">
                 <div className="h-10 bg-[#231d2e] rounded w-3/4 md:w-1/2" />
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -36,8 +29,6 @@ function EventDetailSkeleton() {
                 </div>
               </div>
             </div>
-
-            {/* About Section Skeleton */}
             <div className="bg-[#2e2738]/50 p-8 rounded-xl space-y-4">
               <div className="h-6 bg-[#32293d] rounded w-1/4" />
               <div className="space-y-2">
@@ -47,10 +38,7 @@ function EventDetailSkeleton() {
               </div>
             </div>
           </div>
-
-          {/* Right Column Skeleton */}
           <div className="lg:col-span-4 space-y-6">
-            {/* Organizer Card Skeleton */}
             <div className="bg-[#2e2738]/50 p-6 rounded-xl flex items-center gap-4">
               <div className="w-14 h-14 bg-[#32293d] rounded-full shrink-0" />
               <div className="flex-grow space-y-2">
@@ -59,8 +47,6 @@ function EventDetailSkeleton() {
                 <div className="h-3 bg-[#32293d] rounded w-1/2" />
               </div>
             </div>
-
-            {/* Ticket Card Skeleton */}
             <div className="bg-[#231d2e]/50 rounded-xl overflow-hidden border border-white/5">
               <div className="p-6 bg-[#32293d] h-20" />
               <div className="p-6 space-y-4">
@@ -83,13 +69,18 @@ export default function EventDetail() {
   const { user } = userAuth();
   const [userTransactions, setUserTransactions] = useState<Transaction[]>([]);
   const [submitting, setSubmitting] = useState(false);
-
-  // Menambahkan pengunci lokal awal agar menghindari kedipan/flash empty state
   const [isInitialMount, setIsInitialMount] = useState(true);
+
+  // 👈 New voucher state variables
+  const [voucherCode, setVoucherCode] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
 
   const { event, loading, selectedTicket, setSelectedTicket } = useEventDetail(
     id ?? "",
   );
+
+  const isOwner = user && event && user.id === event.organizerId;
 
   useEffect(() => {
     if (user && id) {
@@ -100,13 +91,18 @@ export default function EventDetail() {
   }, [user, id]);
 
   useEffect(() => {
-    // Matikan initial mount loader jika status loading bawaan store sudah selesai
     if (!loading) {
       setIsInitialMount(false);
     }
   }, [loading]);
 
-  // Evaluasi status loading yang sesungguhnya
+  // 👈 Clear applied voucher if user switches ticket types
+  useEffect(() => {
+    setAppliedVoucher(null);
+    setVoucherCode("");
+    setVoucherError(null);
+  }, [selectedTicket]);
+
   if (loading || isInitialMount) {
     return <EventDetailSkeleton />;
   }
@@ -137,9 +133,55 @@ export default function EventDetail() {
       )
     : 0;
 
+  // 👈 Voucher Price Deduction Computations
   const ticketPrice = selectedTicket ? selectedTicket.price : 0;
-  const serviceFee = ticketPrice > 0 ? ticketPrice * 0.05 : 0;
-  const totalPayment = ticketPrice + serviceFee;
+  const discountAmount = appliedVoucher ? appliedVoucher.discount : 0;
+  const discountedTicketPrice = Math.max(0, ticketPrice - discountAmount);
+
+  const serviceFee =
+    discountedTicketPrice > 0 ? discountedTicketPrice * 0.05 : 0;
+  const totalPayment = discountedTicketPrice + serviceFee;
+
+  // 👈 Dynamic Client-Side Voucher Check Logic
+  const handleApplyVoucher = () => {
+    setVoucherError(null);
+    if (!voucherCode.trim()) return;
+
+    const codeUpper = voucherCode.trim().toUpperCase();
+    const foundVoucher = event.vouchers?.find(
+      (v: any) => v.code.toUpperCase() === codeUpper,
+    );
+
+    if (!foundVoucher) {
+      setVoucherError("Invalid voucher code for this event.");
+      setAppliedVoucher(null);
+      return;
+    }
+
+    const now = new Date();
+    const start = new Date(foundVoucher.startDate);
+    const end = new Date(foundVoucher.endDate);
+
+    if (now < start) {
+      setVoucherError("This voucher promotion has not started yet.");
+      setAppliedVoucher(null);
+      return;
+    }
+
+    if (now > end) {
+      setVoucherError("This promotional voucher has already expired.");
+      setAppliedVoucher(null);
+      return;
+    }
+
+    if (foundVoucher.quota <= 0) {
+      setVoucherError("Voucher quota has been completely used up.");
+      setAppliedVoucher(null);
+      return;
+    }
+
+    setAppliedVoucher(foundVoucher);
+  };
 
   const handleBuyTicket = async () => {
     if (!user) {
@@ -153,6 +195,7 @@ export default function EventDetail() {
       setSubmitting(true);
       const payload = {
         eventId: Number(id),
+        voucherId: appliedVoucher ? appliedVoucher.id : undefined, // 👈 Send voucher if applied
         items: [
           {
             ticketTypeId: selectedTicket.id,
@@ -272,9 +315,11 @@ export default function EventDetail() {
               )}
 
               <div className="space-y-4">
-                <h1 className="text-4xl md:text-5xl font-black text-[#eadef6] leading-tight">
-                  {event.name}
-                </h1>
+                <div className="flex items-center justify-between gap-4">
+                  <h1 className="text-4xl md:text-5xl font-black text-[#eadef6] leading-tight">
+                    {event.name}
+                  </h1>
+                </div>{" "}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex items-center gap-3 p-4 bg-[#231d2e] rounded-xl border border-[#4d4354]/50">
                     <span className="material-symbols-outlined text-[#ddb7ff]">
@@ -366,7 +411,7 @@ export default function EventDetail() {
                     className="w-full h-full object-cover"
                     src={
                       event.organizer?.profilePic ??
-                      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150"
+                      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400"
                     }
                   />
                 </div>
@@ -389,11 +434,19 @@ export default function EventDetail() {
               </div>
               <div className="flex gap-3 pt-2">
                 <button
-                  onClick={() => navigate(`/organizer/${event.organizerId}`)}
-                  className="w-full py-2 bg-transparent border border-[#ddb7ff] text-[#ddb7ff] rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-[#ddb7ff]/10 transition-colors"
+                  onClick={() => navigate(`/organizers/${event.organizerId}`)}
+                  className="w-full py-2 bg-transparent border border-[#ddb7ff] text-[#ddb7ff] rounded-lg font-bold text-xs tracking-widest hover:bg-[#ddb7ff]/10 transition-colors"
                 >
                   View Profile
-                </button>
+                </button>{" "}
+                {isOwner && (
+                  <button
+                    onClick={() => navigate(`/events/${id}/edit`)}
+                    className="w-full py-2 bg-[#ddb7ff] text-[#490080] border border-[#ddb7ff] rounded-lg font-bold text-xs tracking-widest hover:bg-[#d6a5ff] transition-colors"
+                  >
+                    Edit Event
+                  </button>
+                )}
               </div>
             </section>
 
@@ -454,6 +507,59 @@ export default function EventDetail() {
                     </div>
                   )}
                 </div>
+
+                {selectedTicket && ticketPrice > 0 && (
+                  <div className="pt-4 border-t border-[#4d4354]/30 space-y-2">
+                    <label className="block text-xs font-bold text-[#cfc2d6] uppercase tracking-wider">
+                      Event Voucher Promotion
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Enter Promo Code"
+                        value={voucherCode}
+                        onChange={(e) => setVoucherCode(e.target.value)}
+                        disabled={!!appliedVoucher}
+                        className="flex-1 bg-[#171021] border border-[#4d4354] text-[#eadef6] rounded-lg px-3 py-2 text-sm uppercase focus:outline-none focus:border-[#ddb7ff] disabled:opacity-50"
+                      />
+                      {appliedVoucher ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAppliedVoucher(null);
+                            setVoucherCode("");
+                          }}
+                          className="px-3 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold uppercase transition-all"
+                        >
+                          Clear
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleApplyVoucher}
+                          className="px-4 py-2 bg-[#32293d] border border-[#4d4354] text-[#ddb7ff] rounded-lg text-xs font-bold uppercase hover:bg-[#3d334e] transition-all"
+                        >
+                          Apply
+                        </button>
+                      )}
+                    </div>
+                    {voucherError && (
+                      <p className="text-xs text-red-400 font-medium">
+                        {voucherError}
+                      </p>
+                    )}
+                    {appliedVoucher && (
+                      <p className="text-xs text-green-400 font-medium flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">
+                          check_circle
+                        </span>
+                        Code {appliedVoucher.code} applied! (Rp
+                        {appliedVoucher.discount.toLocaleString("id-ID")} off)
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {selectedTicket && (
                   <div className="pt-4 border-t border-[#4d4354]/30 space-y-2">
                     <div className="flex justify-between text-sm text-[#cfc2d6]">
@@ -464,6 +570,15 @@ export default function EventDetail() {
                           : `Rp${ticketPrice.toLocaleString("id-ID")}`}
                       </span>
                     </div>
+
+                    {/* 👈 Added visual voucher subtraction line item */}
+                    {appliedVoucher && (
+                      <div className="flex justify-between text-sm text-green-400 font-medium">
+                        <span>Promo Code ({appliedVoucher.code})</span>
+                        <span>-Rp{discountAmount.toLocaleString("id-ID")}</span>
+                      </div>
+                    )}
+
                     <div className="flex justify-between text-sm text-[#cfc2d6]">
                       <span>Service Fee (5%)</span>
                       <span>Rp{serviceFee.toLocaleString("id-ID")}</span>

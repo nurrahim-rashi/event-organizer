@@ -1,8 +1,21 @@
 import React from "react";
-import type { EventFormState } from "../../types/type";
+
+interface LocalEventFormState {
+  name: string;
+  category: any;
+  location: string;
+  description: string;
+  bannerImage: File | null | string;
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+  ticketTypes: any[];
+  vouchers: any[];
+}
 
 interface FormScheduleProps {
-  formData: EventFormState;
+  formData: LocalEventFormState;
   handleInputChange: (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -10,7 +23,7 @@ interface FormScheduleProps {
   ) => void;
 }
 
-export function FormSchedule({
+export function ScheduleForm({
   formData,
   handleInputChange,
 }: FormScheduleProps) {

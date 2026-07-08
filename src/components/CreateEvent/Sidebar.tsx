@@ -5,18 +5,13 @@ interface FormSidebarProps {
   scrollToSection: (id: string) => void;
 }
 
-export function FormSidebar({
-  activeStep,
-  loading,
-  error,
-  scrollToSection,
-}: FormSidebarProps) {
+export function Sidebar({ activeStep, scrollToSection }: FormSidebarProps) {
   return (
     <aside className="lg:w-64 flex-shrink-0">
       <div className="sticky top-28 space-y-8">
         <div>
           <h1 className="text-2xl font-bold text-[#eadef6] mb-2">
-            Create New Event
+            Create a New Event
           </h1>
           <p className="text-sm text-[#cfc2d6]">
             Complete the details to publish your event.
@@ -53,23 +48,6 @@ export function FormSidebar({
             </button>
           ))}
         </nav>
-        <div className="pt-8 border-t border-[#4d4354]">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#ddb7ff] disabled:bg-[#4d4354] text-[#490080] disabled:text-gray-400 py-3 px-6 rounded-xl font-bold shadow-lg shadow-[#ddb7ff]/20 active:scale-95 transition-all flex items-center justify-center gap-2"
-          >
-            <span
-              className={`material-symbols-outlined ${loading ? "animate-spin" : ""}`}
-            >
-              {loading ? "sync" : "rocket_launch"}
-            </span>
-            {loading ? "Publishing..." : "Publish Event"}
-          </button>
-          {error && (
-            <p className="text-xs text-red-400 mt-2 text-center">{error}</p>
-          )}
-        </div>
       </div>
     </aside>
   );

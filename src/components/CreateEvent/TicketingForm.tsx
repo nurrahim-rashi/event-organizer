@@ -1,15 +1,29 @@
 import React from "react";
-import type { EventFormState } from "../../types/type";
 
-interface FormPricingAndPromotionsProps {
-  formData: EventFormState;
-  setFormData: React.Dispatch<React.SetStateAction<EventFormState>>;
+interface LocalEventFormState {
+  name: string;
+  category: any;
+  location: string;
+  description: string;
+  bannerImage: File | null | string;
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+  ticketTypes: {
+    name: string;
+    price: number;
+    totalTicket: number;
+  }[];
+  vouchers: any[];
 }
 
-export function FormPricingAndPromotions({
-  formData,
-  setFormData,
-}: FormPricingAndPromotionsProps) {
+interface TicketingFormProps {
+  formData: LocalEventFormState;
+  setFormData: React.Dispatch<React.SetStateAction<LocalEventFormState>>;
+}
+
+export function TicketingForm({ formData, setFormData }: TicketingFormProps) {
   const handleTicketChange = (
     index: number,
     field: string,
@@ -30,7 +44,7 @@ export function FormPricingAndPromotions({
       ...prev,
       ticketTypes: [
         ...prev.ticketTypes,
-        { name: "", price: 0, totalTicket: 0 },
+        { name: "GOLD", price: 0, totalTicket: 0 },
       ],
     }));
   };
@@ -60,7 +74,6 @@ export function FormPricingAndPromotions({
 
   return (
     <>
-      {/* Section 4: Ticketing & Pricing */}
       <section
         className="bg-[#231d2e] p-8 rounded-xl border border-[#4d4354]"
         id="pricing"
@@ -70,7 +83,9 @@ export function FormPricingAndPromotions({
             <span className="material-symbols-outlined text-[#ddb7ff]">
               confirmation_number
             </span>
-            <h2 className="text-xl font-bold">4. Ticket Tiers &amp; Pricing</h2>
+            <h2 className="text-xl font-bold text-[#eadef6]">
+              4. Ticket Tiers &amp; Pricing
+            </h2>
           </div>
           <button
             type="button"
@@ -90,18 +105,21 @@ export function FormPricingAndPromotions({
             >
               <div>
                 <label className="block text-xs text-[#cfc2d6] mb-1">
-                  Ticket Name
+                  Ticket Tier Class (Enum)
                 </label>
-                <input
-                  type="text"
-                  placeholder="e.g., VIP, Regular, Early Bird"
+                <select
                   value={ticket.name}
                   onChange={(e) =>
                     handleTicketChange(index, "name", e.target.value)
                   }
-                  className="w-full px-4 py-2.5 rounded-lg border border-[#4d4354] bg-[#2e2738] text-[#eadef6] focus:border-[#ddb7ff] text-sm outline-none"
+                  className="w-full px-4 py-3 rounded-lg border border-[#4d4354] bg-[#2e2738] text-[#eadef6] focus:border-[#ddb7ff] focus:ring-[4px] focus:ring-[#ddb7ff]/10 text-sm outline-none font-bold"
                   required
-                />
+                >
+                  <option value="GOLD">GOLD</option>
+                  <option value="SILVER">SILVER</option>
+                  <option value="BRONZE">BRONZE</option>
+                  <option value="EARLY_BIRD">EARLY BIRD</option>
+                </select>
               </div>
               <div>
                 <label className="block text-xs text-[#cfc2d6] mb-1">
@@ -109,7 +127,8 @@ export function FormPricingAndPromotions({
                 </label>
                 <input
                   type="number"
-                  placeholder="0"
+                  placeholder="e.g., 100"
+                  min="1"
                   value={ticket.totalTicket || ""}
                   onChange={(e) =>
                     handleTicketChange(
@@ -118,7 +137,7 @@ export function FormPricingAndPromotions({
                       parseInt(e.target.value) || 0,
                     )
                   }
-                  className="w-full px-4 py-2.5 rounded-lg border border-[#4d4354] bg-[#2e2738] text-[#eadef6] focus:border-[#ddb7ff] text-sm outline-none"
+                  className="w-full px-4 py-3 rounded-lg border border-[#4d4354] bg-[#2e2738] text-[#eadef6] focus:border-[#ddb7ff] focus:ring-[4px] focus:ring-[#ddb7ff]/10 text-sm outline-none"
                   required
                 />
               </div>
@@ -130,7 +149,8 @@ export function FormPricingAndPromotions({
                 <div className="flex gap-2 items-center">
                   <input
                     type="number"
-                    placeholder="0"
+                    placeholder="e.g., 150000"
+                    min="0"
                     value={ticket.price || ""}
                     onChange={(e) =>
                       handleTicketChange(
@@ -139,7 +159,7 @@ export function FormPricingAndPromotions({
                         parseInt(e.target.value) || 0,
                       )
                     }
-                    className="w-full px-4 py-2.5 rounded-lg border border-[#4d4354] bg-[#2e2738] text-[#eadef6] focus:border-[#ddb7ff] text-sm font-bold outline-none"
+                    className="w-full px-4 py-3 rounded-lg border border-[#4d4354] bg-[#2e2738] text-[#eadef6] focus:border-[#ddb7ff] focus:ring-[4px] focus:ring-[#ddb7ff]/10 text-sm font-bold outline-none"
                     required
                   />
                   {formData.ticketTypes.length > 1 && (
@@ -190,33 +210,6 @@ export function FormPricingAndPromotions({
             </p>
           </div>
         )}
-      </section>
-
-      {/* Section 5: Vouchers & Promotion */}
-      <section
-        className="bg-[#231d2e] p-8 rounded-xl border border-[#4d4354]"
-        id="promotions"
-      >
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#ddb7ff]">
-              loyalty
-            </span>
-            <h2 className="text-xl font-bold">5. Vouchers &amp; Promotion</h2>
-          </div>
-        </div>
-        <div className="space-y-4">
-          <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-[#4d4354] rounded-xl opacity-60">
-            <span className="material-symbols-outlined text-5xl mb-3">
-              confirmation_number
-            </span>
-            <p className="font-medium">No active vouchers yet.</p>
-            <p className="text-sm">
-              Add promo codes later on dashboard panel to increase sales
-              conversions.
-            </p>
-          </div>
-        </div>
       </section>
     </>
   );
