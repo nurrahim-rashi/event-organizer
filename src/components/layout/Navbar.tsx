@@ -5,6 +5,8 @@ import type { EventCategory } from "../../types/type";
 
 export default function Navbar() {
   const { user, logout } = userAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -65,13 +67,13 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-[#171021]/80 backdrop-blur-xl border-b border-[#4d4354]/20 h-16 flex items-center">
-      <div className="max-w-[1440px] mx-auto w-full px-6 flex items-center justify-between gap-4">
+      <div className="max-w-360 mx-auto w-full px-6 flex items-center justify-between gap-4">
         {/* LEFT AREA: Logo & Main Navigation */}
         <div className="flex items-center gap-8 flex-1">
           {/* Logo */}
           <Link
             to="/"
-            className="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-[#ddb7ff] to-[#5de6ff] bg-clip-text text-transparent whitespace-nowrap hover:opacity-90 transition-opacity"
+            className="text-2xl font-extrabold tracking-wider bg-linear-to-r from-[#ddb7ff] to-[#5de6ff] bg-clip-text text-transparent whitespace-nowrap hover:opacity-90 transition-opacity"
           >
             MyEvent
           </Link>
@@ -182,15 +184,58 @@ export default function Navbar() {
                 <span>{toTitleCase(user.name)}</span>
               </Link>
               <button
-                onClick={logout}
-                className="bg-[#2e2738] border border-[#4d4354] hover:bg-[#3d344a] text-[#ffafd3] text-xs font-bold px-4 py-2.5 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex items-center gap-2 hover:text-purple-400 transition-colors focus:outline-none font-medium text-sm md:text-base"
               >
-                Logout
+                <span>{user.name || "My Account"}</span>
+                <span className={`text-xs transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>
+                  ▼
+                </span>
               </button>
+
+              {isOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-[#161224] border border-purple-900/40 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="px-4 py-2 border-b border-purple-950/40">
+                    <p className="text-xs text-gray-400 font-medium">Logged in as</p>
+                    <p className="text-sm font-semibold truncate text-purple-300 uppercase">{user.role}</p>
+                  </div>
+
+                  {/* DASHBOARD */}
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setIsOpen(false)}
+                    className="block px-4 py-2.5 text-sm text-gray-200 hover:bg-purple-600/20 hover:text-purple-300 transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+
+                  {/* PROFILE PAGE */}
+                  <Link
+                    to="/profile" // Sesuaikan alamat route halaman profilmu
+                    onClick={() => setIsOpen(false)}
+                    className="block px-4 py-2.5 text-sm text-gray-200 hover:bg-purple-600/20 hover:text-purple-300 transition-colors"
+                  >
+                    My Profile
+                  </Link>
+
+                  <hr className="border-purple-950/40 my-1" />
+
+                  {/* LOGOUT */}
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      logout(); // Panggil fungsi logout dari store kalian
+                    }}
+                    className="w-full text-left block px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <Link to="/login">
-              <button className="bg-gradient-to-r from-[#ddb7ff] to-[#bd7aff] text-[#400071] text-xs font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-[#ddb7ff]/10 hover:scale-105 active:scale-95 transition-all cursor-pointer">
+              <button className="bg-linear-to-r from-[#ddb7ff] to-[#bd7aff] text-[#400071] text-xs font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-[#ddb7ff]/10 hover:scale-105 active:scale-95 transition-all cursor-pointer">
                 Login
               </button>
             </Link>

@@ -14,6 +14,7 @@ import CreateEvent from "./pages/CreateEvent";
 import EditEvent from "./pages/EditEvent";
 import OwnerProtectedRoute from "./routes/OwnerProtectedRoute";
 import OrganizerProfile from "./pages/OrganizerProfile";
+import DashboardPage from "./pages/DashboardPage";
 
 const router = createBrowserRouter([
   {
@@ -63,6 +64,10 @@ const router = createBrowserRouter([
   {
     path: "/profile/edit",
     element: <ProfileEdit />,
+  },
+  {
+    path: "/dashboard",
+    element: <DashboardPage />,
   },
 ]);
 
