@@ -55,7 +55,6 @@ export default function OrganizerProfile() {
     data.organizedEvents?.filter((e: any) => new Date(e.startDate) <= now) ||
     [];
 
-  // Helper untuk render list menggunakan EventCard
   const renderEventList = (events: any[]) => {
     if (events.length === 0)
       return (
