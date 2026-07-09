@@ -9,6 +9,8 @@ import {
 import type { Transaction } from "../types/type";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
+import { OrganizerSection } from "../components/EventDetail/OrganizerSection";
+import { getOrganizerProfile } from "../services/organizer.service";
 
 function EventDetailSkeleton() {
   return (
@@ -67,13 +69,15 @@ export default function EventDetail() {
   const navigate = useNavigate();
 
   const { user } = userAuth();
+
+  // Hooks dipindahkan ke atas semua
   const [userTransactions, setUserTransactions] = useState<Transaction[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [isInitialMount, setIsInitialMount] = useState(true);
-
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
   const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [moreEvents, setMoreEvents] = useState<any[]>([]);
 
   const { event, loading, selectedTicket, setSelectedTicket } = useEventDetail(
     id ?? "",
@@ -81,11 +85,12 @@ export default function EventDetail() {
 
   const isOwner = user && event && user.id === event.organizerId;
 
+  // Efek-efek
   useEffect(() => {
     if (user && id) {
-      getTransactionsByEvent(Number(id)).then((data) => {
-        setUserTransactions(data);
-      });
+      getTransactionsByEvent(Number(id))
+        .then((data) => setUserTransactions(data))
+        .catch((err) => console.error("Error fetching transactions:", err));
     }
   }, [user, id]);
 
@@ -101,6 +106,17 @@ export default function EventDetail() {
     setVoucherError(null);
   }, [selectedTicket]);
 
+  useEffect(() => {
+    if (event?.organizerId) {
+      getOrganizerProfile(event.organizerId.toString())
+        .then((data: any) => {
+          setMoreEvents(data.organizedEvents || []);
+        })
+        .catch((err) => console.error("Gagal ambil event organizer:", err));
+    }
+  }, [event?.organizerId]);
+
+  // Logika Render
   if (loading || isInitialMount) {
     return <EventDetailSkeleton />;
   }
@@ -122,19 +138,9 @@ export default function EventDetail() {
   }
 
   const tickets = event.ticketTypes ?? [];
-
-  const totalTicketsLeft = Array.isArray(tickets)
-    ? tickets.reduce(
-        (acc, ticket) =>
-          acc + ((ticket.totalTicket ?? 0) - (ticket.booked ?? 0)),
-        0,
-      )
-    : 0;
-
   const ticketPrice = selectedTicket ? selectedTicket.price : 0;
   const discountAmount = appliedVoucher ? appliedVoucher.discount : 0;
   const discountedTicketPrice = Math.max(0, ticketPrice - discountAmount);
-
   const serviceFee =
     discountedTicketPrice > 0 ? discountedTicketPrice * 0.05 : 0;
   const totalPayment = discountedTicketPrice + serviceFee;
@@ -192,16 +198,10 @@ export default function EventDetail() {
       const payload = {
         eventId: Number(id),
         voucherId: appliedVoucher ? appliedVoucher.id : undefined,
-        items: [
-          {
-            ticketTypeId: selectedTicket.id,
-            qty: 1,
-          },
-        ],
+        items: [{ ticketTypeId: selectedTicket.id, qty: 1 }],
       };
 
       const res = await createTransaction(payload);
-
       if (res.success) {
         alert("Transaction created successfully!");
         navigate(`/dashboard/transactions/${res.data.id}`);
@@ -209,8 +209,7 @@ export default function EventDetail() {
     } catch (error: any) {
       console.error("Checkout error:", error);
       alert(
-        error.response?.data?.message ||
-          "Failed to process ticket purchase. Please try again.",
+        error.response?.data?.message || "Failed to process ticket purchase.",
       );
     } finally {
       setSubmitting(false);
@@ -254,12 +253,9 @@ export default function EventDetail() {
   return (
     <div className="bg-[#171021] text-[#eadef6] min-h-screen selection:bg-[#ddb7ff] selection:text-[#490080]">
       <Navbar />
-
       <main className="pt-24 pb-16 px-6 max-w-[1280px] mx-auto">
         <Breadcrumb items={breadcrumbItems} />
-
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column */}
           <div className="lg:col-span-8 space-y-8">
             <section className="space-y-6">
               <div className="w-full h-[400px] rounded-xl overflow-hidden shadow-[0px_8px_32px_rgba(0,0,0,0.4)] relative group">
@@ -294,13 +290,7 @@ export default function EventDetail() {
                           {tx.items?.[0]?.ticketType?.name || "Ticket"})
                         </span>
                         <span
-                          className={`px-2 py-0.5 rounded font-black uppercase text-[10px] ${
-                            tx.status === "PAID" || tx.status === "DONE"
-                              ? "bg-green-500/20 text-green-400"
-                              : tx.status === "WAITING_PAYMENT"
-                                ? "bg-yellow-500/20 text-yellow-400"
-                                : "bg-red-500/20 text-red-400"
-                          }`}
+                          className={`px-2 py-0.5 rounded font-black uppercase text-[10px] ${tx.status === "PAID" || tx.status === "DONE" ? "bg-green-500/20 text-green-400" : tx.status === "WAITING_PAYMENT" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}
                         >
                           {tx.status.replace("_", " ")}
                         </span>
@@ -315,8 +305,8 @@ export default function EventDetail() {
                   <h1 className="text-4xl md:text-5xl font-black text-[#eadef6] leading-tight">
                     {event.name}
                   </h1>
-                </div>{" "}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center gap-3 p-4 bg-[#231d2e] rounded-xl border border-[#4d4354]/50">
                     <span className="material-symbols-outlined text-[#ddb7ff]">
                       calendar_today
@@ -343,23 +333,9 @@ export default function EventDetail() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-[#231d2e] rounded-xl border border-[#4d4354]/50">
-                    <span className="material-symbols-outlined text-[#ddb7ff]">
-                      confirmation_number
-                    </span>
-                    <div>
-                      <p className="text-xs text-[#cfc2d6] uppercase tracking-wider font-bold">
-                        Remaining tickets
-                      </p>
-                      <p className="text-md text-[#eadef6] mt-0.5">
-                        {totalTicketsLeft} tickets left
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
             </section>
-
             <section className="bg-[#2e2738] p-8 rounded-xl shadow-lg space-y-6">
               <h2 className="text-2xl font-bold text-[#eadef6]">
                 About the Event
@@ -368,92 +344,19 @@ export default function EventDetail() {
                 <p>{event.description || "No description provided."}</p>
               </div>
             </section>
-
-            <section className="bg-[#2e2738] p-8 rounded-xl shadow-lg space-y-6">
-              <h2 className="text-2xl font-bold text-[#eadef6]">Venue</h2>
-              <div className="w-full h-80 rounded-xl overflow-hidden border border-[#4d4354] relative">
-                <div
-                  className="absolute inset-0 bg-cover bg-center grayscale contrast-125 opacity-70"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1524661135339-9140b0078d49?q=80&w=1000')",
-                  }}
-                ></div>
-                <div className="absolute inset-0 bg-[#171021]/40"></div>
-                <div className="relative z-10 h-full flex items-center justify-center">
-                  <div className="bg-[#2e2738]/70 backdrop-blur-md p-4 rounded-xl flex items-center gap-3 border border-white/10 max-w-xs md:max-w-md">
-                    <span
-                      className="material-symbols-outlined text-[#ddb7ff]"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      location_on
-                    </span>
-                    <span className="font-bold text-[#eadef6] truncate">
-                      {event.location}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <OrganizerSection
+              event={event}
+              toTitleCase={toTitleCase}
+              isOwner={!!isOwner}
+              moreEvents={moreEvents}
+            />
           </div>
 
-          {/* Right Column */}
           <div className="lg:col-span-4 space-y-6">
-            <section className="bg-[#2e2738] p-6 rounded-xl shadow-lg border border-[#4d4354]/30 space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#ddb7ff]/20 bg-[#171021] flex items-center justify-center">
-                  <img
-                    alt={event.organizer?.name || "Organizer"}
-                    className="w-full h-full object-cover"
-                    src={
-                      event.organizer?.profilePic ??
-                      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400"
-                    }
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs text-[#ddb7ff] uppercase font-bold tracking-wider">
-                      Hosted By
-                    </p>
-                  </div>
-                  <h4 className="font-bold text-[#eadef6] text-lg truncate">
-                    {toTitleCase(event.organizer?.name || "Organizer")}{" "}
-                    <span className="text-[10px] bg-[#1f1929] px-2 py-0.5 rounded text-[#988d9f] border border-[#4d4354]/40 font-mono">
-                      ID: {event.organizerId}
-                    </span>
-                  </h4>
-                  <p className="text-xs text-[#cfc2d6] truncate">
-                    {event.organizer?.email || "No email available"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => navigate(`/organizers/${event.organizerId}`)}
-                  className="w-full py-2 bg-transparent border border-[#ddb7ff] text-[#ddb7ff] rounded-lg font-bold text-xs tracking-widest hover:bg-[#ddb7ff]/10 transition-colors"
-                >
-                  View Profile
-                </button>{" "}
-                {isOwner && (
-                  <button
-                    onClick={() => navigate(`/events/${id}/edit`)}
-                    className="w-full py-2 bg-[#ddb7ff] text-[#490080] border border-[#ddb7ff] rounded-lg font-bold text-xs tracking-widest hover:bg-[#d6a5ff] transition-colors"
-                  >
-                    Edit Event
-                  </button>
-                )}
-              </div>
-            </section>
-
             <aside className="sticky top-24 bg-[#231d2e] rounded-xl shadow-lg border border-[#4d4354]/30 overflow-hidden">
               <div className="p-6 bg-[#b76dff] text-[#400071]">
-                <h3 className="text-xl font-bold">Select Tickets</h3>
-                <p className="text-xs opacity-90 uppercase tracking-widest mt-1">
-                  Choose your experience
-                </p>
+                <h3 className="text-xl font-bold">Choose your experience</h3>
               </div>
-
               <div className="p-6 space-y-6">
                 <div className="space-y-4">
                   {tickets.length > 0 ? (
@@ -464,11 +367,7 @@ export default function EventDetail() {
                       return (
                         <label
                           key={t.id}
-                          className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                            selectedTicket?.id === t.id
-                              ? "border-[#ddb7ff] bg-[#ddb7ff]/10"
-                              : "border-[#4d4354] opacity-80"
-                          } ${isSoldOut ? "pointer-events-none opacity-40 bg-black/20" : ""}`}
+                          className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedTicket?.id === t.id ? "border-[#ddb7ff] bg-[#ddb7ff]/10" : "border-[#4d4354] opacity-80"} ${isSoldOut ? "pointer-events-none opacity-40 bg-black/20" : ""}`}
                           onClick={() => !isSoldOut && setSelectedTicket(t)}
                         >
                           <div className="flex justify-between items-start mb-2">
@@ -486,11 +385,7 @@ export default function EventDetail() {
                             tickets
                           </p>
                           <span
-                            className={`px-2 py-0.5 rounded font-bold text-[10px] tracking-widest uppercase ${
-                              !isSoldOut
-                                ? "bg-[#5de6ff]/20 text-[#5de6ff]"
-                                : "bg-[#ffb4ab]/20 text-[#ffb4ab]"
-                            }`}
+                            className={`px-2 py-0.5 rounded font-bold text-[10px] tracking-widest uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
                           >
                             {!isSoldOut ? "Available" : "Sold Out"}
                           </span>
@@ -499,7 +394,7 @@ export default function EventDetail() {
                     })
                   ) : (
                     <div className="text-center p-4 border border-dashed border-[#4d4354] rounded-xl text-[#cfc2d6] text-sm">
-                      No tickets available for this event.
+                      No tickets available.
                     </div>
                   )}
                 </div>
@@ -566,15 +461,12 @@ export default function EventDetail() {
                           : `Rp${ticketPrice.toLocaleString("id-ID")}`}
                       </span>
                     </div>
-
-                    {/* 👈 Added visual voucher subtraction line item */}
                     {appliedVoucher && (
                       <div className="flex justify-between text-sm text-green-400 font-medium">
                         <span>Promo Code ({appliedVoucher.code})</span>
                         <span>-Rp{discountAmount.toLocaleString("id-ID")}</span>
                       </div>
                     )}
-
                     <div className="flex justify-between text-sm text-[#cfc2d6]">
                       <span>Service Fee (5%)</span>
                       <span>Rp{serviceFee.toLocaleString("id-ID")}</span>
