@@ -173,7 +173,7 @@ export default function Navbar() {
           </div>
 
           {user ? (
-            <div className="flex items-center gap-4">
+            <div className="relative flex items-center gap-4">
               <Link
                 to="/profile"
                 className="hidden lg:flex items-center gap-2 text-sm font-semibold text-[#ddb7ff] hover:underline"
@@ -194,7 +194,7 @@ export default function Navbar() {
               </button>
 
               {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-[#161224] border border-purple-900/40 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="absolute top-full right-0 mt-2 w-48 bg-[#161224] border border-purple-900/40 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   <div className="px-4 py-2 border-b border-purple-950/40">
                     <p className="text-xs text-gray-400 font-medium">Logged in as</p>
                     <p className="text-sm font-semibold truncate text-purple-300 uppercase">{user.role}</p>
