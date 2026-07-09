@@ -301,10 +301,10 @@ export default function EventDetail() {
               )}
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between">
                   <h1 className="text-4xl md:text-5xl font-black text-[#eadef6] leading-tight">
                     {event.name}
-                  </h1>
+                  </h1>{" "}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center gap-3 p-4 bg-[#231d2e] rounded-xl border border-[#4d4354]/50">
@@ -337,9 +337,20 @@ export default function EventDetail() {
               </div>
             </section>
             <section className="bg-[#2e2738] p-8 rounded-xl shadow-lg space-y-6">
-              <h2 className="text-2xl font-bold text-[#eadef6]">
-                About the Event
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-[#eadef6]">
+                  About the Event
+                </h2>{" "}
+                {isOwner && (
+                  <button
+                    onClick={() => navigate(`/events/${event.id}/edit`)}
+                    type="button"
+                    className="grid items-center gap-2 text-sm bg-[#ddb7ff] text-[#490080] px-4 py-2 rounded-xl font-bold border border-[#ddb7ff]/20 hover:bg-[#ddb7ff]/20 hover:bg-[#f0dbff] transition-all rounded-lg font-bold text-sm"
+                  >
+                    Edit Event
+                  </button>
+                )}
+              </div>
               <div className="space-y-4 text-[#cfc2d6] leading-relaxed">
                 <p>{event.description || "No description provided."}</p>
               </div>

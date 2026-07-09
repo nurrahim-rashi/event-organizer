@@ -11,43 +11,42 @@ export const OrganizerSection = ({
 
   return (
     <section className="bg-[#2e2738] p-6 rounded-xl shadow-lg border border-[#4d4354]/30 space-y-4">
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#ddb7ff]/20 bg-[#171021] flex items-center justify-center">
-          <img
-            alt={event.organizer?.name || "Organizer"}
-            className="w-full h-full object-cover"
-            src={
-              event.organizer?.profilePic ??
-              "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400"
-            }
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-[#ddb7ff] uppercase font-bold tracking-wider">
-            Hosted By
-          </p>
-          <h4 className="font-bold text-[#eadef6] text-lg truncate">
-            {toTitleCase(event.organizer?.name || "Organizer")}
-          </h4>{" "}
-          <h3 className="text-[#eadef6] text-sm truncate">
-            {event.organizer?.email}
-          </h3>
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => navigate(`/organizers/${event.organizerId}`)}
-              className="w-full py-2 bg-transparent border border-[#ddb7ff] text-[#ddb7ff] rounded-lg font-bold text-xs hover:bg-[#ddb7ff]/10"
-            >
-              View Profile
-            </button>
-            {isOwner && (
-              <button
-                onClick={() => navigate(`/events/${event.id}/edit`)}
-                className="w-full py-2 bg-[#ddb7ff] text-[#490080] rounded-lg font-bold text-xs hover:bg-[#d6a5ff]"
-              >
-                Edit Event
-              </button>
-            )}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#ddb7ff]/20 bg-[#171021] flex items-center justify-center">
+            <img
+              alt={event.organizer?.name || "Organizer"}
+              className="w-full h-full object-cover"
+              src={
+                event.organizer?.profilePic ??
+                "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400"
+              }
+            />
           </div>
+          <div className="">
+            <div></div>
+            <div className="">
+              <p className="text-xs text-[#ddb7ff] uppercase font-bold tracking-wider">
+                Hosted By
+              </p>
+              <h4 className="font-bold text-[#eadef6] text-lg truncate">
+                {toTitleCase(event.organizer?.name || "Organizer")}
+              </h4>{" "}
+              <h3 className="text-[#eadef6] text-sm truncate">
+                {event.organizer?.email}
+              </h3>
+            </div>
+            <div className="flex gap-3 pt-2"></div>{" "}
+          </div>{" "}
+        </div>
+        <div>
+          <button
+            onClick={() => navigate(`/organizers/${event.organizerId}`)}
+            type="button"
+            class="flex items-center gap-2 text-sm bg-[#ddb7ff]/10 text-[#ddb7ff] px-4 py-2 rounded-xl font-bold border border-[#ddb7ff]/20 hover:bg-[#ddb7ff]/20 transition-all"
+          >
+            View Profile
+          </button>
         </div>
       </div>
 

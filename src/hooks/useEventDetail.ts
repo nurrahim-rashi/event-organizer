@@ -10,6 +10,8 @@ export const useEventDetail = (eventId: number | string | undefined) => {
   useEffect(() => {
     const fetchDetail = async () => {
       setLoading(true);
+      setEvent(null);
+      setSelectedTicket(null);
 
       const cleanId = Number(eventId);
 
@@ -20,19 +22,23 @@ export const useEventDetail = (eventId: number | string | undefined) => {
 
       try {
         const data: Event = await getEvent(cleanId);
-        setEvent(data);
 
-        const tickets = data?.ticketTypes || (data as any)?.ticket_types || [];
+        if (data) {
+          setEvent(data);
 
-        if (tickets && tickets.length > 0) {
-          const available = tickets.find(
-            (t: any) =>
-              (t.totalTicket ?? t.total_ticket ?? 0) > (t.booked ?? 0),
-          );
-          setSelectedTicket(available || tickets[0]);
+          const tickets =
+            data?.ticketTypes || (data as any)?.ticket_types || [];
+
+          if (tickets && tickets.length > 0) {
+            const available = tickets.find(
+              (t: any) =>
+                (t.totalTicket ?? t.total_ticket ?? 0) > (t.booked ?? 0),
+            );
+            setSelectedTicket(available || tickets[0]);
+          }
         }
       } catch (error) {
-        console.error("Error fetching event detail inside store:", error);
+        console.error("Error fetching event detail:", error);
         setEvent(null);
       } finally {
         setLoading(false);
