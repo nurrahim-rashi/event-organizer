@@ -93,7 +93,7 @@ function ProfilePage({ userId }: { userId: number }) {
                 Active Points
               </p>
               <p className="text-2xl font-black text-yellow-400 mt-2">
-                {user.totalPoints?.toLocaleString("id-ID") || 0}{" "}
+                {user?.totalPoints?.toLocaleString("id-ID") || 0}{" "}
                 <span className="text-xs font-normal text-gray-400">Pts</span>
               </p>
             </div>
@@ -103,7 +103,7 @@ function ProfilePage({ userId }: { userId: number }) {
                 Active Coupons
               </p>
 
-              {!user.coupons || user.coupons.length === 0 ? (
+              {!user?.coupons || user.coupons.length === 0 ? (
                 <p className="text-xs text-gray-500 italic">
                   No active coupons availabe.
                 </p>
