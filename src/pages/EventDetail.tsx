@@ -7,8 +7,8 @@ import {
   getTransactionsByEvent,
 } from "../services/transaction.service";
 import type { Transaction } from "../types/type";
-import Navbar from "../components/layout/Navbar";
-import Breadcrumb from "../components/layout/Breadcrumb";
+import Navbar from "../components/General/Navbar";
+import Breadcrumb from "../components/General/Breadcrumb";
 
 function EventDetailSkeleton() {
   return (
@@ -71,7 +71,6 @@ export default function EventDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [isInitialMount, setIsInitialMount] = useState(true);
 
-  // 👈 New voucher state variables
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
   const [voucherError, setVoucherError] = useState<string | null>(null);
@@ -96,7 +95,6 @@ export default function EventDetail() {
     }
   }, [loading]);
 
-  // 👈 Clear applied voucher if user switches ticket types
   useEffect(() => {
     setAppliedVoucher(null);
     setVoucherCode("");
@@ -133,7 +131,6 @@ export default function EventDetail() {
       )
     : 0;
 
-  // 👈 Voucher Price Deduction Computations
   const ticketPrice = selectedTicket ? selectedTicket.price : 0;
   const discountAmount = appliedVoucher ? appliedVoucher.discount : 0;
   const discountedTicketPrice = Math.max(0, ticketPrice - discountAmount);
@@ -142,7 +139,6 @@ export default function EventDetail() {
     discountedTicketPrice > 0 ? discountedTicketPrice * 0.05 : 0;
   const totalPayment = discountedTicketPrice + serviceFee;
 
-  // 👈 Dynamic Client-Side Voucher Check Logic
   const handleApplyVoucher = () => {
     setVoucherError(null);
     if (!voucherCode.trim()) return;
@@ -195,7 +191,7 @@ export default function EventDetail() {
       setSubmitting(true);
       const payload = {
         eventId: Number(id),
-        voucherId: appliedVoucher ? appliedVoucher.id : undefined, // 👈 Send voucher if applied
+        voucherId: appliedVoucher ? appliedVoucher.id : undefined,
         items: [
           {
             ticketTypeId: selectedTicket.id,

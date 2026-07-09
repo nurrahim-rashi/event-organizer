@@ -2,61 +2,64 @@ import React, { useState, useEffect } from "react";
 import { userAuth } from "../stores/useAuth"; // Sesuaikan dengan store kelompokmu
 import { Link } from "react-router";
 import axios from "axios";
-import Navbar from "../components/layout/Navbar";
+import Navbar from "../components/General/Navbar";
 
 interface DashboardStats {
-    activeEventCounts?: number;
-    ticketsSold?: number;
-    totalEarnings?: number;
-    totalAvailableEvents?: number;
-    totalTicketsOwned?: number;
-    managedEvents?: Array<{
-      id: number;
-      name: string;
-      startDate: string;
-    }>;
-    upcomingTickets?: Array<{
-      id: number;
-      event: {
-        id: number,
-        name: string,
-        startDate: string,
-        location: string,
-      };
-    }>;
-    recommendedEvents?: Array<{
+  activeEventCounts?: number;
+  ticketsSold?: number;
+  totalEarnings?: number;
+  totalAvailableEvents?: number;
+  totalTicketsOwned?: number;
+  managedEvents?: Array<{
+    id: number;
+    name: string;
+    startDate: string;
+  }>;
+  upcomingTickets?: Array<{
+    id: number;
+    event: {
       id: number;
       name: string;
       startDate: string;
       location: string;
-      price?: number;
-    }>;
+    };
+  }>;
+  recommendedEvents?: Array<{
+    id: number;
+    name: string;
+    startDate: string;
+    location: string;
+    price?: number;
+  }>;
 }
 
 export default function DashboardPage() {
   const { user } = userAuth();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats>({})
+  const [stats, setStats] = useState<DashboardStats>({});
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-        if (!user?.accessToken) return;
+      if (!user?.accessToken) return;
 
-        try {
-            setLoading(true);
+      try {
+        setLoading(true);
 
-            const response = await axios.get("http://localhost:8000/dashboard/stats", {
-                headers: {
-                    Authorization: `Bearer ${user.accessToken}`
-                },
-            });
+        const response = await axios.get(
+          "http://localhost:8000/dashboard/stats",
+          {
+            headers: {
+              Authorization: `Bearer ${user.accessToken}`,
+            },
+          },
+        );
 
-            setStats(response.data.data);
-        } catch (error) {
-            console.error("Failed to retrieve dashboard statistic data", error);
-        } finally {
-            setLoading(false);
-        }
+        setStats(response.data.data);
+      } catch (error) {
+        console.error("Failed to retrieve dashboard statistic data", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchDashboardData();
@@ -64,37 +67,39 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-        <div className="min-h-screen bg-[#0d0a16] text-white flex items-center justify-center">
-            <p className="text-purple-400 animate-pulse text-lg font-semibold">
-                Loading dashboard data...
-            </p>
+      <div className="min-h-screen bg-[#0d0a16] text-white flex items-center justify-center">
+        <p className="text-purple-400 animate-pulse text-lg font-semibold">
+          Loading dashboard data...
+        </p>
       </div>
-    )
-  };
+    );
+  }
 
   // Pelindung jika user belum login atau loading state global belum selesai
   if (!user) {
     return (
       <div className="min-h-screen bg-[#0d0a16] text-white flex items-center justify-center">
-        <p className="text-gray-400">Loading your dashboard or please login first...</p>
+        <p className="text-gray-400">
+          Loading your dashboard or please login first...
+        </p>
       </div>
     );
   }
-
 
   if (user.role === "ADMIN") {
     return (
       <div className="min-h-screen bg-[#0d0a16] text-white p-6 md:p-10">
         <Navbar />
         <div className="max-w-6xl mx-auto space-y-8">
-          
           {/* Header Dashboard EO */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-purple-950 pb-6">
             <div>
               <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-indigo-400">
                 Organizer Dashboard
               </h1>
-              <p className="text-gray-400 text-sm mt-1">Welcome back, {user?.name || "User"}.</p>
+              <p className="text-gray-400 text-sm mt-1">
+                Welcome back, {user?.name || "User"}.
+              </p>
             </div>
             <Link to="/create-event">
               <button className="bg-linear-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-2.5 px-5 rounded-xl shadow-lg shadow-purple-900/20 active:scale-[0.98] transition-all text-sm">
@@ -106,26 +111,45 @@ export default function DashboardPage() {
           {/* Kartu Analitik Angka Utama (EO Metrics) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl">
-              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">Total Earnings</p>
-              <p className="text-2xl font-bold text-gray-100 mt-2">Rp {new Intl.NumberFormat("id-ID", {
-                style: "currency",
-                currency: "IDR",
-                maximumFractionDigits: 0,
-              }).format(stats.totalEarnings ?? 0)}</p>
+              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">
+                Total Earnings
+              </p>
+              <p className="text-2xl font-bold text-gray-100 mt-2">
+                Rp{" "}
+                {new Intl.NumberFormat("id-ID", {
+                  style: "currency",
+                  currency: "IDR",
+                  maximumFractionDigits: 0,
+                }).format(stats.totalEarnings ?? 0)}
+              </p>
             </div>
             <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl">
-              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">Tickets Sold</p>
-              <p className="text-2xl font-bold text-gray-100 mt-2">{stats.ticketsSold ?? 0} <span className="text-xs text-gray-500 font-normal">tickets</span></p>
+              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">
+                Tickets Sold
+              </p>
+              <p className="text-2xl font-bold text-gray-100 mt-2">
+                {stats.ticketsSold ?? 0}{" "}
+                <span className="text-xs text-gray-500 font-normal">
+                  tickets
+                </span>
+              </p>
             </div>
             <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl">
-              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">Active Events</p>
-              <p className="text-2xl font-bold text-gray-100 mt-2">{stats.activeEventCounts ?? 0} <span className="text-xs text-gray-500 font-normal">live</span></p>
+              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">
+                Active Events
+              </p>
+              <p className="text-2xl font-bold text-gray-100 mt-2">
+                {stats.activeEventCounts ?? 0}{" "}
+                <span className="text-xs text-gray-500 font-normal">live</span>
+              </p>
             </div>
           </div>
 
           {/* Tabel Manajemen Event Kreator */}
           <div className="bg-[#161224] border border-purple-900/20 rounded-2xl p-6 shadow-xl">
-            <h3 className="text-lg font-bold mb-4 text-gray-200">Your Managed Events</h3>
+            <h3 className="text-lg font-bold mb-4 text-gray-200">
+              Your Managed Events
+            </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -139,8 +163,10 @@ export default function DashboardPage() {
                 <tbody className="text-sm text-gray-300 divide-y divide-purple-950/40">
                   {stats.managedEvents && stats.managedEvents.length > 0 ? (
                     stats.managedEvents.map((event) => (
-                      <tr key={event.id} className="border-b border-purple-950/40 text-sm text-gray-300">
-
+                      <tr
+                        key={event.id}
+                        className="border-b border-purple-950/40 text-sm text-gray-300"
+                      >
                         {/*NAMA EVENT*/}
                         <td className="py-4 font-medium text-white pl-2">
                           {event.name}
@@ -148,16 +174,17 @@ export default function DashboardPage() {
 
                         {/*TANGGA: EVENT*/}
                         <td>
-                          {new Date(event.startDate).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          {new Date(event.startDate).toLocaleDateString(
+                            "id-ID",
+                            {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )}
                         </td>
 
-                        <td className="py-4">
-                          0
-                        </td>
+                        <td className="py-4">0</td>
 
                         <td className="py-4 text-right pr-2">
                           <button>Delete</button>
@@ -166,7 +193,10 @@ export default function DashboardPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="py-8 text-center text-gray-500 italic">
+                      <td
+                        colSpan={4}
+                        className="py-8 text-center text-gray-500 italic"
+                      >
                         You haven't managed any events yet.
                       </td>
                     </tr>
@@ -175,7 +205,6 @@ export default function DashboardPage() {
               </table>
             </div>
           </div>
-
         </div>
       </div>
     );
@@ -185,84 +214,117 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#0d0a16] text-white p-6 md:p-10">
       <div className="max-w-5xl mx-auto space-y-8">
-        
         {/* Header Dashboard Customer */}
         <div className="border-b border-purple-950 pb-6">
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-indigo-400">
             Welcome Back, {user.name}! 👋
           </h1>
-          <p className="text-gray-400 text-sm mt-1">Ready for your next experience? Track your tickets and saved events here.</p>
+          <p className="text-gray-400 text-sm mt-1">
+            Ready for your next experience? Track your tickets and saved events
+            here.
+          </p>
         </div>
 
         {/* Kartu Ringkasan Aktivitas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">Your Tickets</p>
-              <p className="text-3xl font-bold text-gray-100 mt-1">{stats.totalTicketsOwned ?? 0}</p>
+              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">
+                Your Tickets
+              </p>
+              <p className="text-3xl font-bold text-gray-100 mt-1">
+                {stats.totalTicketsOwned ?? 0}
+              </p>
             </div>
-            <Link to="/my-tickets" className="text-xs text-purple-400 hover:underline">View All &rarr;</Link>
+            <Link
+              to="/my-tickets"
+              className="text-xs text-purple-400 hover:underline"
+            >
+              View All &rarr;
+            </Link>
           </div>
 
           <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">Active Events</p>
-              <p className="text-3xl font-bold text-gray-100 mt-1">{stats.totalAvailableEvents ?? 0}</p>
+              <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">
+                Active Events
+              </p>
+              <p className="text-3xl font-bold text-gray-100 mt-1">
+                {stats.totalAvailableEvents ?? 0}
+              </p>
             </div>
-            <Link to="/favorites" className="text-xs text-purple-400 hover:underline">Browse &rarr;</Link>
+            <Link
+              to="/favorites"
+              className="text-xs text-purple-400 hover:underline"
+            >
+              Browse &rarr;
+            </Link>
           </div>
         </div>
 
         {/*RECOMMENED EVENTS*/}
         <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white mb-4">Recommended for you</h3>
+          <h3 className="text-lg font-bold text-white mb-4">
+            Recommended for you
+          </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-              {stats.recommendedEvents && stats.recommendedEvents.length > 0 ? (
+            {stats.recommendedEvents && stats.recommendedEvents.length > 0 ? (
               stats.recommendedEvents.map((event) => (
-              <div
-              key={event.id}
-              className="bg-[#161224] border border-purple-900/30 rounded-2xl p-5 shadow-xl flex flex-col justify-between"
-              >
-                <div>
-                  <h4 className="font-semibold text-white text-base">{event.name}</h4>
-                  <p className="text-gray-400 text-xs mt-1.5 flex items-center gap-1">{event.location}</p>
-                  <p className="text-purple-400 text-xs mt-3 font-medium">
-                    {new Date(event.startDate).toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                    })}
-                  </p>
-                </div>
+                <div
+                  key={event.id}
+                  className="bg-[#161224] border border-purple-900/30 rounded-2xl p-5 shadow-xl flex flex-col justify-between"
+                >
+                  <div>
+                    <h4 className="font-semibold text-white text-base">
+                      {event.name}
+                    </h4>
+                    <p className="text-gray-400 text-xs mt-1.5 flex items-center gap-1">
+                      {event.location}
+                    </p>
+                    <p className="text-purple-400 text-xs mt-3 font-medium">
+                      {new Date(event.startDate).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
 
-                <div className="flex items-center justify-between mt-5 pt-4 border-t border-purple-950/40">
-                  <span className="text-sm font-bold text-gray-200">
-                    {event.price === 0 ? "Free" : event.price ? `Rp ${event.price.toLocaleString("id-ID")}` : "Tickets Available"}
-                  </span>
+                  <div className="flex items-center justify-between mt-5 pt-4 border-t border-purple-950/40">
+                    <span className="text-sm font-bold text-gray-200">
+                      {event.price === 0
+                        ? "Free"
+                        : event.price
+                          ? `Rp ${event.price.toLocaleString("id-ID")}`
+                          : "Tickets Available"}
+                    </span>
 
-                  <Link 
-                  to={`/events/${event.id}`}
-                  className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl transition-all font-semibold shadow-md shadow-purple-900/20"
-                  >
-                    Buy Ticket
-                  </Link>
+                    <Link
+                      to={`/events/${event.id}`}
+                      className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl transition-all font-semibold shadow-md shadow-purple-900/20"
+                    >
+                      Buy Ticket
+                    </Link>
+                  </div>
                 </div>
-              </div>
               ))
-              ) : (
-                <div className="col-span-1 md:col-span-2 text-center py-8 px-4 bg-[#161224]/50 border border-dashed border-purple-900/20 rounded-2xl">
-                  <p className="text-sm text-gray-500 italic">No recommended events available right now.</p>
-                </div>  
-              )}
+            ) : (
+              <div className="col-span-1 md:col-span-2 text-center py-8 px-4 bg-[#161224]/50 border border-dashed border-purple-900/20 rounded-2xl">
+                <p className="text-sm text-gray-500 italic">
+                  No recommended events available right now.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* List Tiket Terdekat (Upcoming Events) */}
         <div className="bg-[#161224] border border-purple-900/20 rounded-2xl p-6 shadow-xl">
-          <h3 className="text-lg font-bold mb-4 text-gray-200">Your Upcoming Events</h3>
-          
+          <h3 className="text-lg font-bold mb-4 text-gray-200">
+            Your Upcoming Events
+          </h3>
+
           <div className="space-y-4">
             {/* EVENT CARD */}
             {stats.upcomingTickets && stats.upcomingTickets.length > 0 ? (
@@ -270,21 +332,30 @@ export default function DashboardPage() {
                 const eventDate = new Date(ticket.event.startDate);
                 const day = eventDate.getDate();
 
-                const month = eventDate.toLocaleDateString("id-ID", {month: "short"}).toUpperCase();
+                const month = eventDate
+                  .toLocaleDateString("id-ID", { month: "short" })
+                  .toUpperCase();
 
                 return (
-                  <div key={ticket.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#1e1932] border border-purple-950 rounded-xl">
+                  <div
+                    key={ticket.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#1e1932] border border-purple-950 rounded-xl"
+                  >
                     <div className="flex items-center space-x-4">
-                        {/*KOTAK TANGGAL*/}
-                        <div className="bg-purple-600/20 text-purple-400 p-3 rounded-xl text-center font-bold text-xs w-14">
-                            {month} <span className="block text-lg">{day}</span>
-                        </div>
+                      {/*KOTAK TANGGAL*/}
+                      <div className="bg-purple-600/20 text-purple-400 p-3 rounded-xl text-center font-bold text-xs w-14">
+                        {month} <span className="block text-lg">{day}</span>
+                      </div>
 
-                        {/*EVENT DETAIL*/}
-                        <div>
-                          <h4 className="font-semibold text-white">{ticket.event.name}</h4>
-                          <p className="text-gray-400 text-xs mt-0.5">{ticket.event.location}</p>
-                        </div>
+                      {/*EVENT DETAIL*/}
+                      <div>
+                        <h4 className="font-semibold text-white">
+                          {ticket.event.name}
+                        </h4>
+                        <p className="text-gray-400 text-xs mt-0.5">
+                          {ticket.event.location}
+                        </p>
+                      </div>
                     </div>
 
                     {/*BUTTON ACTION*/}
@@ -300,9 +371,7 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
-
         </div>
-
       </div>
     </div>
   );
