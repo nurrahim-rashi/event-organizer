@@ -11,6 +11,14 @@ api.interceptors.request.use((config) => {
 });
 
 export const getOrganizerProfile = async (id: string): Promise<Organizer> => {
-  const response = await api.get(`/organizers/${id}`);
-  return response.data;
+  try {
+    const response = await api.get(`/organizers/${id}`);
+
+    const result = response.data.data || response.data;
+
+    return result;
+  } catch (error) {
+    console.error("Error in getOrganizerProfile:", error);
+    throw error;
+  }
 };

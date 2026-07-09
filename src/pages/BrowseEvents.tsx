@@ -3,12 +3,12 @@ import { useSearchParams } from "react-router";
 import { useEvents } from "../hooks/useEvents";
 import { useDebounce } from "../hooks/useDebounce";
 import type { Event, EventCategory } from "../types/type";
-import Navbar from "../components/layout/Navbar";
-import Footer from "../components/layout/Footer";
+import Navbar from "../components/General/Navbar";
+import Footer from "../components/General/Footer";
 import SidebarFilter from "../components/BrowseEvents/SidebarFilter";
 import FeaturedBanner from "../components/BrowseEvents/FeaturedBanner";
-import EventCard from "../components/BrowseEvents/EventCard";
-import Breadcrumb from "../components/layout/Breadcrumb";
+import { EventCard } from "../components/General/EventCard";
+import Breadcrumb from "../components/General/Breadcrumb";
 
 function EventCardSkeleton() {
   return (

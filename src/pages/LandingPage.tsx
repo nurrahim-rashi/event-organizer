@@ -1,7 +1,7 @@
-import Navbar from "../components/layout/Navbar";
+import Navbar from "../components/General/Navbar";
 import Hero from "../components/LandingPage/Hero";
 import UpcomingEvents from "../components/LandingPage/UpcomingEvents";
-import Footer from "../components/layout/Footer";
+import Footer from "../components/General/Footer";
 import CTA from "../components/LandingPage/CTA";
 
 export default function LandingPage() {

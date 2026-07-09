@@ -1,23 +1,24 @@
-import Navbar from "../components/layout/Navbar";
+import Navbar from "../components/General/Navbar";
 import ProfilePage from "../components/Profile/ProfilePage";
 import { userAuth } from "../stores/useAuth";
 
-function Profile () {
-    const {user} = userAuth();
-    const idUser = user ? Number(user.id) : 0;
+function Profile() {
+  const { user } = userAuth();
+  const idUser = user ? Number(user.id) : 0;
 
+  return (
+    <div>
+      <Navbar />
 
-    return (
+      {idUser !== 0 ? (
+        <ProfilePage userId={idUser} />
+      ) : (
         <div>
-            <Navbar />
-
-            {idUser !== 0 ? (
-                <ProfilePage userId={idUser} />
-            ) : (<div>
-                <p>Please login</p>
-            </div>)}
+          <p>Please login</p>
         </div>
-    )
+      )}
+    </div>
+  );
 }
 
 export default Profile;

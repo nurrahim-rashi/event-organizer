@@ -8,8 +8,8 @@ import { BasicDetailsForm } from "../components/CreateEvent/BasicDetailsForm";
 import { ScheduleForm } from "../components/CreateEvent/ScheduleForm";
 import { TicketingForm } from "../components/CreateEvent/TicketingForm";
 import { PromotionForm } from "../components/CreateEvent/PromotionForm";
-import Navbar from "../components/layout/Navbar";
-import Breadcrumb from "../components/layout/Breadcrumb";
+import Navbar from "../components/General/Navbar";
+import Breadcrumb from "../components/General/Breadcrumb";
 
 export type EventCategory =
   | "MUSIC"
