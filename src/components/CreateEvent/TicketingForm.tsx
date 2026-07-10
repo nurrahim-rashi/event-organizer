@@ -60,10 +60,6 @@ export function TicketingForm({ formData, setFormData }: TicketingFormProps) {
     }));
   };
 
-  const totalCapacity = formData.ticketTypes.reduce(
-    (acc, t) => acc + (Number(t.totalTicket) || 0),
-    0,
-  );
   const totalRevenue = formData.ticketTypes.reduce(
     (acc, t) => acc + (Number(t.price) || 0) * (Number(t.totalTicket) || 0),
     0,

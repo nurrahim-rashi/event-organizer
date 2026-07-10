@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { userAuth } from "../stores/useAuth"; // Sesuaikan dengan store kelompokmu
+import { userAuth } from "../stores/useAuth";
 import { Link } from "react-router";
 import axios from "axios";
 import Navbar from "../components/General/Navbar";
