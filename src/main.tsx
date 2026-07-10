@@ -13,6 +13,7 @@ import CreateEvent from "./pages/CreateEvent";
 import EditEvent from "./pages/EditEvent";
 import OrganizerProfile from "./pages/OrganizerProfile";
 import DashboardPage from "./pages/DashboardPage";
+import EventStatistics from "./components/Profile/EventStatistics";
 
 const router = createBrowserRouter([
   {
