@@ -6,7 +6,7 @@ export default function FeaturedBanner({ event }: { event: Event }) {
     if (!event.ticketTypes || event.ticketTypes.length === 0) return "IDR 0";
     const prices = event.ticketTypes.map((t) => t.price);
     const minPrice = Math.min(...prices);
-    return minPrice === 0 ? "Free" : `IDR ${minPrice.toLocaleString()}`;
+    return minPrice === 0 ? "Free" : `IDR ${minPrice.toLocaleString("id-ID")}`;
   };
 
   return (

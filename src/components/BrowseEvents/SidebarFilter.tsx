@@ -182,7 +182,7 @@ export default function SidebarFilter({
               <span className="text-xs font-bold text-[#ddb7ff]">
                 {Number(priceRange) === 0
                   ? "Free"
-                  : `IDR 0 - IDR ${Number(priceRange).toLocaleString()}`}
+                  : `IDR 0 - IDR ${Number(priceRange).toLocaleString("id-ID")}`}
               </span>
             </div>
             <input

@@ -48,7 +48,7 @@ export default function BrowseEvents() {
   const searchQuery = searchParams.get("search") || "";
   const locationQuery = searchParams.get("location") || "";
   const sortBy = searchParams.get("sortBy") || "Closest Date";
-  const maxPriceParam = Number(searchParams.get("price")) || 5000000;
+  const maxPriceParam = Number(searchParams.get("price")) || 20000000;
   const dateFilter = searchParams.get("date") || "";
 
   const selectedCategories = searchParams

@@ -225,8 +225,8 @@ export function PromotionForm({ formData, setFormData }: PromotionFormProps) {
                   <span className="text-[#eadef6] font-mono font-bold">
                     {v.code.toUpperCase()}
                   </span>{" "}
-                  | Disc: IDR {Number(v.discount).toLocaleString()} | Quota:{" "}
-                  {v.quota}
+                  | Disc: IDR {Number(v.discount).toLocaleString("id-ID")} |
+                  Quota: {v.quota}
                 </li>
               ))}
             </ul>
