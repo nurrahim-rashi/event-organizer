@@ -14,6 +14,7 @@ import EditEvent from "./pages/EditEvent";
 import OrganizerProfile from "./pages/OrganizerProfile";
 import DashboardPage from "./pages/DashboardPage";
 import EventStatistics from "./components/Profile/EventStatistics";
+import CheckoutPage from "./pages/Checkout";
 
 const router = createBrowserRouter([
   {
@@ -59,6 +60,10 @@ const router = createBrowserRouter([
   {
     path: "/dashboard",
     element: <DashboardPage />,
+  },
+  {
+    path: "/transactions/checkout/:id",
+    element: <CheckoutPage />,
   },
 ]);
 
