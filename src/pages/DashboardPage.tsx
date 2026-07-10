@@ -3,6 +3,7 @@ import { userAuth } from "../stores/useAuth";
 import { Link } from "react-router";
 import axios from "axios";
 import Navbar from "../components/General/Navbar";
+import EventStatistics from "../components/Profile/EventStatistics";
 
 interface DashboardStats {
   activeEventCounts?: number;
@@ -37,6 +38,7 @@ export default function DashboardPage() {
   const { user } = userAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({});
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -115,7 +117,7 @@ export default function DashboardPage() {
                 Total Earnings
               </p>
               <p className="text-2xl font-bold text-gray-100 mt-2">
-                Rp{" "}
+                {" "}
                 {new Intl.NumberFormat("id-ID", {
                   style: "currency",
                   currency: "IDR",
@@ -144,6 +146,37 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
+
+          {/*STATISTICS*/}
+          <div className="space-y-4 mt-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <h3 className="text-lg font-bold text-white">Event Performance Analytics</h3>
+              
+              <div className="w-full sm:w-72">
+                <select 
+                  className="w-full bg-[#161224] border border-purple-900/30 text-purple-300 text-xs rounded-xl px-4 py-2.5 focus:outline-none focus:border-purple-600 transition-all cursor-pointer"
+                  value={selectedEventId || ""}
+                  onChange={(e) => setSelectedEventId(e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="" disabled>-- Select an Event to View Stats --</option>
+                  {/* Menggunakan stats?.events berdasarkan struktur objek 'stats' kamu */}
+                  {stats?.managedEvents?.map((evt: any) => (
+                    <option key={evt.id} value={evt.id} className="bg-[#0d0a16]">
+                      {evt.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {selectedEventId ? (
+              <EventStatistics eventId={selectedEventId} />
+            ) : (
+              <div className="p-10 text-center bg-purple-950/10 rounded-2xl border border-dashed border-purple-900/20 text-purple-300/60 text-sm">
+                Please select an event from the dropdown above to visualize its sales and ticket analytics.
+              </div>
+            )}
+        </div>
 
           {/* Tabel Manajemen Event Kreator */}
           <div className="bg-[#161224] border border-purple-900/20 rounded-2xl p-6 shadow-xl">
