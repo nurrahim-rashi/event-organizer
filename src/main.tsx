@@ -15,6 +15,7 @@ import OrganizerProfile from "./pages/OrganizerProfile";
 import DashboardPage from "./pages/DashboardPage";
 import EventStatistics from "./components/Profile/EventStatistics";
 import CheckoutPage from "./pages/Checkout";
+import { authLoader, userGuardLoader, adminGuardLoader } from "./loaders/auth";
 
 const router = createBrowserRouter([
   {
@@ -36,10 +37,12 @@ const router = createBrowserRouter([
   {
     path: "/events/create",
     element: <CreateEvent />,
+    loader: adminGuardLoader,
   },
   {
     path: "/events/:id/edit",
     element: <EditEvent />,
+    loader: adminGuardLoader
   },
   {
     path: "/register",
@@ -52,18 +55,22 @@ const router = createBrowserRouter([
   {
     path: "/profile",
     element: <Profile />,
+    loader: authLoader,
   },
   {
     path: "/profile/edit",
     element: <ProfileEdit />,
+    loader: authLoader,
   },
   {
     path: "/dashboard",
     element: <DashboardPage />,
+    loader: authLoader,
   },
   {
     path: "/transactions/checkout/:id",
     element: <CheckoutPage />,
+    loader: userGuardLoader,
   },
 ]);
 
