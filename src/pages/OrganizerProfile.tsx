@@ -30,11 +30,6 @@ export default function OrganizerProfile() {
     fetchOrganizerData();
   }, [id]);
 
-  const onShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert("Profile link copied to clipboard!");
-  };
-
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#171021] text-[#ddb7ff]">

@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { useEventDetail } from "../hooks/useEventDetail";
 import { userAuth } from "../stores/useAuth";
+import { useCheckoutStore } from "../stores/useCheckoutStore";
 import {
   createTransaction,
   getTransactionsByEvent,
@@ -95,15 +96,17 @@ export default function EventDetail() {
     if (!selectedTicket) return;
     try {
       setSubmitting(true);
+      useCheckoutStore.getState().setCheckoutData(event, selectedTicket);
       const res = await createTransaction({
         eventId: Number(id),
         voucherId: appliedVoucher?.id,
         items: [{ ticketTypeId: selectedTicket.id, qty: 1 }],
       });
       if (res.success) {
-        navigate(`/transactions/checkout/${res.data.id}`);
+        navigate(`/transactions/checkout/`);
       }
     } catch (e: any) {
+      console.error("ID tidak ditemukan dalam respon API!");
       alert(e.response?.data?.message || "Failed to process transaction.");
     } finally {
       setSubmitting(false);

@@ -118,4 +118,5 @@ export interface Organizer {
     percentage: number;
   }[];
   reviews: Review[];
+  organizedEvents: Event;
 }
