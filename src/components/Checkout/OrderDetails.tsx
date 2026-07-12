@@ -1,95 +1,91 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function OrderSummary() {
-  const [submitting, setSubmitting] = useState(false);
+interface OrderSummaryProps {
+  ticket: { name: string; price: number };
+  transaction: { expiredAt: string | Date };
+  onProceedToPayment: () => void;
+}
 
-  const handleProceed = () => {
-    setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-    }, 2000);
-  };
+export default function OrderSummary({
+  ticket,
+  transaction,
+  onProceedToPayment,
+}: OrderSummaryProps) {
+  const [qty, setQty] = useState(1);
+  const [timeLeft, setTimeLeft] = useState("00m 00s");
+
+  const subtotal = ticket ? ticket.price * qty : 0;
+  const serviceFee = subtotal * 0.05;
+  const total = subtotal + serviceFee;
+
+  useEffect(() => {
+    if (!transaction?.expiredAt) return;
+    const expiryDate = new Date(transaction.expiredAt).getTime();
+    const timer = setInterval(() => {
+      const diff = expiryDate - new Date().getTime();
+      if (diff <= 0) {
+        setTimeLeft("Expired");
+        clearInterval(timer);
+      } else {
+        const m = Math.floor(diff / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        setTimeLeft(`${m}m ${s.toString().padStart(2, "0")}s`);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [transaction?.expiredAt]);
+
+  if (!ticket) return null;
 
   return (
-    <div className="lg:col-span-5 sticky top-28">
-      <div className="bg-[rgba(35,29,46,0.6)] backdrop-blur-[12px] border border-white/10 rounded-xl p-8 flex flex-col gap-8 shadow-2xl relative overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#ddb7ff] rounded-full blur-[80px] opacity-20"></div>
-        <h3 className="text-xl font-bold text-[#eadef6]">Order Summary</h3>
+    <section className="bg-[rgba(35,29,46,0.6)] backdrop-blur-md border border-white/10 rounded-2xl p-6 flex flex-col gap-6 w-full max-w-sm">
+      <div className="flex justify-between items-center bg-[#171021] px-4 py-3 rounded-xl border border-[#4d4354]/30">
+        <span className="text-[#5de6ff] font-bold">{timeLeft}</span>
+      </div>
 
-        <div className="flex flex-col gap-4 border-b border-[#4d4354] pb-6">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-[#cfc2d6]">Subtotal</span>
-            <span className="text-[#eadef6]">$149.00</span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-[#cfc2d6]">Fees & Taxes</span>
-            <span className="text-[#eadef6]">$17.50</span>
-          </div>
-          <div className="flex justify-between items-center text-[#ddb7ff] text-sm font-medium">
-            <span>Discounts</span>
-            <span>-$0.00</span>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <span className="text-xl font-bold text-[#eadef6]">Total</span>
-          <div className="flex flex-col items-end">
-            <span className="text-2xl font-extrabold text-[#ddb7ff]">
-              $166.50
-            </span>
-            <span className="text-xs text-[#cfc2d6]">USD</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4">
+      <div className="flex justify-between items-center">
+        <span className="text-[#eadef6] font-medium">{ticket.name}</span>
+        <div className="flex items-center gap-3 border border-[#4d4354] rounded-lg p-1">
           <button
-            onClick={handleProceed}
-            className="w-full py-4 bg-[#ddb7ff] text-[#490080] font-bold text-lg rounded-lg hover:shadow-[0_0_20px_rgba(183,109,255,0.3)] transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+            onClick={() => setQty(Math.max(1, qty - 1))}
+            className="px-2 text-[#ddb7ff]"
           >
-            {submitting ? (
-              <>
-                <span className="material-symbols-outlined animate-spin">
-                  sync
-                </span>
-                <span>Processing...</span>
-              </>
-            ) : (
-              <>
-                <span>Proceed to Payment</span>
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </>
-            )}
+            -
           </button>
-          <p className="text-[11px] text-center text-[#cfc2d6] px-4">
-            By proceeding, you agree to MomentumEvents' Terms of Service and
-            Privacy Policy.
-          </p>
-        </div>
-
-        <div className="flex justify-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-          <span className="material-symbols-outlined text-3xl">
-            credit_card
-          </span>
-          <span className="material-symbols-outlined text-3xl">
-            account_balance_wallet
-          </span>
-          <span className="material-symbols-outlined text-3xl">
-            contactless
-          </span>
+          <span className="text-[#eadef6] w-6 text-center">{qty}</span>
+          <button
+            onClick={() => setQty(qty + 1)}
+            className="px-2 text-[#ddb7ff]"
+          >
+            +
+          </button>
         </div>
       </div>
 
-      <div className="mt-6 flex items-center gap-4 p-4 rounded-xl border border-[#4d4354] bg-[#110b1b]">
-        <div className="w-10 h-10 rounded-full bg-[#00cbe6]/20 flex items-center justify-center text-[#00cbe6]">
-          <span className="material-symbols-outlined">support_agent</span>
+      <div className="text-sm space-y-2 border-t border-[#4d4354]/30 pt-4">
+        <div className="flex justify-between text-[#cfc2d6]">
+          <span>Subtotal</span>
+          <span>Rp{subtotal.toLocaleString("id-ID")}</span>
         </div>
-        <div>
-          <h4 className="font-semibold text-[#eadef6] text-sm">Need help?</h4>
-          <p className="text-xs text-[#cfc2d6]">
-            Our concierge is available 24/7
-          </p>
+        <div className="flex justify-between text-[#cfc2d6]">
+          <span>Service Fee (5%)</span>
+          <span>Rp{serviceFee.toLocaleString("id-ID")}</span>
         </div>
       </div>
-    </div>
+
+      <div className="bg-[#171021] p-4 rounded-xl border border-[#ddb7ff]/20">
+        <div className="text-2xl font-black text-[#ddb7ff]">
+          Rp{total.toLocaleString("id-ID")}
+        </div>
+      </div>
+
+      <button
+        onClick={onProceedToPayment}
+        disabled={timeLeft === "Expired"}
+        className="w-full py-4 bg-[#ddb7ff] text-[#490080] font-bold rounded-xl disabled:opacity-50"
+      >
+        Proceed to Payment
+      </button>
+    </section>
   );
 }

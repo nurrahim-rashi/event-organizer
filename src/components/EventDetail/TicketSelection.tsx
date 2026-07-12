@@ -7,7 +7,6 @@ export const TicketSelection = ({
   appliedVoucher,
   setAppliedVoucher,
   voucherError,
-  setVoucherError,
   handleApplyVoucher,
   handleBuyTicket,
   submitting,

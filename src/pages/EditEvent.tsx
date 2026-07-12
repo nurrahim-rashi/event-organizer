@@ -51,8 +51,6 @@ export default function EditEvent() {
       const startDateTime = new Date(formData.startDate).toISOString();
       const endDateTime = new Date(formData.endDate).toISOString();
 
-      // 2. Bersihkan payload
-      // Kita hapus property yang kosong agar tidak dikirim ke Prisma sebagai null
       const payload: any = {
         name: formData.name,
         category: formData.category,

@@ -68,7 +68,7 @@ const router = createBrowserRouter([
     loader: authLoader,
   },
   {
-    path: "/transactions/checkout/:id",
+    path: "/transactions/checkout/",
     element: <CheckoutPage />,
     loader: userGuardLoader,
   },
