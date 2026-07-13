@@ -116,24 +116,6 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-
-            {/* Logged-In Specific Navigation */}
-            {user && (
-              <>
-                <Link
-                  to="/my-tickets"
-                  className="text-sm font-semibold text-[#cfc2d6] hover:text-[#ddb7ff] transition-colors"
-                >
-                  My Tickets
-                </Link>
-                <Link
-                  to="/wishlist"
-                  className="text-sm font-semibold text-[#cfc2d6] hover:text-[#ddb7ff] transition-colors"
-                >
-                  Wishlist
-                </Link>{" "}
-              </>
-            )}
           </div>
         </div>
 
@@ -174,21 +156,14 @@ export default function Navbar() {
 
           {user ? (
             <div className="relative flex items-center gap-4">
-              <Link
-                to="/profile"
-                className="hidden lg:flex items-center gap-2 text-sm font-semibold text-[#ddb7ff] hover:underline"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  account_circle
-                </span>
-                <span>{toTitleCase(user.name)}</span>
-              </Link>
               <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="flex items-center gap-2 hover:text-purple-400 transition-colors focus:outline-none font-medium text-sm md:text-base"
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-2 hover:text-purple-400 transition-colors focus:outline-none font-medium text-sm md:text-base"
               >
-                <span>{user.name || "My Account"}</span>
-                <span className={`text-xs transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>
+                <span>{toTitleCase(user.name)}</span>
+                <span
+                  className={`text-xs transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                >
                   ▼
                 </span>
               </button>
@@ -196,8 +171,12 @@ export default function Navbar() {
               {isOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 bg-[#161224] border border-purple-900/40 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   <div className="px-4 py-2 border-b border-purple-950/40">
-                    <p className="text-xs text-gray-400 font-medium">Logged in as</p>
-                    <p className="text-sm font-semibold truncate text-purple-300 uppercase">{user.role}</p>
+                    <p className="text-xs text-gray-400 font-medium">
+                      Logged in as
+                    </p>
+                    <p className="text-sm font-semibold truncate text-purple-300 uppercase">
+                      {user.role}
+                    </p>
                   </div>
 
                   {/* DASHBOARD */}
