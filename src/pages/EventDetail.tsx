@@ -179,11 +179,24 @@ export default function EventDetail() {
               </div>
             </section>
 
-            <section className="bg-[#2e2738] p-8 rounded-xl shadow-lg space-y-4">
-              <h2 className="text-2xl font-bold">About the Event</h2>
-              <p className="text-[#cfc2d6] leading-relaxed">
-                {event.description}
-              </p>
+            <section className="bg-[#2e2738] p-8 rounded-xl shadow-lg space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-[#eadef6]">
+                  About the Event
+                </h2>{" "}
+                {isOwner && (
+                  <button
+                    onClick={() => navigate(`/events/${event.id}/edit`)}
+                    type="button"
+                    className="grid items-center gap-2 text-sm bg-[#ddb7ff] text-[#490080] px-4 py-2 rounded-xl font-bold border border-[#ddb7ff]/20 hover:bg-[#ddb7ff]/20 hover:bg-[#f0dbff] transition-all rounded-lg font-bold text-sm"
+                  >
+                    Edit Event
+                  </button>
+                )}
+              </div>
+              <div className="space-y-4 text-[#cfc2d6] leading-relaxed">
+                <p>{event.description || "No description provided."}</p>
+              </div>
             </section>
 
             <OrganizerSection
