@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import axios from "axios";
 import Navbar from "../components/General/Navbar";
 import EventStatistics from "../components/Profile/EventStatistics";
+import { api } from "../api/axios";
 
 interface DashboardStats {
   activeEventCounts?: number;
@@ -34,21 +35,93 @@ interface DashboardStats {
   }>;
 }
 
+interface Transaction {
+  id: number;
+  userId: number;
+  eventId: number;
+  status: "WAITING_PAYMENT" | "DONE" | "REJECTED"; // Sesuaikan dengan tipe enum di backend
+  totalPrice: number;
+  paymentProof: string | null;
+  createdAt: string;
+  event?: {
+    name: string;
+  };
+}
+
+interface ActionButtonsProps {
+  transactionId: number;
+  accessToken: string;
+  onSuccess: () => void;
+}
+
+const TransactionActionButtons: React.FC<ActionButtonsProps> = ({
+  transactionId,
+  accessToken,
+  onSuccess,
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleAction = async (status: "DONE" | "REJECTED") => {
+    const confirmText = status === "DONE" ? "accept" : "reject";
+    if (!window.confirm(`Are you sure you want to ${confirmText} this transaction?`)) return;
+
+    setIsLoading(true);
+    try {
+      const response = await api.patch(
+        `/transactions/${transactionId}/status`,
+        { newStatus: status },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (response.data.success) {
+        alert(response.data.message || `Transaction successfully ${confirmText}ed!`);
+        onSuccess(); // Ini akan memicu reload fungsi fetchDashboardData() kamu
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Something went wrong.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex gap-2 justify-end">
+      <button
+        onClick={() => handleAction("DONE")}
+        disabled={isLoading}
+        className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors"
+      >
+        {isLoading ? "..." : "Accept"}
+      </button>
+      <button
+        onClick={() => handleAction("REJECTED")}
+        disabled={isLoading}
+        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors"
+      >
+        Reject
+      </button>
+    </div>
+  );
+};
+
 export default function DashboardPage() {
   const { user } = userAuth();
+  console.log("User yang login saat ini", user);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({});
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
+  const fetchDashboardData = async () => {
       if (!user?.accessToken) return;
 
       try {
         setLoading(true);
 
-        const response = await axios.get(
-          "http://localhost:8000/dashboard/stats",
+        const response = await api.get(
+          "/dashboard/stats",
           {
             headers: {
               Authorization: `Bearer ${user.accessToken}`,
@@ -56,7 +129,24 @@ export default function DashboardPage() {
           },
         );
 
+        console.log("Response Data dari backend:", response.data);
+        console.log("Isi managed events:", response.data?.data?.managedEvents)
+
         setStats(response.data.data);
+
+        const eventIdToFetch = selectedEventId || response.data.data.managedEvents?.[0]?.id;
+
+         if(eventIdToFetch) {
+          const txResponse = await api.get(`/transactions/event/${eventIdToFetch}/incoming`, {
+            headers: {
+              Authorization: `Bearer ${user.accessToken}`,
+            },
+          });
+          setTransactions(txResponse.data.data);
+         } else {
+          setTransactions([]);
+         }
+
       } catch (error) {
         console.error("Failed to retrieve dashboard statistic data", error);
       } finally {
@@ -64,6 +154,7 @@ export default function DashboardPage() {
       }
     };
 
+  useEffect(() => {
     fetchDashboardData();
   }, [user]);
 
@@ -238,6 +329,83 @@ export default function DashboardPage() {
               </table>
             </div>
           </div>
+
+          <div className="bg-[#161224] border border-purple-900/20 rounded-2xl p-6 shadow-xl mt-8">
+          <h3 className="text-lg font-bold mb-4 text-gray-200">
+            Incoming Transactions & Payment Proofs
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-purple-950 text-purple-300/70 text-xs uppercase tracking-wider">
+                  <th className="pb-3 pl-2">TX ID</th>
+                  <th className="pb-3">Event Name</th>
+                  <th className="pb-3">Amount</th>
+                  <th className="pb-3">Status</th>
+                  <th className="pb-3">Payment Proof</th>
+                  <th className="pb-3 text-right pr-2">Action</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm text-gray-300 divide-y divide-purple-950/40">
+                {transactions && transactions.length > 0 ? (
+                  transactions.map((tx: any) => (
+                    <tr key={tx.id} className="border-b border-purple-950/40 text-sm text-gray-300">
+                      <td className="py-4 pl-2 font-mono text-xs text-purple-300">#{tx.id}</td>
+                      <td className="py-4 font-medium text-white">{tx.event?.name || `Event ID: ${tx.eventId}`}</td>
+                      <td className="py-4">
+                        {new Intl.NumberFormat("id-ID", {
+                          style: "currency",
+                          currency: "IDR",
+                          maximumFractionDigits: 0,
+                        }).format(tx.totalPrice)}
+                      </td>
+                      <td className="py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          tx.status === "DONE" ? "bg-green-950 text-green-400 border border-green-900" :
+                          tx.status === "REJECTED" ? "bg-red-950 text-red-400 border border-red-900" :
+                          "bg-yellow-950 text-yellow-400 border border-yellow-900"
+                        }`}>
+                          {tx.status}
+                        </span>
+                      </td>
+                      <td className="py-4">
+                        {tx.paymentProof ? (
+                          <a 
+                            href={tx.paymentProof} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-purple-400 hover:text-purple-300 underline text-xs"
+                          >
+                            View Proof Image
+                          </a>
+                        ) : (
+                          <span className="text-gray-500 italic text-xs">No proof uploaded</span>
+                        )}
+                      </td>
+                      <td className="py-4 text-right pr-2">
+                        {tx.status !== "DONE" && tx.status !== "REJECTED" ? (
+                          <TransactionActionButtons 
+                            transactionId={tx.id} 
+                            accessToken={user.accessToken}
+                            onSuccess={fetchDashboardData}
+                          />
+                        ) : (
+                          <span className="text-xs text-gray-500 italic">No action required</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-gray-500 italic">
+                      No incoming transactions found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
         </div>
       </div>
     );

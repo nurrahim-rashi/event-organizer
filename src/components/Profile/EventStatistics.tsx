@@ -21,8 +21,11 @@ export default function EventStatistics({ eventId }: EventStatisticsProps) {
     const fetchStatistics = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/api/events/${eventId}`, {
-            params: {filter}
+        const response = await api.get(`/dashboard/stats`, {
+            params: {
+              eventId: eventId,
+              filter: filter,
+            }
         });
         
         if (response.data.success && response.data.data.statistics) {

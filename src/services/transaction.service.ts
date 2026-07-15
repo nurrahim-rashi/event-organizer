@@ -27,3 +27,21 @@ export const getTransactionsByEvent = async (eventId: number) => {
     return [];
   }
 };
+
+export const updateTransactionStatus = async (
+  transactionId: number,
+  newStatus: "DONE" | "CANCELLED",
+  token: string,
+) => {
+  const response = await api.patch(
+    `/transactions/${transactionId}/status`,
+    {newStatus},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+};
