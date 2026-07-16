@@ -20,7 +20,7 @@ function useResetPassword() {
             );
         },
         onSuccess: () => {
-            alert("Password reser successfully");
+            alert("Password reset successfully");
             navigate("/login");
         },
         onError: (error: AxiosError<{message: string}>) => {

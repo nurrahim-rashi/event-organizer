@@ -18,6 +18,9 @@ import CheckoutPage from "./pages/Checkout";
 import { authLoader, userGuardLoader, adminGuardLoader } from "./loaders/auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
@@ -84,13 +87,15 @@ const router = createBrowserRouter([
     element: <ForgotPassword />,
   },
   {
-    path: "/reser-password/:token",
+    path: "/reset-password/:token",
     element: <ResetPassword />,
   },
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </React.StrictMode>,
 );
