@@ -16,6 +16,8 @@ import DashboardPage from "./pages/DashboardPage";
 import EventStatistics from "./components/Profile/EventStatistics";
 import CheckoutPage from "./pages/Checkout";
 import { authLoader, userGuardLoader, adminGuardLoader } from "./loaders/auth";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const router = createBrowserRouter([
   {
@@ -71,6 +73,19 @@ const router = createBrowserRouter([
     path: "/transactions/checkout/",
     element: <CheckoutPage />,
     loader: userGuardLoader,
+  },
+  {
+    path: "/transactions/checkout/",
+    element: <CheckoutPage />,
+    loader: userGuardLoader,
+  },
+  {
+    path: "/forgot-password",
+    element: <ForgotPassword />,
+  },
+  {
+    path: "/reser-password/:token",
+    element: <ResetPassword />,
   },
 ]);
 
