@@ -92,6 +92,10 @@ function Login () {
                         )}
                     </div>
 
+                    <div>
+                        <Link to="/forgot-password">Forgot Password</Link>
+                    </div>
+
                     {/*TOMBOL SUBMIT */}
                     <button className="bg-[#2C0051] p-2 rounded-lg hover:bg-[#6900B3] hover:cursor-pointer" type="submit" disabled={isPending}>{isPending ? "Loading..." : "Login"}</button>
                 </form>

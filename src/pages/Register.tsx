@@ -2,26 +2,16 @@ import { useState } from "react"
 import { api } from "../api/axios"
 import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
-import {z} from "zod"; 
 import { zodResolver } from "@hookform/resolvers/zod";
-
-const formSchema = z.object({
-    name: z.string().min(1, "Name is required"),
-    email: z.email(),
-    password: z
-    .string()
-    .min(6, "Password must be at least 6 characters.")
-    .max(50, "Password must be at most 50 characters"),
-    role: z.enum(["USER", "ADMIN"], {message: "Please select a valid role."}),
-    referredByCode: z.string().optional().or(z.literal("")),
-});
+import { registerSchema, type RegisterSchema } from "../schemas/auth/register";
 
 function Register () {
     const [show, setShow] = useState<boolean>(false);
     const [isPending, setIsPending] = useState<boolean>(false);
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<RegisterSchema>({
+        resolver: zodResolver(registerSchema),
+        mode: "onChange",
         defaultValues: {
             name: "",
             email: "",
@@ -33,7 +23,7 @@ function Register () {
 
     const navigate = useNavigate();
 
-    async function onSubmit(data: z.infer<typeof formSchema>) {
+    async function onSubmit(data: RegisterSchema) {
         setIsPending(true);
         try {
             await api.post("/auth/register", {
@@ -41,6 +31,7 @@ function Register () {
                 email: data.email,
                 password: data.password,
                 role: data.role,
+                referredByCode: data.referredByCode,
             });
 
             alert("Register success");
