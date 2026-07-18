@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { updateEvent } from "../services/event.service";
-import { useEditEvent } from "../hooks/useEditEvent";
+import { useEditEvent } from "../hooks/event/useEditEvent";
 
 import { Sidebar } from "../components/CreateEvent/Sidebar";
 import { BasicDetailsForm } from "../components/CreateEvent/BasicDetailsForm";

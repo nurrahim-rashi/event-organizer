@@ -1,12 +1,16 @@
-import { api } from "../api/axios";
+import { axiosInstance } from "../api/axios";
 
 export const transactionApi = {
   create: (data: {
     eventId: number;
     items: { ticketTypeId: number; qty: number }[];
-  }) => api.post("/transactions/checkout", data),
+    voucherId?: number;
+    couponId?: number;
+    usePoints?: boolean;
+  }) => axiosInstance.post("/transactions/checkout", data),
 
-  getByEvent: (eventId: number) => api.get(`/transactions/event/${eventId}`),
+  getByEvent: (eventId: number) =>
+    axiosInstance.get(`/transactions/event/${eventId}`),
 };
 
 export const createTransaction = async (data: {
@@ -33,14 +37,14 @@ export const updateTransactionStatus = async (
   newStatus: "DONE" | "CANCELLED",
   token: string,
 ) => {
-  const response = await api.patch(
+  const response = await axiosInstance.patch(
     `/transactions/${transactionId}/status`,
-    {newStatus},
+    { newStatus },
     {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 
   return response.data;

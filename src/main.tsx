@@ -13,7 +13,7 @@ import CreateEvent from "./pages/CreateEvent";
 import EditEvent from "./pages/EditEvent";
 import OrganizerProfile from "./pages/OrganizerProfile";
 import DashboardPage from "./pages/DashboardPage";
-import EventStatistics from "./components/Profile/EventStatistics";
+// import EventStatistics from "./components/Profile/EventStatistics";
 import CheckoutPage from "./pages/Checkout";
 import { authLoader, userGuardLoader, adminGuardLoader } from "./loaders/auth";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -47,7 +47,7 @@ const router = createBrowserRouter([
   {
     path: "/events/:id/edit",
     element: <EditEvent />,
-    loader: adminGuardLoader
+    loader: adminGuardLoader,
   },
   {
     path: "/register",
@@ -73,12 +73,7 @@ const router = createBrowserRouter([
     loader: authLoader,
   },
   {
-    path: "/transactions/checkout/",
-    element: <CheckoutPage />,
-    loader: userGuardLoader,
-  },
-  {
-    path: "/transactions/checkout/",
+    path: "/transactions/checkout",
     element: <CheckoutPage />,
     loader: userGuardLoader,
   },

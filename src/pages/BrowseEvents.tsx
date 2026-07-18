@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import { useEvents } from "../hooks/useEvents";
-import { useDebounce } from "../hooks/useDebounce";
+import { useEvents } from "../hooks/event/useEvents";
+import { useDebounce } from "../hooks/event/useDebounce";
 import type { Event, EventCategory } from "../types/type";
 import Navbar from "../components/General/Navbar";
 import Footer from "../components/General/Footer";
@@ -41,7 +41,7 @@ function FeaturedBannerSkeleton() {
 }
 
 export default function BrowseEvents() {
-  const { events, fetchEvents, isLoading } = useEvents();
+  const { events, fetchEvents } = useEvents(); // Hapus isLoading dari sini karena tidak ada di return hookmu
   const [searchParams, setSearchParams] = useSearchParams();
   const [isInitialMount, setIsInitialMount] = useState(true);
 
@@ -89,30 +89,24 @@ export default function BrowseEvents() {
       const matchesSearch = event.name
         ? event.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
         : false;
-
       const eventCategoryUpper = (
         event.category || ""
       ).toUpperCase() as EventCategory;
       const matchesCategory =
         selectedCategories.length === 0 ||
         selectedCategories.includes(eventCategoryUpper);
-
       const eventLocation = event.location?.toLowerCase() || "";
       const eventCity = event.city?.toLowerCase() || "";
       const filterLoc = debouncedLocationQuery.toLowerCase();
       const matchesLocation =
         eventLocation.includes(filterLoc) || eventCity.includes(filterLoc);
 
-      let eventPrice = 0;
-      if (event.price !== undefined) {
-        eventPrice = Number(event.price);
-      } else if (
-        (event as any).ticketTypes &&
-        Array.isArray((event as any).ticketTypes)
-      ) {
-        const prices = (event as any).ticketTypes.map((t: any) => t.price || 0);
-        eventPrice = prices.length > 0 ? Math.min(...prices) : 0;
-      }
+      // Mengambil harga dari ticketTypes karena Event tidak punya properti price langsung
+      const ticketPrices =
+        (event as any).ticketTypes?.map((t: any) => Number(t.price) || 0) || [];
+      const eventPrice =
+        ticketPrices.length > 0 ? Math.min(...ticketPrices) : 0;
+
       const matchesPrice = eventPrice <= maxPriceParam;
 
       let matchesDate = true;
@@ -151,19 +145,22 @@ export default function BrowseEvents() {
     });
 
     return [...filtered].sort((a, b) => {
+      const getMinPrice = (e: Event) => {
+        const prices =
+          (e as any).ticketTypes?.map((t: any) => Number(t.price) || 0) || [];
+        return prices.length > 0 ? Math.min(...prices) : 0;
+      };
+
       if (sortBy === "Price: Low to High") {
-        const priceA = a.price || 0;
-        const priceB = b.price || 0;
-        return priceA - priceB;
+        return getMinPrice(a) - getMinPrice(b);
       }
       if (sortBy === "Most Popular") {
-        const viewsA = (a as any).views || 0;
-        const viewsB = (b as any).views || 0;
-        return viewsB - viewsA;
+        return ((b as any).views || 0) - ((a as any).views || 0);
       }
-      const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
-      const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
-      return dateA - dateB;
+      return (
+        (a.startDate ? new Date(a.startDate).getTime() : 0) -
+        (b.startDate ? new Date(b.startDate).getTime() : 0)
+      );
     });
   }, [
     safeEvents,
@@ -178,23 +175,18 @@ export default function BrowseEvents() {
   const suggestedEvents = useMemo(() => {
     if (filteredEvents.length > 0) return [];
     const searchWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
-
-    if (searchWords.length === 0) {
-      return safeEvents.slice(0, 9);
-    }
+    if (searchWords.length === 0) return safeEvents.slice(0, 9);
 
     const scoredEvents = safeEvents.map((event) => {
       let score = 0;
       const eventName = (event.name || "").toLowerCase();
       const eventCategory = (event.category || "").toLowerCase();
       const eventCity = (event.city || "").toLowerCase();
-
       searchWords.forEach((word) => {
         if (eventName.includes(word)) score += 10;
         if (eventCategory.includes(word)) score += 5;
         if (eventCity.includes(word)) score += 3;
       });
-
       return { event, score };
     });
 
@@ -202,42 +194,31 @@ export default function BrowseEvents() {
       .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
       .map((item) => item.event);
-
     return sortedBestMatches.length === 0
       ? safeEvents.slice(0, 9)
       : sortedBestMatches.slice(0, 9);
   }, [safeEvents, filteredEvents.length, searchQuery]);
 
   const featuredEvent = filteredEvents.length > 0 ? filteredEvents[0] : null;
-
   const handleSortChange = (value: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set("sortBy", value);
-    setSearchParams(newParams);
+    const n = new URLSearchParams(searchParams);
+    n.set("sortBy", value);
+    setSearchParams(n);
   };
-
-  const handleClearFilters = () => {
-    setSearchParams(new URLSearchParams());
-  };
-
+  const handleClearFilters = () => setSearchParams(new URLSearchParams());
   const handleQuickSearch = (keyword: string) => {
-    const newParams = new URLSearchParams();
-    newParams.set("search", keyword);
-    setSearchParams(newParams);
+    const n = new URLSearchParams();
+    n.set("search", keyword);
+    setSearchParams(n);
   };
 
-  const isReallyLoading = isInitialMount || isLoading;
-  const breadcrumbItems = [{ label: "Events", path: "/events" }];
+  const isReallyLoading = isInitialMount; // Mengandalkan state lokal karena hook hook hook mu ga ada isLoading
 
   return (
     <div className="bg-[#171021] text-[#eadef6] min-h-screen font-sans selection:bg-[#ddb7ff]/30">
       <Navbar />
-
-      {/* 👈 Hapus 'flex flex-col gap-4' dan ganti pb-12 menjadi pb-16 agar struktur kontainer main identik dengan EventDetail */}
       <main className="pt-24 pb-16 px-6 max-w-[1280px] mx-auto">
-        <Breadcrumb items={breadcrumbItems} />
-
-        {/* 👈 Hapus 'mt-4' agar jarak murni mengikuti alur block-level bawaan Breadcrumb seperti di EventDetail */}
+        <Breadcrumb items={[{ label: "Events", path: "/events" }]} />
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-1/4 shrink-0">
             <SidebarFilter
@@ -245,7 +226,6 @@ export default function BrowseEvents() {
               setSearchParams={setSearchParams}
             />
           </div>
-
           <div className="flex-grow flex flex-col gap-12 min-w-0 w-full lg:w-3/4">
             {isReallyLoading ? (
               <>
@@ -264,7 +244,6 @@ export default function BrowseEvents() {
                 {filteredEvents.length > 0 && featuredEvent && (
                   <FeaturedBanner event={featuredEvent} />
                 )}
-
                 <section>
                   {filteredEvents.length > 0 && (
                     <div className="flex items-center justify-between mb-8">
@@ -291,7 +270,6 @@ export default function BrowseEvents() {
                       <div className="bg-[#231d2e]/70 backdrop-blur-md border border-white/5 min-h-[500px] rounded-xl flex flex-col items-center justify-center text-center p-6 lg:p-12 relative overflow-hidden shadow-[0_0_20px_rgba(221,183,255,0.05)]">
                         <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#ddb7ff]/10 rounded-full blur-[100px]"></div>
                         <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[#5de6ff]/10 rounded-full blur-[100px]"></div>
-
                         <div className="mb-8 relative group">
                           <div className="absolute inset-0 bg-[#ddb7ff]/20 blur-3xl group-hover:bg-[#ddb7ff]/30 transition-all rounded-full"></div>
                           <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-full border-2 border-dashed border-[#4d4354] flex items-center justify-center">
@@ -314,7 +292,6 @@ export default function BrowseEvents() {
                             </div>
                           </div>
                         </div>
-
                         <div className="max-w-md mx-auto space-y-4">
                           <h2 className="text-3xl font-bold text-[#eadef6]">
                             No Events Found
@@ -330,7 +307,6 @@ export default function BrowseEvents() {
                             alternative suggestions down below.
                           </p>
                         </div>
-
                         <div className="mt-8 flex flex-col sm:flex-row gap-4 z-10">
                           <button
                             onClick={handleClearFilters}
@@ -338,7 +314,7 @@ export default function BrowseEvents() {
                           >
                             <span className="material-symbols-outlined text-xl">
                               filter_alt_off
-                            </span>
+                            </span>{" "}
                             Clear All Filters
                           </button>
                           <button
@@ -348,7 +324,6 @@ export default function BrowseEvents() {
                             Browse All Events
                           </button>
                         </div>
-
                         <div className="mt-12 w-full z-10">
                           <p className="text-xs font-bold text-[#988d9f] uppercase tracking-widest mb-4">
                             Try these popular searches
@@ -371,14 +346,13 @@ export default function BrowseEvents() {
                           </div>
                         </div>
                       </div>
-
                       {suggestedEvents.length > 0 && (
                         <div className="w-full text-left pt-4">
                           <div className="border-b border-white/5 pb-4 mb-6">
                             <h3 className="text-2xl font-bold text-[#eadef6] flex items-center gap-2">
                               <span className="material-symbols-outlined text-[#5de6ff]">
                                 explore
-                              </span>
+                              </span>{" "}
                               Try Other Events
                             </h3>
                             <p className="text-sm text-[#988d9f] mt-1">
