@@ -1,8 +1,8 @@
-import { api } from "../api/axios";
+import { axiosInstance } from "../api/axios";
 import { userAuth } from "../stores/useAuth";
 import type { Organizer } from "../types/type";
 
-api.interceptors.request.use((config) => {
+axiosInstance.interceptors.request.use((config) => {
   const token = userAuth.getState().user?.accessToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -12,7 +12,7 @@ api.interceptors.request.use((config) => {
 
 export const getOrganizerProfile = async (id: string): Promise<Organizer> => {
   try {
-    const response = await api.get(`/organizers/${id}`);
+    const response = await axiosInstance.get(`/organizers/${id}`);
 
     const result = response.data.data || response.data;
 

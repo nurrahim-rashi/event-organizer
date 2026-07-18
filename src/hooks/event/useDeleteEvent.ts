@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { deleteEvent } from "../services/event.service";
+import { deleteEvent } from "../../services/event.service";
 
 export const useDeleteEvent = (eventId: number, onSuccess: () => void) => {
   const [isDeleting, setIsDeleting] = useState(false);

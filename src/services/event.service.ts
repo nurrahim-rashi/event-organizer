@@ -1,14 +1,14 @@
-import { api } from "../api/axios";
+import { axiosInstance } from "../api/axios";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=1000&auto=format&fit=crop";
 
 export const eventApi = {
-  getAll: () => api.get("/events"),
-  getById: (id: number) => api.get(`/events/${id}`),
-  create: (data: any) => api.post("/events", data),
-  update: (id: number, data: any) => api.patch(`/events/${id}`, data),
-  delete: (id: number) => api.delete(`/events/${id}`),
+  getAll: () => axiosInstance.get("/events"),
+  getById: (id: number) => axiosInstance.get(`/events/${id}`),
+  create: (data: any) => axiosInstance.post("/events", data),
+  update: (id: number, data: any) => axiosInstance.patch(`/events/${id}`, data),
+  delete: (id: number) => axiosInstance.delete(`/events/${id}`),
 };
 
 const withFallbackImage = (event: any) => {
@@ -31,7 +31,6 @@ export const getEvents = async () => {
 export const getEvent = async (id: number) => {
   const res = await eventApi.getById(id);
   const data = res.data?.data || res.data;
-  // Memastikan satu event punya gambar
   return withFallbackImage(data);
 };
 
@@ -52,5 +51,26 @@ export const updateEvent = async (id: number, data: any) => {
 
 export const deleteEvent = async (id: number) => {
   const res = await eventApi.delete(id);
+  return res.data;
+};
+
+export const uploadPayment = async (
+  transactionId: number,
+  file: File,
+  bank: string,
+) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("bank", bank);
+
+  const res = await axiosInstance.patch(
+    `/transactions/${transactionId}/payment`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
   return res.data;
 };

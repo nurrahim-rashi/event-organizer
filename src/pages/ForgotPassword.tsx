@@ -2,27 +2,30 @@ import AuthBrand from "../components/Auth/AuthBrand";
 import AuthCard from "../components/Auth/AuthCard";
 import BackLink from "../components/Auth/BackLink";
 import ForgotPasswordForm from "../components/ForgotPassword/ForgotPasswordForm";
-import useForgotPassword from "../hooks/useForgotPassword";
-import { forgotPasswordSchema, type ForgotPasswordSchema } from "../schemas/auth/forgot-password";
+import useForgotPassword from "../hooks/auth/useForgotPassword";
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordSchema,
+} from "../schemas/auth/forgot-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 
 function ForgotPassword() {
-    const form = useForm<ForgotPasswordSchema>({
-        resolver: zodResolver(forgotPasswordSchema),
-        defaultValues: {
-            email: "",
-        },
-    });
+  const form = useForm<ForgotPasswordSchema>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
 
-    const {mutateAsync: forgotPasswordAction, isPending} = useForgotPassword();
+  const { mutateAsync: forgotPasswordAction, isPending } = useForgotPassword();
 
-    async function onSubmit(data: ForgotPasswordSchema) {
-        await forgotPasswordAction(data);
-    }
+  async function onSubmit(data: ForgotPasswordSchema) {
+    await forgotPasswordAction(data);
+  }
 
-    return (
+  return (
     <div className="min-h-screen bg-[#0A0514] flex">
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
@@ -56,6 +59,6 @@ function ForgotPassword() {
       </div>
     </div>
   );
-};
+}
 
 export default ForgotPassword;
