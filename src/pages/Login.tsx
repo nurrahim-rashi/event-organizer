@@ -1,26 +1,19 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import z from "zod";
 import { useNavigate } from "react-router";
 import {userAuth} from "../stores/useAuth"
 import { api } from "../api/axios";
 import { Link } from "react-router";
-
-const formSchema = z.object({
-    email: z.email(),
-    password: z
-    .string()
-    .min(6, "Password must be at least 6 characters.")
-    .max(50, "Password must be at most 50 characters")
-})
+import { loginSchema, type LoginSchema } from "../schemas/auth/login";
 
 function Login () {
     const [show, setShow] = useState<boolean>(false);
     const [isPending, setIsPending] = useState<boolean>(false);
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<LoginSchema>({
+        resolver: zodResolver(loginSchema),
+        mode: "onChange",
         defaultValues: {
             email: "",
             password: "",
@@ -30,7 +23,7 @@ function Login () {
     const {login} = userAuth()
     const navigate = useNavigate()
 
-    async function onSubmit(data: z.infer<typeof formSchema>) {
+    async function onSubmit(data: LoginSchema) {
         setIsPending(true);
         try {
             const response = await api.post("/auth/login", {
@@ -38,14 +31,16 @@ function Login () {
                 password: data.password,
             });
 
+            console.log("Struktur respons API:", response.data);
+
             alert("login success");
 
             login({
-                id: response.data.id,
-                name: response.data.name,
-                email: response.data.email,
-                profilePic: response.data.profilePic,
-                role: response.data.role,
+                id: response.data.user.id,
+                name: response.data.user.name,
+                email: response.data.user.email,
+                profilePic: response.data.user.profilePic,
+                role: response.data.user.role,
                 accessToken: response.data.accessToken,
             });
 
@@ -72,7 +67,7 @@ function Login () {
                         <label htmlFor="" className="font-semibold">Email</label>
                         <input className="bg-white text-black focus:outline-[#22D3EE] p-2 rounded-lg" type="email" {...form.register("email")} placeholder="example@mail.com" />
                         {form.formState.errors.email && (
-                            <p>
+                            <p className="mt-1 text-xs text-red-500">
                                 {form.formState.errors.email.message}
                             </p>
                         )}
@@ -86,7 +81,7 @@ function Login () {
                             <button type="button" onClick={() => setShow(!show)}>{show ? "Hide" : "Show"}</button>
                         </div>
                         {form.formState.errors.password && (
-                            <p>
+                            <p className="mt-1 text-xs text-red-500">
                                 {form.formState.errors.password.message}
                             </p>
                         )}

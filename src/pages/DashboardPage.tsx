@@ -119,6 +119,7 @@ export default function DashboardPage() {
 
       try {
         setLoading(true);
+        console.log("1. Sedang memanggil API stats...");
 
         const response = await api.get(
           "/dashboard/stats",
@@ -128,6 +129,7 @@ export default function DashboardPage() {
             },
           },
         );
+        console.log("2. Response diterima:", response.data)
 
         console.log("Response Data dari backend:", response.data);
         console.log("Isi managed events:", response.data?.data?.managedEvents)
@@ -150,13 +152,14 @@ export default function DashboardPage() {
       } catch (error) {
         console.error("Failed to retrieve dashboard statistic data", error);
       } finally {
+        console.log("3. Loading selesai");
         setLoading(false);
       }
     };
 
   useEffect(() => {
     fetchDashboardData();
-  }, [user]);
+  }, []);
 
   if (loading) {
     return (
