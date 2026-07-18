@@ -2,30 +2,33 @@ import AuthBrand from "../components/Auth/AuthBrand";
 import AuthCard from "../components/Auth/AuthCard";
 import BackLink from "../components/Auth/BackLink";
 import ResetPasswordForm from "../components/ResetPassword/ResetPasswordForm";
-import useResetPassword from "../hooks/useResetPassword";
-import { resetPasswordSchema, type ResetPasswordSchema } from "../schemas/auth/reset-password";
+import useResetPassword from "../hooks/auth/useResetPassword";
+import {
+  resetPasswordSchema,
+  type ResetPasswordSchema,
+} from "../schemas/auth/reset-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, useParams } from "react-router";
 
 function ResetPassword() {
-    const {token} = useParams();
+  const { token } = useParams();
 
-    const form = useForm<ResetPasswordSchema>({
-        resolver: zodResolver(resetPasswordSchema),
-        defaultValues: {
-            password: "",
-            confirmPassword: "",
-        },
-    });
+  const form = useForm<ResetPasswordSchema>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
-    const {mutateAsync: resetPasswordAction, isPending} = useResetPassword();
+  const { mutateAsync: resetPasswordAction, isPending } = useResetPassword();
 
-    async function onSubmit(data: ResetPasswordSchema) {
-        await resetPasswordAction({...data, token: token!});
-    }
+  async function onSubmit(data: ResetPasswordSchema) {
+    await resetPasswordAction({ ...data, token: token! });
+  }
 
-    return (
+  return (
     <div className="min-h-screen flex bg-[#0A0514]">
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
@@ -59,6 +62,6 @@ function ResetPassword() {
       </div>
     </div>
   );
-};
+}
 
 export default ResetPassword;

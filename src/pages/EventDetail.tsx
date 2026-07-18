@@ -1,19 +1,16 @@
 import { useParams, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
-import { useEventDetail } from "../hooks/useEventDetail";
+import { useEventDetail } from "../hooks/event/useEventDetail";
 import { userAuth } from "../stores/useAuth";
 import { useCheckoutStore } from "../stores/useCheckoutStore";
-import {
-  createTransaction,
-  getTransactionsByEvent,
-} from "../services/transaction.service";
+import { getTransactionsByEvent } from "../services/transaction.service";
 import { getOrganizerProfile } from "../services/organizer.service";
 import { toTitleCase } from "../utils/toTitleCase";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
 import { OrganizerSection } from "../components/EventDetail/OrganizerSection";
 import { TicketSelection } from "../components/EventDetail/TicketSelection";
-import type { Transaction } from "../types/type";
+// import type { Transaction } from "../types/type";
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,8 +18,6 @@ export default function EventDetail() {
   const { user } = userAuth();
 
   // State
-  const [userTransactions, setUserTransactions] = useState<Transaction[]>([]);
-  const [submitting, setSubmitting] = useState(false);
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
   const [voucherError, setVoucherError] = useState<string | null>(null);
@@ -37,9 +32,7 @@ export default function EventDetail() {
   // Fetch data
   useEffect(() => {
     if (user && id) {
-      getTransactionsByEvent(Number(id))
-        .then(setUserTransactions)
-        .catch(console.error);
+      getTransactionsByEvent(Number(id)).catch(console.error);
     }
   }, [user, id]);
 
@@ -77,7 +70,7 @@ export default function EventDetail() {
   const totalPayment = discountedPrice + serviceFee;
 
   const handleApplyVoucher = () => {
-    const foundVoucher = event?.vouchers?.find(
+    const foundVoucher = (event as any)?.vouchers?.find(
       (v: any) => v.code.toUpperCase() === voucherCode.trim().toUpperCase(),
     );
     if (!foundVoucher) return setVoucherError("Invalid voucher code.");
@@ -87,30 +80,17 @@ export default function EventDetail() {
     setVoucherError(null);
   };
 
-  const handleBuyTicket = async () => {
+  const handleBuyTicket = () => {
     if (!user) {
       alert("Please login first!");
       navigate("/login");
       return;
     }
     if (!selectedTicket) return;
-    try {
-      setSubmitting(true);
-      useCheckoutStore.getState().setCheckoutData(event, selectedTicket);
-      const res = await createTransaction({
-        eventId: Number(id),
-        voucherId: appliedVoucher?.id,
-        items: [{ ticketTypeId: selectedTicket.id, qty: 1 }],
-      });
-      if (res.success) {
-        navigate(`/transactions/checkout/`);
-      }
-    } catch (e: any) {
-      console.error("ID tidak ditemukan dalam respon API!");
-      alert(e.response?.data?.message || "Failed to process transaction.");
-    } finally {
-      setSubmitting(false);
-    }
+
+    // Menambahkan argumen null untuk memenuhi interface store
+    useCheckoutStore.getState().setCheckoutData(event, selectedTicket, null);
+    navigate("/transactions/checkout");
   };
 
   if (loading)
@@ -220,7 +200,7 @@ export default function EventDetail() {
               setVoucherError={setVoucherError}
               handleApplyVoucher={handleApplyVoucher}
               handleBuyTicket={handleBuyTicket}
-              submitting={submitting}
+              submitting={false}
               ticketPrice={ticketPrice}
               discountAmount={discountAmount}
               serviceFee={serviceFee}

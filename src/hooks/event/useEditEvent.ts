@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { getEvent, updateEvent } from "../services/event.service";
-import type { Event, EventFormState } from "../types/type";
+import { getEvent, updateEvent } from "../../services/event.service";
+import type { Event, EventFormState } from "../../types/type";
 
 export const useEditEvent = (eventId: number) => {
   const [formData, setFormData] = useState<EventFormState>({

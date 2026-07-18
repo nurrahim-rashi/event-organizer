@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router";
-import { useEvents } from "../../hooks/useEvents";
+import { useEvents } from "../../hooks/event/useEvents";
 import type { Event } from "../../types/type";
 
 export default function Hero() {

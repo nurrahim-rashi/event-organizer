@@ -1,4 +1,4 @@
-import { useDeleteEvent } from "../../hooks/useDeleteEvent";
+import { useDeleteEvent } from "../../hooks/event/useDeleteEvent";
 
 interface DeleteEventModalProps {
   isOpen: boolean;

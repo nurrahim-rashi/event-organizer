@@ -5,46 +5,51 @@ import EventDetails from "../components/Checkout/EventDetails";
 import OrderSummary from "../components/Checkout/OrderDetails";
 import PaymentProofModal from "../components/Checkout/PaymentProofModal";
 import { useCheckoutStore } from "../stores/useCheckoutStore";
+import { createTransaction } from "../services/transaction.service";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { selectedEvent, selectedTicket, transaction } = useCheckoutStore();
+  const { selectedEvent, selectedTicket } = useCheckoutStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [transaction, setTransaction] = useState(null);
 
   useEffect(() => {
+    // 1. Validasi awal
     if (!selectedEvent || !selectedTicket) {
       navigate("/");
+      return;
     }
-  }, [selectedEvent, selectedTicket, navigate]);
+
+    // 2. Auto-create transaksi saat halaman di-load
+    const initTransaction = async () => {
+      try {
+        const res = await createTransaction({
+          eventId: selectedEvent.id,
+          voucherId: appliedVoucher?.id,
+          items: [{ ticketTypeId: selectedTicket.id, qty: 1 }],
+          usePoints: false,
+        });
+        // Data transaksi masuk, timer di OrderSummary otomatis jalan karena props transaction terisi
+        setTransaction(res.data || res);
+      } catch (e) {
+        alert("Failed to create transaction. Redirecting...");
+        navigate("/");
+      }
+    };
+
+    initTransaction();
+  }, [selectedEvent, selectedTicket, appliedVoucher, navigate]);
 
   if (!selectedEvent) return null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#171021] mt-12 text-[#eadef6] font-['Hanken_Grotesk',sans-serif]">
+    <div className="min-h-screen flex flex-col bg-[#171021] mt-12 text-[#eadef6]">
       <Navbar />
-
-      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-10 md:py-16">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          <div className="lg:col-span-7 flex flex-col gap-10">
-            <header>
-              <div
-                className="flex items-center gap-2 text-[#ddb7ff] mb-2 cursor-pointer hover:opacity-80"
-                onClick={() => navigate(-1)}
-              >
-                <span className="material-symbols-outlined text-sm">
-                  arrow_back
-                </span>
-                <span className="text-xs font-semibold tracking-wider uppercase">
-                  Return to Event
-                </span>
-              </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-[#eadef6] tracking-tight">
-                Complete Your Order
-              </h1>
-            </header>
+          <div className="lg:col-span-7">
             <EventDetails event={selectedEvent} />
           </div>
-
           <aside className="lg:col-span-5 sticky top-24">
             <OrderSummary
               ticket={selectedTicket}
@@ -57,12 +62,8 @@ export default function CheckoutPage() {
 
       {isModalOpen && (
         <PaymentProofModal
-          totalPrice={selectedTicket.price * 1.05}
           onClose={() => setIsModalOpen(false)}
-          onSubmit={(file, bank) => {
-            console.log("Uploading...", file, bank);
-            setIsModalOpen(false);
-          }}
+          onSubmit={(file, bank) => console.log("Upload...", file, bank)}
         />
       )}
     </div>

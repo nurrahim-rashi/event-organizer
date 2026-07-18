@@ -3,7 +3,7 @@ import { getEventDateParts, formatPrice } from "../../utils/format";
 
 export const EventCard = ({ event }: { event: any }) => {
   const { day, month } = getEventDateParts(event.startDate);
-  console.log("Event Data:", event);
+  // console.log("Event Data:", event);
   const tickets = event.ticketTypes || event.ticket_types || [];
   const priceDisplay = formatPrice(tickets);
 

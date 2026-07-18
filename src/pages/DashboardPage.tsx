@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { userAuth } from "../stores/useAuth";
 import { Link } from "react-router";
-import axios from "axios";
+// import axios from "axios";
 import Navbar from "../components/General/Navbar";
 import EventStatistics from "../components/Profile/EventStatistics";
-import { api } from "../api/axios";
+import { axiosInstance } from "../api/axios";
 
 interface DashboardStats {
   activeEventCounts?: number;
@@ -63,21 +63,28 @@ const TransactionActionButtons: React.FC<ActionButtonsProps> = ({
 
   const handleAction = async (status: "DONE" | "REJECTED") => {
     const confirmText = status === "DONE" ? "accept" : "reject";
-    if (!window.confirm(`Are you sure you want to ${confirmText} this transaction?`)) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to ${confirmText} this transaction?`,
+      )
+    )
+      return;
 
     setIsLoading(true);
     try {
-      const response = await api.patch(
+      const response = await axiosInstance.patch(
         `/transactions/${transactionId}/status`,
         { newStatus: status },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
 
       if (response.data.success) {
-        alert(response.data.message || `Transaction successfully ${confirmText}ed!`);
-        onSuccess(); // Ini akan memicu reload fungsi fetchDashboardData() kamu
+        alert(
+          response.data.message || `Transaction successfully ${confirmText}ed!`,
+        );
+        onSuccess();
       }
     } catch (error: any) {
       alert(error.response?.data?.message || "Something went wrong.");
@@ -115,47 +122,41 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const fetchDashboardData = async () => {
-      if (!user?.accessToken) return;
+    if (!user?.accessToken) return;
 
       try {
         setLoading(true);
         console.log("1. Sedang memanggil API stats...");
 
-        const response = await api.get(
-          "/dashboard/stats",
-          {
-            headers: {
-              Authorization: `Bearer ${user.accessToken}`,
-            },
-          },
-        );
-        console.log("2. Response diterima:", response.data)
+      const response = await axiosInstance.get("/dashboard/stats", {
+        headers: {
+          Authorization: `Bearer ${user.accessToken}`,
+        },
+      });
 
-        console.log("Response Data dari backend:", response.data);
-        console.log("Isi managed events:", response.data?.data?.managedEvents)
+      console.log("Response Data dari backend:", response.data);
+      setStats(response.data.data);
 
-        setStats(response.data.data);
+      const eventIdToFetch =
+        selectedEventId || response.data.data.managedEvents?.[0]?.id;
 
-        const eventIdToFetch = selectedEventId || response.data.data.managedEvents?.[0]?.id;
-
-         if(eventIdToFetch) {
-          const txResponse = await api.get(`/transactions/event/${eventIdToFetch}/incoming`, {
-            headers: {
-              Authorization: `Bearer ${user.accessToken}`,
-            },
-          });
-          setTransactions(txResponse.data.data);
-         } else {
-          setTransactions([]);
-         }
-
-      } catch (error) {
-        console.error("Failed to retrieve dashboard statistic data", error);
-      } finally {
-        console.log("3. Loading selesai");
-        setLoading(false);
-      }
-    };
+      if (eventIdToFetch) {
+      const txResponse = await axiosInstance.get(
+        `/transactions/event/${eventIdToFetch}/incoming`,
+        {
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+        }
+      );
+      setTransactions(txResponse.data.data);
+    } else {
+      setTransactions([]);
+    }
+  } catch (error) {
+    console.error("Failed to retrieve dashboard statistic data", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchDashboardData();
@@ -244,18 +245,30 @@ export default function DashboardPage() {
           {/*STATISTICS*/}
           <div className="space-y-4 mt-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <h3 className="text-lg font-bold text-white">Event Performance Analytics</h3>
-              
+              <h3 className="text-lg font-bold text-white">
+                Event Performance Analytics
+              </h3>
+
               <div className="w-full sm:w-72">
-                <select 
+                <select
                   className="w-full bg-[#161224] border border-purple-900/30 text-purple-300 text-xs rounded-xl px-4 py-2.5 focus:outline-none focus:border-purple-600 transition-all cursor-pointer"
                   value={selectedEventId || ""}
-                  onChange={(e) => setSelectedEventId(e.target.value ? Number(e.target.value) : null)}
+                  onChange={(e) =>
+                    setSelectedEventId(
+                      e.target.value ? Number(e.target.value) : null,
+                    )
+                  }
                 >
-                  <option value="" disabled>-- Select an Event to View Stats --</option>
+                  <option value="" disabled>
+                    -- Select an Event to View Stats --
+                  </option>
                   {/* Menggunakan stats?.events berdasarkan struktur objek 'stats' kamu */}
                   {stats?.managedEvents?.map((evt: any) => (
-                    <option key={evt.id} value={evt.id} className="bg-[#0d0a16]">
+                    <option
+                      key={evt.id}
+                      value={evt.id}
+                      className="bg-[#0d0a16]"
+                    >
                       {evt.name}
                     </option>
                   ))}
@@ -267,10 +280,11 @@ export default function DashboardPage() {
               <EventStatistics eventId={selectedEventId} />
             ) : (
               <div className="p-10 text-center bg-purple-950/10 rounded-2xl border border-dashed border-purple-900/20 text-purple-300/60 text-sm">
-                Please select an event from the dropdown above to visualize its sales and ticket analytics.
+                Please select an event from the dropdown above to visualize its
+                sales and ticket analytics.
               </div>
             )}
-        </div>
+          </div>
 
           {/* Tabel Manajemen Event Kreator */}
           <div className="bg-[#161224] border border-purple-900/20 rounded-2xl p-6 shadow-xl">
@@ -334,81 +348,99 @@ export default function DashboardPage() {
           </div>
 
           <div className="bg-[#161224] border border-purple-900/20 rounded-2xl p-6 shadow-xl mt-8">
-          <h3 className="text-lg font-bold mb-4 text-gray-200">
-            Incoming Transactions & Payment Proofs
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-purple-950 text-purple-300/70 text-xs uppercase tracking-wider">
-                  <th className="pb-3 pl-2">TX ID</th>
-                  <th className="pb-3">Event Name</th>
-                  <th className="pb-3">Amount</th>
-                  <th className="pb-3">Status</th>
-                  <th className="pb-3">Payment Proof</th>
-                  <th className="pb-3 text-right pr-2">Action</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm text-gray-300 divide-y divide-purple-950/40">
-                {transactions && transactions.length > 0 ? (
-                  transactions.map((tx: any) => (
-                    <tr key={tx.id} className="border-b border-purple-950/40 text-sm text-gray-300">
-                      <td className="py-4 pl-2 font-mono text-xs text-purple-300">#{tx.id}</td>
-                      <td className="py-4 font-medium text-white">{tx.event?.name || `Event ID: ${tx.eventId}`}</td>
-                      <td className="py-4">
-                        {new Intl.NumberFormat("id-ID", {
-                          style: "currency",
-                          currency: "IDR",
-                          maximumFractionDigits: 0,
-                        }).format(tx.totalPrice)}
-                      </td>
-                      <td className="py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          tx.status === "DONE" ? "bg-green-950 text-green-400 border border-green-900" :
-                          tx.status === "REJECTED" ? "bg-red-950 text-red-400 border border-red-900" :
-                          "bg-yellow-950 text-yellow-400 border border-yellow-900"
-                        }`}>
-                          {tx.status}
-                        </span>
-                      </td>
-                      <td className="py-4">
-                        {tx.paymentProof ? (
-                          <a 
-                            href={tx.paymentProof} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-purple-400 hover:text-purple-300 underline text-xs"
+            <h3 className="text-lg font-bold mb-4 text-gray-200">
+              Incoming Transactions & Payment Proofs
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-purple-950 text-purple-300/70 text-xs uppercase tracking-wider">
+                    <th className="pb-3 pl-2">TX ID</th>
+                    <th className="pb-3">Event Name</th>
+                    <th className="pb-3">Amount</th>
+                    <th className="pb-3">Status</th>
+                    <th className="pb-3">Payment Proof</th>
+                    <th className="pb-3 text-right pr-2">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm text-gray-300 divide-y divide-purple-950/40">
+                  {transactions && transactions.length > 0 ? (
+                    transactions.map((tx: any) => (
+                      <tr
+                        key={tx.id}
+                        className="border-b border-purple-950/40 text-sm text-gray-300"
+                      >
+                        <td className="py-4 pl-2 font-mono text-xs text-purple-300">
+                          #{tx.id}
+                        </td>
+                        <td className="py-4 font-medium text-white">
+                          {tx.event?.name || `Event ID: ${tx.eventId}`}
+                        </td>
+                        <td className="py-4">
+                          {new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                            maximumFractionDigits: 0,
+                          }).format(tx.totalPrice)}
+                        </td>
+                        <td className="py-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                              tx.status === "DONE"
+                                ? "bg-green-950 text-green-400 border border-green-900"
+                                : tx.status === "REJECTED"
+                                  ? "bg-red-950 text-red-400 border border-red-900"
+                                  : "bg-yellow-950 text-yellow-400 border border-yellow-900"
+                            }`}
                           >
-                            View Proof Image
-                          </a>
-                        ) : (
-                          <span className="text-gray-500 italic text-xs">No proof uploaded</span>
-                        )}
-                      </td>
-                      <td className="py-4 text-right pr-2">
-                        {tx.status !== "DONE" && tx.status !== "REJECTED" ? (
-                          <TransactionActionButtons 
-                            transactionId={tx.id} 
-                            accessToken={user.accessToken}
-                            onSuccess={fetchDashboardData}
-                          />
-                        ) : (
-                          <span className="text-xs text-gray-500 italic">No action required</span>
-                        )}
+                            {tx.status}
+                          </span>
+                        </td>
+                        <td className="py-4">
+                          {tx.paymentProof ? (
+                            <a
+                              href={tx.paymentProof}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-purple-400 hover:text-purple-300 underline text-xs"
+                            >
+                              View Proof Image
+                            </a>
+                          ) : (
+                            <span className="text-gray-500 italic text-xs">
+                              No proof uploaded
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 text-right pr-2">
+                          {tx.status !== "DONE" && tx.status !== "REJECTED" ? (
+                            <TransactionActionButtons
+                              transactionId={tx.id}
+                              accessToken={user.accessToken}
+                              onSuccess={fetchDashboardData}
+                            />
+                          ) : (
+                            <span className="text-xs text-gray-500 italic">
+                              No action required
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="py-8 text-center text-gray-500 italic"
+                      >
+                        No incoming transactions found.
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-500 italic">
-                      No incoming transactions found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
         </div>
       </div>
     );
