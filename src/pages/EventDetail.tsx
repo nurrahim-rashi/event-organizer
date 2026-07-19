@@ -12,8 +12,6 @@ import { OrganizerSection } from "../components/EventDetail/OrganizerSection";
 import { TicketSelection } from "../components/EventDetail/TicketSelection";
 import toast from "react-hot-toast";
 
-// import type { Transaction } from "../types/type";
-
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -22,7 +20,7 @@ export default function EventDetail() {
   // State
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [appliedCoupon] = useState<any>(null);
   const [usePoints] = useState<any>(null);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [moreEvents, setMoreEvents] = useState<any[]>([]);
@@ -89,12 +87,14 @@ export default function EventDetail() {
     }
     if (!selectedTicket) return;
 
+    const cartItems = [{ ticket: selectedTicket, qty: 1 }];
+
     console.log("Saving to store:", { event, selectedTicket });
     useCheckoutStore
       .getState()
       .setCheckoutData(
         event,
-        selectedTicket,
+        cartItems,
         appliedVoucher,
         appliedCoupon,
         usePoints,
@@ -201,6 +201,7 @@ export default function EventDetail() {
 
           <div className="lg:col-span-4">
             <TicketSelection
+              submitting={false}
               event={event}
               tickets={event.ticketTypes}
               selectedTicket={selectedTicket}
@@ -213,7 +214,6 @@ export default function EventDetail() {
               setVoucherError={setVoucherError}
               handleApplyVoucher={handleApplyVoucher}
               handleBuyTicket={handleBuyTicket}
-              submitting={false}
               ticketPrice={ticketPrice}
               discountAmount={discountAmount}
               totalPayment={totalPayment}

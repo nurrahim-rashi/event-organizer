@@ -1,4 +1,4 @@
-import type { EventCategory } from "../../types/type";
+import type { EventCategory } from "../../types/event";
 
 interface SidebarFilterProps {
   searchParams: URLSearchParams;

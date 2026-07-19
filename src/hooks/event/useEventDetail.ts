@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getEvent } from "../../services/event.service";
-import type { Event, TicketType } from "../../types/type";
+import type { Event } from "../../types/event";
+import type { TicketType } from "../../types/ticketType";
 
 export const useEventDetail = (eventId: number | string | undefined) => {
   const [event, setEvent] = useState<Event | null>(null);

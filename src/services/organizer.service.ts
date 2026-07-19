@@ -1,6 +1,6 @@
 import { axiosInstance } from "../api/axios";
 import { userAuth } from "../stores/useAuth";
-import type { Organizer } from "../types/type";
+import type { Organizer } from "../types/organizer";
 
 axiosInstance.interceptors.request.use((config) => {
   const token = userAuth.getState().user?.accessToken;

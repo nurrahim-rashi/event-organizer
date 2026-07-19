@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import Navbar from "../components/General/Navbar";
 import EventDetails from "../components/Checkout/EventDetails";
@@ -24,6 +24,7 @@ export default function CheckoutPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const items = transaction?.items || [];
+  const isInitialized = useRef(false);
   const subtotal = items.reduce(
     (acc: number, item: any) => acc + item.price * item.qty,
     0,
@@ -44,47 +45,54 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!_hasHydrated) return;
-    if (!selectedEvent || cartItems.length === 0) {
-      navigate("/");
-      return;
-    }
+    if (isInitialized.current) return;
 
-    const initTransaction = async () => {
+    const init = async () => {
       try {
-        const payload = {
-          eventId: selectedEvent.id,
-          items: cartItems.map((item) => ({
-            ticketTypeId: item.ticket.id,
-            qty: item.qty,
-          })),
-          voucherId: appliedVoucher?.id || undefined,
-          couponId: appliedCoupon?.id || undefined,
-          usePoints: usePoints || false,
+        // 1. Coba ambil yang aktif
+        const res = await transactionApi.getActive();
+
+        const refreshData = async () => {
+          try {
+            const res = await transactionApi.getActive();
+            setTransaction(res.data.data);
+          } catch (e) {
+            toast.error("Failed to refresh data.");
+          }
         };
 
-        const res = await createTransaction(payload);
-        setTransaction(res.data || res);
-      } catch (e: any) {
-        if (e.response?.status === 400) {
-          fetchActiveTransaction();
+        refreshData();
+
+        if (res.data.data) {
+          // Jika ada transaksi aktif, pakai itu
+          setTransaction(res.data.data);
+        } else if (selectedEvent && cartItems.length > 0) {
+          // 2. Jika tidak ada, baru buat transaksi baru
+          const payload = {
+            eventId: selectedEvent.id,
+            items: cartItems.map((item) => ({
+              ticketTypeId: item.ticket.id,
+              qty: item.qty,
+            })),
+            voucherId: appliedVoucher?.id || undefined,
+            couponId: appliedCoupon?.id || undefined,
+            usePoints: Number(usePoints) || 0,
+          };
+          const created = await createTransaction(payload);
+          setTransaction(created.data || created);
         } else {
-          console.error(e);
-          toast.error("Failed to create transaction.");
           navigate("/");
         }
+      } catch (e) {
+        console.error(e);
+        navigate("/");
+      } finally {
+        isInitialized.current = true;
       }
     };
 
-    if (!transaction) initTransaction();
-  }, [
-    _hasHydrated,
-    selectedEvent,
-    cartItems,
-    navigate,
-    appliedVoucher,
-    appliedCoupon,
-    usePoints,
-  ]);
+    init();
+  }, [_hasHydrated]);
 
   const handleCancel = async () => {
     if (!transaction) return;
@@ -152,7 +160,7 @@ export default function CheckoutPage() {
                 Complete Your Order
               </h1>
             </header>
-            <EventDetails event={selectedEvent} />
+            <EventDetails event={transaction?.event} />
           </div>
           <aside className="lg:col-span-5 sticky top-24">
             <OrderSummary
