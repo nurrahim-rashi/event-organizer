@@ -11,6 +11,7 @@ export const transactionApi = {
   cancel: (id: number) => axiosInstance.patch(`/transactions/${id}/cancel`),
   getActive: () => axiosInstance.get("/transactions/checkout"),
   getAll: () => axiosInstance.get("/transactions"),
+  getById: (id: number) => axiosInstance.get(`/transactions/${id}`),
   getByEvent: (eventId: number) =>
     axiosInstance.get(`/transactions/event/${eventId}`),
   uploadPayment: (id: number, file: File) => {
@@ -43,7 +44,7 @@ export const getTransactionsByEvent = async (eventId: number) => {
 
 export const updateTransactionStatus = async (
   transactionId: number,
-  newStatus: "DONE" | "CANCELLED",
+  newStatus: "DONE" | "REJECTED",
   token: string,
 ) => {
   const response = await axiosInstance.patch(

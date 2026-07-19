@@ -190,7 +190,7 @@ export default function Navbar() {
 
                   {/* PROFILE PAGE */}
                   <Link
-                    to="/profile" // Sesuaikan alamat route halaman profilmu
+                    to="/profile"
                     onClick={() => setIsOpen(false)}
                     className="block px-4 py-2.5 text-sm text-gray-200 hover:bg-purple-600/20 hover:text-purple-300 transition-colors"
                   >
@@ -211,7 +211,7 @@ export default function Navbar() {
                   <button
                     onClick={() => {
                       setIsOpen(false);
-                      logout(); // Panggil fungsi logout dari store kalian
+                      logout();
                     }}
                     className="w-full text-left block px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                   >

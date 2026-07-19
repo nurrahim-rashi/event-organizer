@@ -28,11 +28,10 @@ const TransactionPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleCardClick = (tx: Transaction) => {
-    if (
-      tx.status === "WAITING_PAYMENT" ||
-      tx.status === "WAITING_CONFIRMATION"
-    ) {
+    if (tx.status === "WAITING_PAYMENT") {
       navigate(`/transactions/checkout`);
+    } else {
+      navigate(`/transactions/${tx.id}`);
     }
   };
 
@@ -111,14 +110,6 @@ const TransactionPage: React.FC = () => {
               { label: "Transactions", path: "/transactions" },
             ]}
           />
-          <div className="mb-8">
-            <h2 className="text-headline-lg font-bold text-on-surface mb-2">
-              Transaction History
-            </h2>
-            <p className="text-on-surface-variant">
-              Manage your ticket bookings and payment status.
-            </p>
-          </div>
 
           {loading ? (
             <p className="text-center text-on-surface-variant">Loading...</p>
