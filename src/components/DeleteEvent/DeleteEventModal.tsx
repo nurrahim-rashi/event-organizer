@@ -32,7 +32,6 @@ export default function DeleteEventModal({
             warning
           </span>
         </div>
-
         {/* Text Content */}
         <div className="text-center mb-10">
           <h2 className="text-2xl font-bold text-[#eadef6] mb-4 tracking-tight">
@@ -45,7 +44,6 @@ export default function DeleteEventModal({
             permanently removed.
           </p>
         </div>
-
         {/* Action Buttons */}
         <div className="flex flex-col gap-3">
           <button
@@ -65,13 +63,6 @@ export default function DeleteEventModal({
           >
             Cancel
           </button>
-        </div>
-
-        {/* Security Check Copy */}
-        <div className="mt-8 pt-6 border-t border-white/5 text-center">
-          <p className="text-[10px] uppercase tracking-widest text-[#988d9f]">
-            Authorized Administrator Only
-          </p>
         </div>
       </div>
     </div>

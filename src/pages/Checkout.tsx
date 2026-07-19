@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import Navbar from "../components/General/Navbar";
 import EventDetails from "../components/Checkout/EventDetails";
 import OrderSummary from "../components/Checkout/OrderDetails";
+import CancelTransactionModal from "../components/Checkout/CancelTransactionModal";
 import PaymentProofModal from "../components/Checkout/PaymentProofModal";
 import { useCheckoutStore } from "../stores/useCheckoutStore";
 import { createTransaction } from "../services/transaction.service";
@@ -25,6 +26,7 @@ export default function CheckoutPage() {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const items = transaction?.items || [];
   const isInitialized = useRef(false);
+
   const subtotal = items.reduce(
     (acc: number, item: any) => acc + item.price * item.qty,
     0,
@@ -33,41 +35,17 @@ export default function CheckoutPage() {
   const totalFinal =
     subtotal + serviceFee - (transaction?.voucherDiscount || 0);
 
-  const fetchActiveTransaction = async () => {
-    try {
-      const res = await transactionApi.getActive();
-      setTransaction(res.data.data);
-    } catch (e) {
-      console.error("Failed to get transactions", e);
-      navigate("/");
-    }
-  };
-
   useEffect(() => {
-    if (!_hasHydrated) return;
-    if (isInitialized.current) return;
+    if (!_hasHydrated || isInitialized.current) return;
 
     const init = async () => {
+      isInitialized.current = true; // Set flag langsung agar tidak terpanggil 2x
       try {
-        // 1. Coba ambil yang aktif
         const res = await transactionApi.getActive();
 
-        const refreshData = async () => {
-          try {
-            const res = await transactionApi.getActive();
-            setTransaction(res.data.data);
-          } catch (e) {
-            toast.error("Failed to refresh data.");
-          }
-        };
-
-        refreshData();
-
         if (res.data.data) {
-          // Jika ada transaksi aktif, pakai itu
           setTransaction(res.data.data);
         } else if (selectedEvent && cartItems.length > 0) {
-          // 2. Jika tidak ada, baru buat transaksi baru
           const payload = {
             eventId: selectedEvent.id,
             items: cartItems.map((item) => ({
@@ -86,20 +64,19 @@ export default function CheckoutPage() {
       } catch (e) {
         console.error(e);
         navigate("/");
-      } finally {
-        isInitialized.current = true;
       }
     };
 
     init();
-  }, [_hasHydrated]);
-
-  const handleCancel = async () => {
-    if (!transaction) return;
-    await transactionApi.cancel(transaction.id);
-    useCheckoutStore.getState().clearCheckoutData();
-    navigate("/");
-  };
+  }, [
+    _hasHydrated,
+    navigate,
+    selectedEvent,
+    cartItems,
+    appliedVoucher,
+    appliedCoupon,
+    usePoints,
+  ]);
 
   const handleConfirmCancel = async () => {
     if (!transaction?.id) return;
@@ -122,9 +99,7 @@ export default function CheckoutPage() {
       await axiosInstance.patch(
         `/transactions/${transaction.id}/upload`,
         formData,
-        {
-          headers: {},
-        },
+        { headers: {} },
       );
 
       toast.success("Payment proof successfully submitted!");
@@ -176,6 +151,15 @@ export default function CheckoutPage() {
           totalPrice={totalFinal}
           onClose={() => setIsPaymentModalOpen(false)}
           onSubmit={handleSubmitPayment}
+        />
+      )}
+
+      {/* Tambahkan bagian ini */}
+      {isCancelModalOpen && (
+        <CancelTransactionModal
+          isOpen={isCancelModalOpen}
+          onClose={() => setIsCancelModalOpen(false)}
+          onConfirm={handleConfirmCancel}
         />
       )}
     </div>
