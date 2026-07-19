@@ -14,19 +14,9 @@ export default function OrderSummary({
   onCancelTransaction,
 }: OrderSummaryProps) {
   const items = transaction?.items || [];
+  const total = transaction?.totalPrice || 0;
+  const pointUsed = transaction?.pointUsed || 0;
   const [timeLeft, setTimeLeft] = useState("00m 00s");
-
-  // Logika kalkulasi disamakan dengan TicketSelection
-  const subtotal = items.reduce(
-    (acc: number, item: any) => acc + item.price * item.qty,
-    0,
-  );
-  const serviceFeePercent = 0.05;
-  const serviceFee = subtotal * serviceFeePercent;
-
-  // Jika ada voucher di transaksi, kurangi. Jika tidak, gunakan subtotal
-  const discount = transaction?.voucherDiscount || 0;
-  const total = subtotal - discount + serviceFee;
 
   useEffect(() => {
     if (!transaction?.expiredAt) return;
@@ -74,28 +64,46 @@ export default function OrderSummary({
         {items.map((item: any) => (
           <div key={item.id} className="flex justify-between text-[#eadef6]">
             <span>
-              {item.ticketType.name} x {item.qty}
+              {item.ticketType?.name || "Ticket"} x {item.qty}
             </span>
             <span>Rp{(item.price * item.qty).toLocaleString("id-ID")}</span>
           </div>
         ))}
-      </div>
 
-      <div className="text-sm border-t border-[#4d4354]/30 pt-4 space-y-2">
-        {transaction?.voucherDiscount > 0 && (
-          <div className="flex justify-between text-green-400 font-medium">
-            <span>Discount</span>
+        {/* 1. SINKRONISASI VOUCHER */}
+        {transaction?.voucher && (
+          <div className="flex justify-between text-green-400 font-medium text-sm">
+            <span>Voucher ({transaction.voucher.code})</span>
             <span>
-              -Rp{transaction.voucherDiscount.toLocaleString("id-ID")}
+              -Rp{transaction.voucher.discount.toLocaleString("id-ID")}
             </span>
           </div>
         )}
-        <div className="flex justify-between text-[#cfc2d6]">
-          <span>Service Fee (5%)</span>
-          <span>Rp{serviceFee.toLocaleString("id-ID")}</span>
-        </div>{" "}
-        <div className="grid text-[#cfc2d6] border-t border-[#4d4354]/30 pt-4">
-          <span className="font-bold">TOTAL PRICE</span>
+
+        {/* 2. SINKRONISASI COUPON */}
+        {transaction?.coupon && (
+          <div className="flex justify-between text-green-400 font-medium text-sm">
+            <span>User Coupon</span>
+            <span>
+              -Rp{transaction.coupon.discount.toLocaleString("id-ID")}
+            </span>
+          </div>
+        )}
+
+        {/* 3. SINKRONISASI POINTS */}
+        {pointUsed > 0 && (
+          <div className="flex justify-between text-green-400 font-medium text-sm">
+            <span>Points Used</span>
+            <span>-Rp{pointUsed.toLocaleString("id-ID")}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="text-sm border-t border-[#4d4354]/30 pt-4 space-y-2">
+        <div className="grid text-[#cfc2d6]">
+          <span className="font-bold text-xs uppercase tracking-wider text-[#cfc2d6]">
+            TOTAL PRICE
+          </span>
           <span className="text-2xl font-black text-[#ddb7ff] mt-2">
             Rp{total.toLocaleString("id-ID")}
           </span>

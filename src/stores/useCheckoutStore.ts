@@ -45,16 +45,6 @@ export const useCheckoutStore = create<CheckoutStore>()(
         }),
 
       setTransaction: (tx) => set({ transaction: tx }),
-
-      clearCheckoutData: () =>
-        set({
-          selectedEvent: null,
-          cartItems: [],
-          appliedVoucher: null,
-          appliedCoupon: null,
-          usePoints: false,
-          transaction: null,
-        }),
     }),
     {
       name: "checkout-storage",

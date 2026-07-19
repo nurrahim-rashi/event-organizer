@@ -13,7 +13,6 @@ export const TicketSelection = ({
   voucherError,
   handleApplyVoucher,
   submitting,
-  serviceFeePercent = 0.05,
 }: any) => {
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   const [cart, setCart] = useState<Record<number, number>>({});
@@ -24,13 +23,16 @@ export const TicketSelection = ({
       const ticket = tickets.find((t: any) => t.id === Number(id));
       if (ticket) subtotal += ticket.price * cart[Number(id)];
     });
-    const discount = appliedVoucher ? appliedVoucher.discount : 0;
-    const serviceFee = subtotal * serviceFeePercent;
-    const total = subtotal - discount + serviceFee;
-    return { subtotal, discount, serviceFee, total };
+
+    const voucherDiscount = appliedVoucher ? appliedVoucher.discount : 0;
+    const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
+    const totalDiscount = voucherDiscount + couponDiscount;
+
+    const total = Math.max(0, subtotal - totalDiscount);
+    return { totalDiscount, total };
   };
 
-  const { discount, serviceFee, total } = calculateTotals();
+  const { totalDiscount, total } = calculateTotals();
 
   const handleUpdateCart = (ticket: any, delta: number) => {
     setCart((prev) => {
@@ -96,21 +98,22 @@ export const TicketSelection = ({
                         ? "Free"
                         : `Rp${t.price.toLocaleString("id-ID")}`}
                     </span>
+                  </div>{" "}
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="text-xs text-[#cfc2d6] mb-3">
+                      Remaining: {remaining} tickets
+                    </p>
+
+                    <span
+                      className={`px-2 py-0.5 rounded font-bold text-[10px] tracking-widest uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
+                    >
+                      {isSoldOut
+                        ? "Sold Out"
+                        : isUnavailable
+                          ? "Unavailable"
+                          : "Available"}
+                    </span>
                   </div>
-                  <p className="text-xs text-[#cfc2d6] mb-3">
-                    Remaining: {remaining} tickets
-                  </p>
-
-                  <span
-                    className={`px-2 py-0.5 rounded font-bold text-[10px] tracking-widest uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
-                  >
-                    {isSoldOut
-                      ? "Sold Out"
-                      : isUnavailable
-                        ? "Unavailable"
-                        : "Available"}
-                  </span>
-
                   {!isCheckoutMode ? (
                     <button
                       onClick={() => handleUpdateCart(t, 1)}
@@ -203,15 +206,11 @@ export const TicketSelection = ({
               {appliedVoucher && (
                 <div className="flex justify-between text-sm text-green-400 font-medium">
                   <span>Promo ({appliedVoucher.code})</span>
-                  <span>-Rp{discount.toLocaleString("id-ID")}</span>
+                  <span>-Rp{totalDiscount.toLocaleString("id-ID")}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm text-[#cfc2d6]">
-                <span>Service Fee (5%)</span>
-                <span>Rp{serviceFee.toLocaleString("id-ID")}</span>
-              </div>
               <div className="flex justify-between items-center pt-2">
-                <span className="font-bold text-[#eadef6]">Total</span>
+                <span className="font-bold text-[#eadef6]">Total Price</span>
                 <span className="text-[#ddb7ff] text-2xl font-black">
                   Rp{total.toLocaleString("id-ID")}
                 </span>
