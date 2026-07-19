@@ -10,6 +10,7 @@ import { TicketingForm } from "../components/CreateEvent/TicketingForm";
 import { PromotionForm } from "../components/CreateEvent/PromotionForm";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
+import toast from "react-hot-toast";
 
 export type EventCategory =
   | "MUSIC"
@@ -145,12 +146,12 @@ export default function CreateEvent() {
 
       const res = await createEvent(payload);
       if (res) {
-        alert("🎉 Event successfully published!");
+        toast.success("🎉 Event successfully published!");
         navigate("/");
       }
     } catch (err: any) {
       console.error("Error creating event:", err);
-      setError(err.response?.data?.message || "Failed to create event");
+      toast.error(err.response?.data?.message || "Failed to create event");
     } finally {
       setLoading(false);
     }

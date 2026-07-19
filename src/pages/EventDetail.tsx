@@ -10,6 +10,8 @@ import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
 import { OrganizerSection } from "../components/EventDetail/OrganizerSection";
 import { TicketSelection } from "../components/EventDetail/TicketSelection";
+import toast from "react-hot-toast";
+
 // import type { Transaction } from "../types/type";
 
 export default function EventDetail() {
@@ -65,9 +67,6 @@ export default function EventDetail() {
   // Kalkulasi Harga
   const ticketPrice = selectedTicket ? selectedTicket.price : 0;
   const discountAmount = appliedVoucher ? appliedVoucher.discount : 0;
-  const discountedPrice = Math.max(0, ticketPrice - discountAmount);
-  const serviceFee = discountedPrice * 0.05;
-  const totalPayment = discountedPrice + serviceFee;
 
   const handleApplyVoucher = () => {
     const foundVoucher = (event as any)?.vouchers?.find(
@@ -82,7 +81,7 @@ export default function EventDetail() {
 
   const handleBuyTicket = () => {
     if (!user) {
-      alert("Please login first!");
+      toast.error("Please login first!");
       navigate("/login");
       return;
     }
@@ -92,6 +91,9 @@ export default function EventDetail() {
     useCheckoutStore.getState().setCheckoutData(event, selectedTicket, null);
     navigate("/transactions/checkout");
   };
+
+  const discountedPrice = Math.max(0, ticketPrice - discountAmount);
+  const totalPayment = discountedPrice; // Definisi yang kurang tadi
 
   if (loading)
     return (
@@ -204,7 +206,6 @@ export default function EventDetail() {
               submitting={false}
               ticketPrice={ticketPrice}
               discountAmount={discountAmount}
-              serviceFee={serviceFee}
               totalPayment={totalPayment}
             />
           </div>

@@ -3,6 +3,7 @@ import type { ResetPasswordSchema } from "../../schemas/auth/reset-password";
 import { useMutation } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { useNavigate } from "react-router";
+import toast from "react-hot-toast";
 
 interface ResetPasswordPayload extends ResetPasswordSchema {
   token: string;
@@ -20,11 +21,11 @@ function useResetPassword() {
       );
     },
     onSuccess: () => {
-      alert("Password reset successfully");
+      toast.success("Password reset successfully");
       navigate("/login");
     },
     onError: (error: AxiosError<{ message: string }>) => {
-      alert(error.response?.data.message || "Something went wrong");
+      toast.error(error.response?.data.message || "Something went wrong");
     },
   });
 }

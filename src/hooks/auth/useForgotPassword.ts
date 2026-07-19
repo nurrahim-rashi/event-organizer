@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { axiosInstance } from "../../api/axios";
+import toast from "react-hot-toast";
 import type { ForgotPasswordSchema } from "../../schemas/auth/forgot-password";
 
 function useForgotPassword() {
@@ -11,10 +12,10 @@ function useForgotPassword() {
       });
     },
     onSuccess: () => {
-      alert("Check your email for reset link");
+      toast.success("Check your email for reset link");
     },
     onError: (error: AxiosError<{ message: string }>) => {
-      alert(error.response?.data.message || "Something went wrong");
+      toast.error(error.response?.data.message || "Something went wrong");
     },
   });
 }
