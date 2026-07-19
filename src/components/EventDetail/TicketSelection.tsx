@@ -97,21 +97,19 @@ export const TicketSelection = ({
                         : `Rp${t.price.toLocaleString("id-ID")}`}
                     </span>
                   </div>
-                  <div className="flex justify-between items-start mb-2">
-                    <p className="text-xs text-[#cfc2d6] mb-3">
-                      Remaining: {remaining} tickets
-                    </p>
+                  <p className="text-xs text-[#cfc2d6] mb-3">
+                    Remaining: {remaining} tickets
+                  </p>
 
-                    <span
-                      className={`px-2 py-0.5 rounded font-bold text-[10px] tracking-widest uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
-                    >
-                      {isSoldOut
-                        ? "Sold Out"
-                        : isUnavailable
-                          ? "Unavailable"
-                          : "Available"}
-                    </span>
-                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded font-bold text-[10px] tracking-widest uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
+                  >
+                    {isSoldOut
+                      ? "Sold Out"
+                      : isUnavailable
+                        ? "Unavailable"
+                        : "Available"}
+                  </span>
 
                   {!isCheckoutMode ? (
                     <button

@@ -73,14 +73,19 @@ export const router = createBrowserRouter([
   },
   {
     path: "/transactions",
-    loader: userGuardLoader,
     lazy: async () => ({
-      Component: (await import("./pages/TransactionPage")).default,
+      Component: (await import("./pages/Transactions")).default,
+    }),
+  },
+  {
+    path: "/transactions/:id",
+    lazy: async () => ({
+      Component: (await import("./pages/TransactionDetail")).default,
     }),
   },
   {
     path: "/transactions/checkout",
-    loader: userGuardLoader,
+    loader: authLoader,
     lazy: async () => ({
       Component: (await import("./pages/Checkout")).default,
     }),
