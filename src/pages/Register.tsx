@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterSchema } from "../schemas/auth/register";
+import toast from "react-hot-toast";
 
 function Register() {
   const [show, setShow] = useState<boolean>(false);
@@ -34,11 +35,11 @@ function Register() {
         referredByCode: data.referredByCode,
       });
 
-      alert("Register success");
+      toast.success("Register success");
       navigate("/login");
     } catch (error) {
       console.log(error);
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     } finally {
       setIsPending(false);
     }

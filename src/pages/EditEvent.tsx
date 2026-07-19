@@ -11,6 +11,7 @@ import { PromotionForm } from "../components/CreateEvent/PromotionForm";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
 import DeleteEventModal from "../components/DeleteEvent/DeleteEventModal";
+import toast from "react-hot-toast";
 
 export default function EditEvent() {
   const { id } = useParams<{ id: string }>();
@@ -84,11 +85,11 @@ export default function EditEvent() {
       }
 
       await updateEvent(eventId, payload);
-      alert("🎉 Event updated successfully!");
+      toast.succes("Event updated successfully!");
       navigate(`/events/${eventId}`);
     } catch (err: any) {
       console.error("Update Error:", err);
-      setError(
+      toast.error(
         err.response?.data?.message ||
           "Failed to update event. Please check your input fields.",
       );
