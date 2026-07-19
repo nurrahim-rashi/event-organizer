@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 
 interface DashboardStats {
-  activeEventCounts?: number;
+  activeEventsCount?: number;
   ticketsSold?: number;
   totalEarnings?: number;
   totalAvailableEvents?: number;
@@ -18,6 +18,7 @@ interface DashboardStats {
     id: number;
     name: string;
     startDate: string;
+    ticketsSold?: number;
   }>;
   upcomingTickets?: Array<{
     id: number;
@@ -174,6 +175,8 @@ export default function DashboardPage() {
     );
   }
 
+  console.log("=== ISI STATE STATS SAAT RENDER ===", stats);
+
   // Pelindung jika user belum login atau loading state global belum selesai
   if (!user) {
     return (
@@ -238,7 +241,7 @@ export default function DashboardPage() {
                 Active Events
               </p>
               <p className="text-2xl font-bold text-gray-100 mt-2">
-                {stats.activeEventCounts ?? 0}{" "}
+                {stats.activeEventsCount ?? 0}{" "}
                 <span className="text-xs text-gray-500 font-normal">live</span>
               </p>
             </div>
@@ -327,7 +330,7 @@ export default function DashboardPage() {
                           )}
                         </td>
 
-                        <td className="py-4">0</td>
+                        <td className="py-4">{event.ticketsSold || 0}</td>
 
                         <td className="py-4 text-right pr-2">
                           <div className="flex justify-end gap-2">
