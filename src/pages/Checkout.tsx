@@ -12,10 +12,16 @@ import toast from "react-hot-toast";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { selectedEvent, cartItems, _hasHydrated } = useCheckoutStore();
+  const {
+    selectedEvent,
+    cartItems,
+    appliedVoucher,
+    appliedCoupon,
+    usePoints,
+    _hasHydrated,
+  } = useCheckoutStore();
   const [transaction, setTransaction] = useState<any>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const items = transaction?.items || [];
   const subtotal = items.reduce(
@@ -45,13 +51,18 @@ export default function CheckoutPage() {
 
     const initTransaction = async () => {
       try {
-        const res = await createTransaction({
+        const payload = {
           eventId: selectedEvent.id,
           items: cartItems.map((item) => ({
             ticketTypeId: item.ticket.id,
             qty: item.qty,
           })),
-        });
+          voucherId: appliedVoucher?.id || undefined,
+          couponId: appliedCoupon?.id || undefined,
+          usePoints: usePoints || false,
+        };
+
+        const res = await createTransaction(payload);
         setTransaction(res.data || res);
       } catch (e: any) {
         if (e.response?.status === 400) {
@@ -65,7 +76,15 @@ export default function CheckoutPage() {
     };
 
     if (!transaction) initTransaction();
-  }, [_hasHydrated, selectedEvent, cartItems, navigate]);
+  }, [
+    _hasHydrated,
+    selectedEvent,
+    cartItems,
+    navigate,
+    appliedVoucher,
+    appliedCoupon,
+    usePoints,
+  ]);
 
   const handleCancel = async () => {
     if (!transaction) return;

@@ -14,7 +14,7 @@ export const refreshInstance = axios.create({
 // 1. Request Interceptor: Menyisipkan Token ke setiap request
 axiosInstance.interceptors.request.use((config) => {
   // Jika Anda menyimpan token di localStorage
-  const token = localStorage.getItem("token");
+  const token = userAuth.getState().user?.accessToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -32,9 +32,6 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Coba refresh token
-        await refreshInstance.post("/auth/refresh");
-
         // Jika sukses, ulangi request awal
         return axiosInstance(originalRequest);
       } catch (refreshError) {

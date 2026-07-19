@@ -155,29 +155,60 @@ export default function TransactionDetail() {
                 </div>
               </div>
             </div>
-
             {/* Payment Summary */}
             <div className="glass-card rounded-2xl p-6 bg-[#231d2e]/50 border border-[#4d4354] space-y-4">
               <h3 className="font-bold border-b border-[#4d4354] pb-3">
                 Order Breakdown
               </h3>
+
+              {/* List Items */}
               {transaction.items?.map((item: any) => (
                 <div key={item.id} className="flex justify-between">
                   <span>
                     {item.ticketType.name} x {item.qty}
                   </span>
                   <span className="font-bold">
-                    Rp{item.price.toLocaleString("id-ID")}
+                    Rp{(item.price * item.qty).toLocaleString("id-ID")}
                   </span>
                 </div>
               ))}
+
+              {/* Discount Sections (BARU) */}
+              <div className="space-y-2 pt-2 border-t border-[#4d4354]">
+                {transaction.voucher && (
+                  <div className="flex justify-between text-green-400 text-sm">
+                    <span>Voucher ({transaction.voucher.code})</span>
+                    <span>
+                      -Rp{transaction.voucher.discount.toLocaleString("id-ID")}
+                    </span>
+                  </div>
+                )}
+                {transaction.coupon && (
+                  <div className="flex justify-between text-green-400 text-sm">
+                    <span>Coupon Discount</span>
+                    <span>
+                      -Rp{transaction.coupon.discount.toLocaleString("id-ID")}
+                    </span>
+                  </div>
+                )}
+                {transaction.pointUsed > 0 && (
+                  <div className="flex justify-between text-green-400 text-sm">
+                    <span>Points Used</span>
+                    <span>
+                      -Rp{transaction.pointUsed.toLocaleString("id-ID")}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Total */}
               <div className="pt-4 border-t border-[#4d4354] flex justify-between text-lg font-bold">
                 <span>Total Payment</span>
                 <span className="text-[#ddb7ff]">
                   Rp{transaction.totalPrice.toLocaleString("id-ID")}
                 </span>
               </div>
-            </div>
+            </div>{" "}
           </div>
         </div>
       </main>{" "}
