@@ -22,6 +22,8 @@ export default function EventDetail() {
   // State
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [usePoints] = useState<any>(null);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [moreEvents, setMoreEvents] = useState<any[]>([]);
 
@@ -88,12 +90,20 @@ export default function EventDetail() {
     if (!selectedTicket) return;
 
     console.log("Saving to store:", { event, selectedTicket });
-    useCheckoutStore.getState().setCheckoutData(event, selectedTicket, null);
+    useCheckoutStore
+      .getState()
+      .setCheckoutData(
+        event,
+        selectedTicket,
+        appliedVoucher,
+        appliedCoupon,
+        usePoints,
+      );
     navigate("/transactions/checkout");
   };
 
   const discountedPrice = Math.max(0, ticketPrice - discountAmount);
-  const totalPayment = discountedPrice; // Definisi yang kurang tadi
+  const totalPayment = discountedPrice;
 
   if (loading)
     return (

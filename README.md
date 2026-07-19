@@ -1,32 +1,36 @@
-# React + TypeScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Event-Organizer Platform
+Platform manajemen event end-to-end yang memungkinkan penyelenggara membuat acara, mengelola tiket, serta memfasilitasi pengguna untuk membeli tiket dengan sistem voucher dan poin.
+✨ Main Features
+Event Management: Penyelenggara dapat membuat, mengedit, dan memantau event.
+Ticket System: Sistem pemesanan tiket dengan berbagai kategori (Gold, Silver, Bronze, dsb).
+Voucher & Coupon: Diskon dinamis untuk setiap event menggunakan kode voucher atau kupon pengguna.
+Loyalty Points: Penggunaan poin referal untuk potongan harga transaksi.
+Payment Verification: Sistem upload bukti bayar dengan verifikasi dari pihak admin/organizer.
+Dashboard & Analytics: Monitoring transaksi dan statistik event.
+Role-Based Access: Mendukung akses untuk User, Admin (Organizer), dan Superadmin.
+🛠 Tech Stack
+Frontend: React 19, Vite, TailwindCSS (v4), TanStack Query, Zustand, Axios, React Router 8.
+Backend: Node.js, Express 5, Prisma ORM, PostgreSQL.
+Utilities: Cloudinary (Media Storage), Nodemailer (Email Notification), Zod (Validation), Node-Cron (Scheduled Tasks).
+🗄️ Database ERD
+ERD:
+🚀 How to Run Locally
+Prerequisites
+Node.js (v20+ recommended)
+PostgreSQL
+Cloudinary Account (untuk upload gambar)
+Setup Backend
+cd backend
+cp .env.example .env (sesuaikan DATABASE_URL dan CLOUDINARY_URL)
+npm install
+npx prisma db push
+npm run dev
+Setup Frontend
+cd ../frontend
+cp .env.example .env (sesuaikan VITE_API_URL)
+npm install
+npm run dev
+🌐 Deployment URLs
+Frontend:
+Backend:
+🔑 Demo Accounts
