@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import Navbar from "../components/General/Navbar";
 import EventStatistics from "../components/Profile/EventStatistics";
 import { axiosInstance } from "../api/axios";
+import toast from "react-hot-toast";
 
 interface DashboardStats {
   activeEventCounts?: number;
@@ -81,13 +82,13 @@ const TransactionActionButtons: React.FC<ActionButtonsProps> = ({
       );
 
       if (response.data.success) {
-        alert(
+        toast.success(
           response.data.message || `Transaction successfully ${confirmText}ed!`,
         );
         onSuccess();
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || "Something went wrong.");
+      toast.error(error.response?.data?.message || "Something went wrong.");
     } finally {
       setIsLoading(false);
     }

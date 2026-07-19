@@ -8,6 +8,7 @@ import { useCheckoutStore } from "../stores/useCheckoutStore";
 import { createTransaction } from "../services/transaction.service";
 import { transactionApi } from "../services/transaction.service";
 import { axiosInstance } from "../api/axios";
+import toast from "react-hot-toast";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ export default function CheckoutPage() {
           fetchActiveTransaction();
         } else {
           console.error(e);
-          alert("Failed to create transaction.");
+          toast.error("Failed to create transaction.");
           navigate("/");
         }
       }
@@ -76,13 +77,14 @@ export default function CheckoutPage() {
   const handleConfirmCancel = async () => {
     if (!transaction?.id) return;
     try {
+      toast.success("Transaction is cancelled successfully!");
       await transactionApi.cancel(transaction.id);
       useCheckoutStore.getState().clearCheckoutData();
       setIsCancelModalOpen(false);
       navigate("/events");
     } catch (error) {
       console.error(error);
-      alert("Failed to cancel transaction. Please try again.");
+      toast.error("Failed to cancel transaction. Please try again.");
     }
   };
 
@@ -98,12 +100,14 @@ export default function CheckoutPage() {
         },
       );
 
-      alert("Payment proof successfully submitted!");
+      toast.success("Payment proof successfully submitted!");
       setIsPaymentModalOpen(false);
       navigate("/transactions");
     } catch (error: any) {
       console.error("Gagal upload:", error.response?.data || error);
-      alert(error.response?.data?.message || "Failed to upload payment proof.");
+      toast.error(
+        error.response?.data?.message || "Failed to upload payment proof.",
+      );
     }
   };
 

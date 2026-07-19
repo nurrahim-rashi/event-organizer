@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { deleteEvent } from "../../services/event.service";
+import toast from "react-hot-toast";
 
 export const useDeleteEvent = (eventId: number, onSuccess: () => void) => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -8,11 +9,11 @@ export const useDeleteEvent = (eventId: number, onSuccess: () => void) => {
     setIsDeleting(true);
     try {
       await deleteEvent(eventId);
-      alert("Event deleted successfully!");
+      toast.success("Event deleted successfully!");
       onSuccess();
     } catch (error) {
       console.error("Failed to delete event:", error);
-      alert("Failed to delete event. Please try again.");
+      toast.error("Failed to delete event. Please try again.");
     } finally {
       setIsDeleting(false);
     }

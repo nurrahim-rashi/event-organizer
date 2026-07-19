@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getEvent, updateEvent } from "../../services/event.service";
 import type { Event, EventFormState } from "../../types/type";
+import toast from "react-hot-toast";
 
 export const useEditEvent = (eventId: number) => {
   const [formData, setFormData] = useState<EventFormState>({
@@ -83,9 +84,10 @@ export const useEditEvent = (eventId: number) => {
       };
 
       await updateEvent(eventId, updatedEventPayload);
-      alert("Changes saved successfully!");
+      toast.success("Changes saved successfully!");
     } catch (error) {
       console.error("Failed to update event", error);
+      toast.error("Failed to update event.");
     } finally {
       setSaving(false);
     }

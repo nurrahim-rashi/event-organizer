@@ -6,8 +6,10 @@ import toast from "react-hot-toast";
 import { axiosInstance } from "../api/axios";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
+import { userAuth } from "../stores/useAuth";
 
 export default function TransactionDetail() {
+  const { user } = userAuth();
   const { id } = useParams();
   const queryClient = useQueryClient();
 
@@ -43,6 +45,11 @@ export default function TransactionDetail() {
     return (
       <div className="text-white text-center pt-20">Transaction not found.</div>
     );
+
+  // Logika Authorization
+  const isSuperAdmin = user?.role === "SUPERADMIN";
+  const isEventOwner = transaction?.event?.organizerId === user?.id;
+  const canReview = isSuperAdmin || isEventOwner;
 
   return (
     <div className="bg-[#171021] text-[#eadef6] min-h-screen pb-16 selection:bg-[#ddb7ff] selection:text-[#490080]">
@@ -85,7 +92,7 @@ export default function TransactionDetail() {
           </div>
 
           {/* Action Bar (Bento Style) */}
-          {transaction.status === "WAITING_CONFIRMATION" && (
+          {transaction.status === "WAITING_CONFIRMATION" && canReview && (
             <div className="bg-[#231d2e] border border-[#4d4354] rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-[#ddb7ff]/10 flex items-center justify-center text-[#ddb7ff]">

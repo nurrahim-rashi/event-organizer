@@ -6,48 +6,49 @@ import { userAuth } from "../stores/useAuth";
 import { axiosInstance } from "../api/axios";
 import { Link } from "react-router";
 import { loginSchema, type LoginSchema } from "../schemas/auth/login";
+import toast from "react-hot-toast";
 
 function Login() {
   const [show, setShow] = useState<boolean>(false);
   const [isPending, setIsPending] = useState<boolean>(false);
 
-    const form = useForm<LoginSchema>({
-        resolver: zodResolver(loginSchema),
-        mode: "onChange",
-        defaultValues: {
-            email: "",
-            password: "",
-        },
-    });
+  const form = useForm<LoginSchema>({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   const { login } = userAuth();
   const navigate = useNavigate();
 
-    async function onSubmit(data: LoginSchema) {
-        setIsPending(true);
-        try {
-            const response = await axiosInstance.post("/auth/login", {
-                email: data.email,
-                password: data.password,
-            });
+  async function onSubmit(data: LoginSchema) {
+    setIsPending(true);
+    try {
+      const response = await axiosInstance.post("/auth/login", {
+        email: data.email,
+        password: data.password,
+      });
 
-            console.log("Struktur respons API:", response.data);
+      console.log("Struktur respons API:", response.data);
 
-            alert("login success");
+      toast.success("Login success!");
 
-            login({
-                id: response.data.user.id,
-                name: response.data.user.name,
-                email: response.data.user.email,
-                profilePic: response.data.user.profilePic,
-                role: response.data.user.role,
-                accessToken: response.data.accessToken,
-            });
+      login({
+        id: response.data.user.id,
+        name: response.data.user.name,
+        email: response.data.user.email,
+        profilePic: response.data.user.profilePic,
+        role: response.data.user.role,
+        accessToken: response.data.accessToken,
+      });
 
       navigate("/");
     } catch (error) {
       console.log(error);
-      alert("Login failed");
+      toast.error("Login failed");
     } finally {
       setIsPending(false);
     }
