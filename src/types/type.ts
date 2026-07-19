@@ -1,7 +1,12 @@
 export type Role = "USER" | "ADMIN" | "SUPERADMIN";
 
 export type TransactionStatus =
-  "WAITING_PAYMENT" | "PAID" | "CANCELLED" | "EXPIRED" | "DONE";
+  | "WAITING_PAYMENT"
+  | "CANCELLED"
+  | "EXPIRED"
+  | "DONE"
+  | "REJECTED"
+  | "WAITING_CONFIRMATION";
 
 export type TicketName = "GOLD" | "SILVER" | "BRONZE" | "  EARLY_BIRD";
 
@@ -88,6 +93,9 @@ export interface Transaction {
   totalPrice: number;
   createdAt: string;
   items: TransactionItem[];
+  event: {
+    name: string;
+  };
 }
 
 export interface Review {

@@ -41,7 +41,7 @@ function FeaturedBannerSkeleton() {
 }
 
 export default function BrowseEvents() {
-  const { events, fetchEvents } = useEvents(); // Hapus isLoading dari sini karena tidak ada di return hookmu
+  const { events, fetchEvents } = useEvents();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isInitialMount, setIsInitialMount] = useState(true);
 
@@ -212,7 +212,7 @@ export default function BrowseEvents() {
     setSearchParams(n);
   };
 
-  const isReallyLoading = isInitialMount; // Mengandalkan state lokal karena hook hook hook mu ga ada isLoading
+  const isReallyLoading = isInitialMount;
 
   return (
     <div className="bg-[#171021] text-[#eadef6] min-h-screen font-sans selection:bg-[#ddb7ff]/30">

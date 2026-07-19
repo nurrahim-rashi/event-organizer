@@ -72,7 +72,7 @@ export default function Navbar() {
         <div className="flex items-center gap-8 flex-1">
           {/* Logo */}
           <Link
-            to="/"
+            to={user ? "/dashboard" : "/"}
             className="text-2xl font-extrabold tracking-wider bg-linear-to-r from-[#ddb7ff] to-[#5de6ff] bg-clip-text text-transparent whitespace-nowrap hover:opacity-90 transition-opacity"
           >
             MyEvent
@@ -195,6 +195,14 @@ export default function Navbar() {
                     className="block px-4 py-2.5 text-sm text-gray-200 hover:bg-purple-600/20 hover:text-purple-300 transition-colors"
                   >
                     My Profile
+                  </Link>
+
+                  <Link
+                    to="/transactions"
+                    onClick={() => setIsOpen(false)}
+                    className="block px-4 py-2.5 text-sm text-gray-200 hover:bg-purple-600/20 hover:text-purple-300 transition-colors"
+                  >
+                    My Transactions
                   </Link>
 
                   <hr className="border-purple-950/40 my-1" />

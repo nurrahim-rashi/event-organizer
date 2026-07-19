@@ -124,9 +124,9 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     if (!user?.accessToken) return;
 
-      try {
-        setLoading(true);
-        console.log("1. Sedang memanggil API stats...");
+    try {
+      setLoading(true);
+      console.log("1. Sedang memanggil API stats...");
 
       const response = await axiosInstance.get("/dashboard/stats", {
         headers: {
@@ -141,22 +141,22 @@ export default function DashboardPage() {
         selectedEventId || response.data.data.managedEvents?.[0]?.id;
 
       if (eventIdToFetch) {
-      const txResponse = await axiosInstance.get(
-        `/transactions/event/${eventIdToFetch}/incoming`,
-        {
-          headers: { Authorization: `Bearer ${user.accessToken}` },
-        }
-      );
-      setTransactions(txResponse.data.data);
-    } else {
-      setTransactions([]);
+        const txResponse = await axiosInstance.get(
+          `/transactions/event/${eventIdToFetch}/incoming`,
+          {
+            headers: { Authorization: `Bearer ${user.accessToken}` },
+          },
+        );
+        setTransactions(txResponse.data.data);
+      } else {
+        setTransactions([]);
+      }
+    } catch (error) {
+      console.error("Failed to retrieve dashboard statistic data", error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Failed to retrieve dashboard statistic data", error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -189,7 +189,7 @@ export default function DashboardPage() {
         <Navbar />
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Header Dashboard EO */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-purple-950 pb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-purple-950 pb-6 mt-16">
             <div>
               <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-indigo-400">
                 Organizer Dashboard
@@ -198,7 +198,7 @@ export default function DashboardPage() {
                 Welcome back, {user?.name || "User"}.
               </p>
             </div>
-            <Link to="/create-event">
+            <Link to="/events/create">
               <button className="bg-linear-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-2.5 px-5 rounded-xl shadow-lg shadow-purple-900/20 active:scale-[0.98] transition-all text-sm">
                 + Create New Event
               </button>
@@ -449,10 +449,12 @@ export default function DashboardPage() {
   // JIKA LOGIN SEBAGAI: CUSTOMER / USER BIASA
   return (
     <div className="min-h-screen bg-[#0d0a16] text-white p-6 md:p-10">
+      {" "}
+      <Navbar />
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Header Dashboard Customer */}
         <div className="border-b border-purple-950 pb-6">
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-indigo-400">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-indigo-400 mt-16">
             Welcome Back, {user.name}! 👋
           </h1>
           <p className="text-gray-400 text-sm mt-1">
@@ -473,7 +475,7 @@ export default function DashboardPage() {
               </p>
             </div>
             <Link
-              to="/my-tickets"
+              to="/transactions"
               className="text-xs text-purple-400 hover:underline"
             >
               View All &rarr;
