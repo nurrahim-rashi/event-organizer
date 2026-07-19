@@ -1,4 +1,3 @@
-import React from "react";
 import { useParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { transactionApi } from "../services/transaction.service";
@@ -7,6 +6,7 @@ import { axiosInstance } from "../api/axios";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
 import { userAuth } from "../stores/useAuth";
+import { getStatusStyle } from "../utils/style";
 
 export default function TransactionDetail() {
   const { user } = userAuth();
@@ -86,7 +86,11 @@ export default function TransactionDetail() {
                 <p className="text-[10px] uppercase font-bold text-[#cfc2d6]">
                   Status
                 </p>
-                <p className="font-bold text-[#5de6ff]">{transaction.status}</p>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-bold border ${getStatusStyle(transaction.status)}`}
+                >
+                  {transaction.status.replace("_", " ")}
+                </span>{" "}
               </div>
             </div>
           </div>
@@ -174,7 +178,7 @@ export default function TransactionDetail() {
               ))}
 
               {/* Discount Sections (BARU) */}
-              <div className="space-y-2 pt-2 border-t border-[#4d4354]">
+              <div className="space-y-2 pt-2 ">
                 {transaction.voucher && (
                   <div className="flex justify-between text-green-400 text-sm">
                     <span>Voucher ({transaction.voucher.code})</span>

@@ -6,7 +6,7 @@ export const transactionApi = {
     items: { ticketTypeId: number; qty: number }[];
     voucherId?: number;
     couponId?: number;
-    usePoints?: boolean;
+    usePoints?: number;
   }) => axiosInstance.post("/transactions/checkout", data),
   cancel: (id: number) => axiosInstance.patch(`/transactions/${id}/cancel`),
   getActive: () => axiosInstance.get("/transactions/checkout"),

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { getEvents } from "../../services/event.service";
 import { EventCard } from "../General/EventCard";
-import type { Event } from "../../types/type";
+import type { Event } from "../../types/event";
 
 export default function UpcomingEvents() {
   const [events, setEvents] = useState<Event[]>([]);

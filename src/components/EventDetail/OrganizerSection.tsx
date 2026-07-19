@@ -1,12 +1,8 @@
 import { useNavigate } from "react-router";
 import { EventCard } from "../General/EventCard";
+import { toTitleCase } from "../../utils/toTitleCase";
 
-export const OrganizerSection = ({
-  event,
-  toTitleCase,
-  isOwner,
-  moreEvents = [],
-}: any) => {
+export const OrganizerSection = ({ event, moreEvents = [] }: any) => {
   const navigate = useNavigate();
 
   return (

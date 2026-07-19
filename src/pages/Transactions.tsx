@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { transactionApi } from "../services/transaction.service";
-import type { Transaction } from "../types/type";
+import type { Transaction } from "../types/transaction";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
 import { useNavigate } from "react-router";
+import { getStatusStyle } from "../utils/style";
 
 const TransactionPage: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -37,34 +38,12 @@ const TransactionPage: React.FC = () => {
 
   const activeTransactions = transactions.filter(
     (t) =>
-      t.status === "WAITING_PAYMENT" || t.status === "WAITING_CONFIRMATION",
+      t.status === "WAITING_CONFIRMATION" || t.status === "WAITING_PAYMENT",
   );
   const historyTransactions = transactions.filter(
     (t) =>
       t.status !== "WAITING_PAYMENT" && t.status !== "WAITING_CONFIRMATION",
   );
-
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "DONE":
-        // Hijau (bg: 10% opacity, border: 20% opacity)
-        return "bg-[#22c55e]/10 text-[#4ade80] border-[#22c55e]/20";
-      case "WAITING_PAYMENT":
-        // Amber/Oranye
-        return "bg-[#f59e0b]/10 text-[#fbbf24] border-[#f59e0b]/20";
-      case "WAITING_CONFIRMATION":
-        // Ungu/Primary
-        return "bg-[#ddb7ff]/10 text-[#ddb7ff] border-[#ddb7ff]/20";
-      case "CANCELLED":
-      case "EXPIRED":
-      case "REJECTED":
-        // Merah/Error
-        return "bg-[#ffb4ab]/10 text-[#ffb4ab] border-[#ffb4ab]/20";
-      default:
-        // Abu-abu
-        return "bg-[#4d4354] text-[#eadef6] border-[#4d4354]";
-    }
-  };
 
   const TransactionCard = ({ tx }: { tx: Transaction }) => (
     <div

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useEvents } from "../hooks/event/useEvents";
 import { useDebounce } from "../hooks/event/useDebounce";
-import type { Event, EventCategory } from "../types/type";
+import type { Event, EventCategory } from "../types/event";
 import Navbar from "../components/General/Navbar";
 import Footer from "../components/General/Footer";
 import SidebarFilter from "../components/BrowseEvents/SidebarFilter";

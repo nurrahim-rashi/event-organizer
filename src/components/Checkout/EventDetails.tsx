@@ -1,9 +1,5 @@
-interface EventDetailsProps {
-  event: any;
-}
-
-export default function EventDetails({ event }: EventDetailsProps) {
-  if (!event) return null;
+export default function EventDetails({ event }: { event: any }) {
+  if (!event) return null; // Akan menunggu sampai data transaksi ter-load
 
   return (
     <section className="bg-[rgba(35,29,46,0.6)] backdrop-blur-[12px] border border-white/10 rounded-xl p-1 overflow-hidden">
