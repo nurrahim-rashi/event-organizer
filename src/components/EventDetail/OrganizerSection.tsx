@@ -43,7 +43,7 @@ export const OrganizerSection = ({
           <button
             onClick={() => navigate(`/organizers/${event.organizerId}`)}
             type="button"
-            class="flex items-center gap-2 text-sm bg-[#ddb7ff]/10 text-[#ddb7ff] px-4 py-2 rounded-xl font-bold border border-[#ddb7ff]/20 hover:bg-[#ddb7ff]/20 transition-all"
+            className="flex items-center gap-2 text-sm bg-[#ddb7ff]/10 text-[#ddb7ff] px-4 py-2 rounded-xl font-bold border border-[#ddb7ff]/20 hover:bg-[#ddb7ff]/20 transition-all"
           >
             View Profile
           </button>

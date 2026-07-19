@@ -1,10 +1,15 @@
 import { useState } from "react";
+import { useCheckoutStore } from "../../stores/useCheckoutStore";
 
 export const TicketSelection = ({
+  event,
   tickets,
+  qty,
   voucherCode,
   setVoucherCode,
   appliedVoucher,
+  appliedCoupon,
+  usePoints,
   setAppliedVoucher,
   voucherError,
   handleApplyVoucher,
@@ -45,7 +50,19 @@ export const TicketSelection = ({
     if (!isCheckoutMode) {
       setIsCheckoutMode(true);
     } else {
-      // Arahkan ke halaman checkout
+      // Transform cart menjadi array object {ticket, qty}
+      const items = Object.entries(cart).map(([id, qty]) => ({
+        ticket: tickets.find((t: any) => t.id === Number(id)),
+        qty: qty,
+      }));
+
+      useCheckoutStore.getState().setCheckoutData(
+        event,
+        items, // Kirim array items!
+        appliedVoucher,
+        appliedCoupon,
+        usePoints,
+      );
       window.location.href = "/transactions/checkout";
     }
   };

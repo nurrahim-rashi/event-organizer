@@ -1,19 +1,66 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface CheckoutStore {
-  selectedEvent: any | null; // Ganti 'any' dengan interface Event jika sudah ada
-  selectedTicket: any | null; // Ganti 'any' dengan interface Ticket jika sudah ada
-  transaction: any | null; // Tambahkan ini agar bisa dipakai di OrderSummary
-  setCheckoutData: (event: any, ticket: any, transaction: any) => void;
+  selectedEvent: any | null;
+  cartItems: { ticket: any; qty: number }[];
+  appliedVoucher: any | null;
+  appliedCoupon: any | null;
+  usePoints: boolean;
+  transaction: any | null;
+  _hasHydrated: boolean;
+
+  setHasHydrated: (state: boolean) => void;
+  setCheckoutData: (
+    event: any,
+    items: { ticket: any; qty: number }[],
+    voucher: any | null,
+    coupon: any | null,
+    usePoints: boolean,
+  ) => void;
+  setTransaction: (tx: any) => void;
   clearCheckoutData: () => void;
 }
 
-export const useCheckoutStore = create<CheckoutStore>((set) => ({
-  selectedEvent: null,
-  selectedTicket: null,
-  transaction: null,
-  setCheckoutData: (event, ticket, transaction) =>
-    set({ selectedEvent: event, selectedTicket: ticket, transaction }),
-  clearCheckoutData: () =>
-    set({ selectedEvent: null, selectedTicket: null, transaction: null }),
-}));
+export const useCheckoutStore = create<CheckoutStore>()(
+  persist(
+    (set) => ({
+      selectedEvent: null,
+      cartItems: [],
+      appliedVoucher: null,
+      appliedCoupon: null,
+      usePoints: false,
+      transaction: null,
+      _hasHydrated: false,
+
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
+
+      setCheckoutData: (event, items, voucher, coupon, usePoints) =>
+        set({
+          selectedEvent: event,
+          cartItems: items,
+          appliedVoucher: voucher,
+          appliedCoupon: coupon,
+          usePoints: usePoints,
+        }),
+
+      setTransaction: (tx) => set({ transaction: tx }),
+
+      clearCheckoutData: () =>
+        set({
+          selectedEvent: null,
+          cartItems: [],
+          appliedVoucher: null,
+          appliedCoupon: null,
+          usePoints: false,
+          transaction: null,
+        }),
+    }),
+    {
+      name: "checkout-storage",
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
+    },
+  ),
+);
