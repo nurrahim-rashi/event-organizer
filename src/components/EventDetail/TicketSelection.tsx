@@ -4,12 +4,16 @@ import { useCheckoutStore } from "../../stores/useCheckoutStore";
 export const TicketSelection = ({
   event,
   tickets,
+  user,
+  coupons,
   voucherCode,
   setVoucherCode,
   appliedVoucher,
   appliedCoupon,
   usePoints,
   setAppliedVoucher,
+  setAppliedCoupon,
+  setUsePoints,
   voucherError,
   handleApplyVoucher,
   submitting,
@@ -24,15 +28,21 @@ export const TicketSelection = ({
       if (ticket) subtotal += ticket.price * cart[Number(id)];
     });
 
-    const voucherDiscount = appliedVoucher ? appliedVoucher.discount : 0;
-    const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-    const totalDiscount = voucherDiscount + couponDiscount;
+    const vDiscount = appliedVoucher ? appliedVoucher.discount : 0;
+    const cDiscount = appliedCoupon ? appliedCoupon.discount : 0;
 
-    const total = Math.max(0, subtotal - totalDiscount);
-    return { totalDiscount, total };
+    // Hitung total sisa setelah voucher dan coupon
+    const afterDiscounts = Math.max(0, subtotal - vDiscount - cDiscount);
+
+    // Poin tidak boleh melebihi sisa pembayaran setelah diskon
+    const finalPoints = Math.min(usePoints || 0, afterDiscounts);
+    const total = Math.max(0, afterDiscounts - finalPoints);
+
+    return { subtotal, vDiscount, cDiscount, finalPoints, total };
   };
 
-  const { totalDiscount, total } = calculateTotals();
+  const { subtotal, vDiscount, cDiscount, finalPoints, total } =
+    calculateTotals();
 
   const handleUpdateCart = (ticket: any, delta: number) => {
     setCart((prev) => {
@@ -51,19 +61,20 @@ export const TicketSelection = ({
     if (!isCheckoutMode) {
       setIsCheckoutMode(true);
     } else {
-      // Transform cart menjadi array object {ticket, qty}
       const items = Object.entries(cart).map(([id, qty]) => ({
         ticket: tickets.find((t: any) => t.id === Number(id)),
         qty: qty,
       }));
 
-      useCheckoutStore.getState().setCheckoutData(
-        event,
-        items, // Kirim array items!
-        appliedVoucher,
-        appliedCoupon,
-        usePoints,
-      );
+      useCheckoutStore
+        .getState()
+        .setCheckoutData(
+          event,
+          items,
+          appliedVoucher,
+          appliedCoupon,
+          finalPoints,
+        );
       window.location.href = "/transactions/checkout";
     }
   };
@@ -76,117 +87,136 @@ export const TicketSelection = ({
         </h3>
       </div>
       <div className="p-6 space-y-6">
+        {/* Ticket List */}
         <div className="space-y-4">
-          {tickets.length > 0 ? (
-            tickets.map((t: any) => {
-              const remaining = (t.totalTicket ?? 0) - (t.booked ?? 0);
-              // Logika status: sold out = 0, unavailable = (misal logicmu < 0 atau khusus), available = sisa
-              const isSoldOut = remaining <= 0;
-              const isUnavailable = false;
-
-              const qtyInCart = cart[t.id] || 0;
-
-              return (
-                <div
-                  key={t.id}
-                  className={`block p-4 border-2 rounded-xl transition-all ${isSoldOut ? "pointer-events-none opacity-40 bg-black/20 border-[#4d4354]" : "border-[#4d4354]"}`}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-bold text-[#eadef6]">{t.name}</span>
-                    <span className="text-[#ddb7ff] font-black text-lg">
-                      {t.price === 0
-                        ? "Free"
-                        : `Rp${t.price.toLocaleString("id-ID")}`}
-                    </span>
-                  </div>{" "}
-                  <div className="flex justify-between items-start mb-2">
-                    <p className="text-xs text-[#cfc2d6] mb-3">
-                      Remaining: {remaining} tickets
-                    </p>
-
-                    <span
-                      className={`px-2 py-0.5 rounded font-bold text-[10px] tracking-widest uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
+          {tickets.map((t: any) => {
+            const remaining = (t.totalTicket ?? 0) - (t.booked ?? 0);
+            const isSoldOut = remaining <= 0;
+            const qtyInCart = cart[t.id] || 0;
+            return (
+              <div
+                key={t.id}
+                className={`block p-4 border-2 rounded-xl ${isSoldOut ? "opacity-40 border-[#4d4354]" : "border-[#4d4354]"}`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-bold text-[#eadef6]">{t.name}</span>
+                  <span className="text-[#ddb7ff] font-black text-lg">
+                    Rp{t.price.toLocaleString("id-ID")}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-[#cfc2d6]">
+                    Remaining: {remaining}
+                  </p>
+                  <span
+                    className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
+                  >
+                    {isSoldOut ? "Sold Out" : "Available"}
+                  </span>
+                </div>
+                {!isCheckoutMode ? (
+                  <button
+                    onClick={() => handleUpdateCart(t, 1)}
+                    disabled={isSoldOut}
+                    className="mt-4 w-full py-2 bg-[#ddb7ff] text-[#400071] font-bold text-xs rounded-lg uppercase"
+                  >
+                    Add to Cart
+                  </button>
+                ) : (
+                  <div className="mt-4 flex items-center justify-center gap-4 bg-[#171021] p-2 rounded-lg">
+                    <button
+                      onClick={() => handleUpdateCart(t, -1)}
+                      className="text-[#ddb7ff] font-bold text-lg"
                     >
-                      {isSoldOut
-                        ? "Sold Out"
-                        : isUnavailable
-                          ? "Unavailable"
-                          : "Available"}
-                    </span>
-                  </div>
-                  {!isCheckoutMode ? (
+                      -
+                    </button>
+                    <span className="text-white font-bold">{qtyInCart}</span>
                     <button
                       onClick={() => handleUpdateCart(t, 1)}
-                      className="mt-4 w-full py-2 bg-[#ddb7ff] text-[#400071] font-bold text-xs rounded-lg uppercase"
+                      className="text-[#ddb7ff] font-bold text-lg"
                     >
-                      Add to Cart
+                      +
                     </button>
-                  ) : (
-                    <div className="mt-4 flex items-center justify-center gap-4 bg-[#171021] p-2 rounded-lg">
-                      <button
-                        onClick={() => handleUpdateCart(t, -1)}
-                        className="text-[#ddb7ff] font-bold text-lg"
-                      >
-                        -
-                      </button>
-                      <span className="text-white font-bold">{qtyInCart}</span>
-                      <button
-                        onClick={() => handleUpdateCart(t, 1)}
-                        className="text-[#ddb7ff] font-bold text-lg"
-                      >
-                        +
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center p-4 border border-dashed border-[#4d4354] rounded-xl text-[#cfc2d6] text-sm">
-              No tickets available.
-            </div>
-          )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Section Voucher & Price muncul jika sudah checkout mode */}
         {isCheckoutMode && (
-          <>
-            <div className="pt-4 border-t border-[#4d4354]/30 space-y-2">
-              <label className="block text-xs font-bold text-[#cfc2d6] uppercase tracking-wider">
+          <div className="pt-4 border-t border-[#4d4354]/30 space-y-6">
+            {/* Voucher */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-[#cfc2d6] uppercase">
                 Event Voucher
               </label>
               <div className="flex gap-2">
                 <input
-                  type="text"
-                  placeholder="Enter Promo Code"
+                  className="flex-1 bg-[#171021] border border-[#4d4354] rounded-lg px-3 py-2 text-sm uppercase"
+                  placeholder="PROMO CODE"
                   value={voucherCode}
                   onChange={(e) => setVoucherCode(e.target.value)}
-                  disabled={!!appliedVoucher}
-                  className="flex-1 bg-[#171021] border border-[#4d4354] rounded-lg px-3 py-2 text-sm uppercase"
                 />
                 <button
-                  type="button"
-                  onClick={
-                    appliedVoucher
-                      ? () => {
-                          setAppliedVoucher(null);
-                          setVoucherCode("");
-                        }
-                      : handleApplyVoucher
-                  }
-                  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase ${appliedVoucher ? "bg-red-500/20 text-red-400" : "bg-[#32293d] text-[#ddb7ff]"}`}
+                  onClick={handleApplyVoucher}
+                  className="px-4 py-2 bg-[#32293d] text-[#ddb7ff] rounded-lg text-xs font-bold uppercase"
                 >
-                  {appliedVoucher ? "Clear" : "Apply"}
+                  Apply
                 </button>
               </div>
-              {voucherError && (
-                <p className="text-xs text-red-400 font-medium">
-                  {voucherError}
-                </p>
-              )}
             </div>
 
-            <div className="pt-4 border-t border-[#4d4354]/30 space-y-2">
+            {/* Coupons */}
+            {coupons?.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-[#cfc2d6] uppercase">
+                  Use Coupon
+                </label>
+                {coupons.map((c: any) => (
+                  <div
+                    key={c.id}
+                    className="flex justify-between items-center bg-[#171021] p-3 rounded-lg border border-[#4d4354]"
+                  >
+                    <span className="text-sm text-[#eadef6]">
+                      Rp{c.discount.toLocaleString()}
+                    </span>
+                    <button
+                      onClick={() =>
+                        setAppliedCoupon(appliedCoupon?.id === c.id ? null : c)
+                      }
+                      className={`text-xs px-2 py-1 rounded font-bold ${appliedCoupon?.id === c.id ? "bg-red-500/20 text-red-400" : "bg-[#ddb7ff] text-[#400071]"}`}
+                    >
+                      {appliedCoupon?.id === c.id ? "Cancel" : "Use"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Points Slider */}
+            {user?.points > 0 && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-[#cfc2d6]">
+                  <span>Use Points (Bal: {user.points.toLocaleString()})</span>
+                  <span>Rp{finalPoints.toLocaleString()}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max={Math.min(
+                    user.points,
+                    Math.max(0, subtotal - vDiscount - cDiscount),
+                  )}
+                  value={usePoints}
+                  onChange={(e) => setUsePoints(Number(e.target.value))}
+                  className="w-full accent-[#ddb7ff]"
+                />
+              </div>
+            )}
+
+            {/* Breakdown */}
+            <div className="space-y-2 border-t border-[#4d4354] pt-4">
               {Object.entries(cart).map(([id, qty]) => {
                 const ticket = tickets.find((t: any) => t.id === Number(id));
                 return ticket ? (
@@ -197,26 +227,36 @@ export const TicketSelection = ({
                     <span>
                       {ticket.name} x {qty}
                     </span>
-                    <span>
-                      Rp{(ticket.price * qty).toLocaleString("id-ID")}
-                    </span>
+                    <span>Rp{(ticket.price * qty).toLocaleString()}</span>
                   </div>
                 ) : null;
               })}
-              {appliedVoucher && (
-                <div className="flex justify-between text-sm text-green-400 font-medium">
-                  <span>Promo ({appliedVoucher.code})</span>
-                  <span>-Rp{totalDiscount.toLocaleString("id-ID")}</span>
+              {vDiscount > 0 && (
+                <div className="flex justify-between text-sm text-green-400">
+                  <span>Voucher</span>
+                  <span>-Rp{vDiscount.toLocaleString()}</span>
                 </div>
               )}
-              <div className="flex justify-between items-center pt-2">
-                <span className="font-bold text-[#eadef6]">Total Price</span>
-                <span className="text-[#ddb7ff] text-2xl font-black">
-                  Rp{total.toLocaleString("id-ID")}
+              {cDiscount > 0 && (
+                <div className="flex justify-between text-sm text-green-400">
+                  <span>Coupon</span>
+                  <span>-Rp{cDiscount.toLocaleString()}</span>
+                </div>
+              )}
+              {finalPoints > 0 && (
+                <div className="flex justify-between text-sm text-green-400">
+                  <span>Points</span>
+                  <span>-Rp{finalPoints.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex justify-between pt-2 text-white font-bold text-lg">
+                <span>Total</span>
+                <span className="text-[#ddb7ff]">
+                  Rp{total.toLocaleString()}
                 </span>
               </div>
             </div>
-          </>
+          </div>
         )}
 
         <button
@@ -226,11 +266,7 @@ export const TicketSelection = ({
           }
           className="w-full py-4 bg-[#ddb7ff] text-[#490080] rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#f0dbff] transition-all disabled:opacity-40"
         >
-          {submitting
-            ? "Processing..."
-            : isCheckoutMode
-              ? "Checkout Tickets"
-              : "Buy Tickets Now"}
+          {isCheckoutMode ? "Checkout Tickets" : "Buy Tickets Now"}
         </button>
       </div>
     </aside>

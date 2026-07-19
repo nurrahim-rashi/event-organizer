@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { userAuth } from "../../stores/useAuth";
 import type { EventCategory } from "../../types/type";
+import { toTitleCase } from "../../utils/toTitleCase";
 
 export default function Navbar() {
   const { user, logout } = userAuth();
@@ -28,15 +29,6 @@ export default function Navbar() {
     "HEALTH",
     "OTHER",
   ];
-
-  const toTitleCase = (str: string) => {
-    if (!str) return "";
-    return str
-      .toLowerCase()
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -212,7 +204,7 @@ export default function Navbar() {
                     onClick={() => {
                       setIsOpen(false);
                       logout();
-                      navigate("/")
+                      navigate("/");
                     }}
                     className="w-full text-left block px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                   >

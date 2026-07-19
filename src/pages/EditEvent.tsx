@@ -85,7 +85,7 @@ export default function EditEvent() {
       }
 
       await updateEvent(eventId, payload);
-      toast.succes("Event updated successfully!");
+      toast.success("Event updated successfully!");
       navigate(`/events/${eventId}`);
     } catch (err: any) {
       console.error("Update Error:", err);

@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { toTitleCase } from "../../utils/toTitleCase";
 
 interface BreadcrumbProps {
   items: {
@@ -8,15 +9,6 @@ interface BreadcrumbProps {
 }
 
 export default function Breadcrumb({ items }: BreadcrumbProps) {
-  const toTitleCase = (str: string) => {
-    if (!str) return "";
-    return str
-      .toLowerCase()
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
-
   return (
     <nav
       className="flex items-center gap-2 text-sm text-[#988d9f] mb-6 overflow-x-auto whitespace-nowrap"
