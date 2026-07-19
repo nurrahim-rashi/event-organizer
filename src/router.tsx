@@ -102,4 +102,10 @@ export const router = createBrowserRouter([
       Component: (await import("./pages/ResetPassword")).default,
     }),
   },
+  {
+    path: "/events/:id/attendees",
+    lazy: async () => ({
+      Component: (await import("./pages/EventAttendees")).default,
+    }),
+  },
 ]);
