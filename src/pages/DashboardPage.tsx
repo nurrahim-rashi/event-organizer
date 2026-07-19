@@ -124,8 +124,9 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     if (!user?.accessToken) return;
 
-    try {
-      setLoading(true);
+      try {
+        setLoading(true);
+        console.log("1. Sedang memanggil API stats...");
 
       const response = await axiosInstance.get("/dashboard/stats", {
         headers: {
@@ -134,36 +135,32 @@ export default function DashboardPage() {
       });
 
       console.log("Response Data dari backend:", response.data);
-      console.log("Isi managed events:", response.data?.data?.managedEvents);
-
       setStats(response.data.data);
 
       const eventIdToFetch =
         selectedEventId || response.data.data.managedEvents?.[0]?.id;
 
       if (eventIdToFetch) {
-        const txResponse = await axiosInstance.get(
-          `/transactions/event/${eventIdToFetch}/incoming`,
-          {
-            headers: {
-              Authorization: `Bearer ${user.accessToken}`,
-            },
-          },
-        );
-        setTransactions(txResponse.data.data);
-      } else {
-        setTransactions([]);
-      }
-    } catch (error) {
-      console.error("Failed to retrieve dashboard statistic data", error);
-    } finally {
-      setLoading(false);
+      const txResponse = await axiosInstance.get(
+        `/transactions/event/${eventIdToFetch}/incoming`,
+        {
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+        }
+      );
+      setTransactions(txResponse.data.data);
+    } else {
+      setTransactions([]);
     }
-  };
+  } catch (error) {
+    console.error("Failed to retrieve dashboard statistic data", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchDashboardData();
-  }, [user]);
+  }, []);
 
   if (loading) {
     return (

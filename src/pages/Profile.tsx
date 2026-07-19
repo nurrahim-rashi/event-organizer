@@ -4,6 +4,7 @@ import { userAuth } from "../stores/useAuth";
 
 function Profile() {
   const { user } = userAuth();
+  console.log("Isi user dari store:", user);
   const idUser = user ? Number(user.id) : 0;
 
   return (

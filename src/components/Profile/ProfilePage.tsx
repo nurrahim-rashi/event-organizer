@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router";
+import { userAuth } from "../../stores/useAuth";
 
 interface Coupon {
   id: number;
@@ -20,19 +21,31 @@ interface User {
   coupons: Coupon[];
 }
 
-function ProfilePage({ userId }: { userId: number }) {
+interface ProfilePageProps {
+  userId: number;
+}
+
+function ProfilePage({userId}: ProfilePageProps) {
+
+  console.log("Nilai userId dari loader:", userId);
+
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    if (!userId || isNaN(userId)) {
+      console.log("userId tidak valid, membatalkan fetch");
+      setLoading(false);
+      return;
+    };
+
     const fetchUserData = async () => {
       try {
         const response = await axios.get(
           `http://localhost:8000/users/${userId}`,
         );
-        console.log("Console penuh dari backend", response.data);
-
         setUser(response.data.data || response.data);
+        console.log("Console penuh dari backend", response.data);
       } catch (error) {
         console.error("Failed to fetch user data", error);
       } finally {
@@ -55,9 +68,9 @@ function ProfilePage({ userId }: { userId: number }) {
 
         {/*FOTO PROFIL DARI CLOUDINARY*/}
         <div className="relative mb-6 group">
-          {user.profilePic ? (
+          {user?.profilePic ? (
             <img
-              src={user.profilePic || ""}
+              src={user?.profilePic || ""}
               alt="profile-picture"
               className="relative w-32 h-32 rounded-full object-cover border-4 border-purple-600/50 shadow-md"
             />

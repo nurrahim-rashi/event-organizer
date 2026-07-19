@@ -9,8 +9,7 @@ export const authLoader = () => {
   if (!user) {
     return redirect("/login");
   }
-
-  return {};
+    return {user};
 };
 
 export const userGuardLoader = () => {

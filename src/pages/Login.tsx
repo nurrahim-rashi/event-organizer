@@ -1,53 +1,48 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import z from "zod";
 import { useNavigate } from "react-router";
 import { userAuth } from "../stores/useAuth";
 import { axiosInstance } from "../api/axios";
 import { Link } from "react-router";
-
-const formSchema = z.object({
-  email: z.email(),
-  password: z
-    .string()
-    .min(6, "Password must be at least 6 characters.")
-    .max(50, "Password must be at most 50 characters"),
-});
+import { loginSchema, type LoginSchema } from "../schemas/auth/login";
 
 function Login() {
   const [show, setShow] = useState<boolean>(false);
   const [isPending, setIsPending] = useState<boolean>(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
+    const form = useForm<LoginSchema>({
+        resolver: zodResolver(loginSchema),
+        mode: "onChange",
+        defaultValues: {
+            email: "",
+            password: "",
+        },
+    });
 
   const { login } = userAuth();
   const navigate = useNavigate();
 
-  async function onSubmit(data: z.infer<typeof formSchema>) {
-    setIsPending(true);
-    try {
-      const response = await axiosInstance.post("/auth/login", {
-        email: data.email,
-        password: data.password,
-      });
+    async function onSubmit(data: LoginSchema) {
+        setIsPending(true);
+        try {
+            const response = await axiosInstance.post("/auth/login", {
+                email: data.email,
+                password: data.password,
+            });
 
-      alert("login success");
+            console.log("Struktur respons API:", response.data);
 
-      login({
-        id: response.data.id,
-        name: response.data.name,
-        email: response.data.email,
-        profilePic: response.data.profilePic,
-        role: response.data.role,
-        accessToken: response.data.accessToken,
-      });
+            alert("login success");
+
+            login({
+                id: response.data.user.id,
+                name: response.data.user.name,
+                email: response.data.user.email,
+                profilePic: response.data.user.profilePic,
+                role: response.data.user.role,
+                accessToken: response.data.accessToken,
+            });
 
       navigate("/");
     } catch (error) {
@@ -57,7 +52,6 @@ function Login() {
       setIsPending(false);
     }
   }
-
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md rounded-lg bg-[#A855F7] p-6 shadow-md text-white flex flex-col gap-2 items-center">
