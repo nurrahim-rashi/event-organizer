@@ -11,6 +11,7 @@ import { PromotionForm } from "../components/CreateEvent/PromotionForm";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
 import DeleteEventModal from "../components/DeleteEvent/DeleteEventModal";
+import ConfirmationModal from "../components/CreateEvent/ConfirmationModal";
 import toast from "react-hot-toast";
 
 export default function EditEvent() {
@@ -22,9 +23,10 @@ export default function EditEvent() {
     useEditEvent(eventId);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState<string>("basic-details");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [formData, setFormData] = useState<any>(null);
 
   useEffect(() => {
@@ -42,13 +44,17 @@ export default function EditEvent() {
     setFormData((prev: any) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // 2. Ubah handleSubmit agar hanya membuka modal
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    setIsConfirmModalOpen(true);
+  };
 
+  // 3. Buat fungsi baru untuk proses simpan sebenarnya
+  const executeSave = async () => {
+    setLoading(true);
+    setIsConfirmModalOpen(false);
     try {
-      // 1. Validasi Tanggal
       const startDateTime = new Date(formData.startDate).toISOString();
       const endDateTime = new Date(formData.endDate).toISOString();
 
@@ -59,40 +65,26 @@ export default function EditEvent() {
         description: formData.description,
         startDate: startDateTime,
         endDate: endDateTime,
-        ticketTypes: formData.ticketTypes.map((t: any) => ({
-          ...(t.id && { id: t.id }), // Kirim ID hanya jika ada (untuk update)
-          name: t.name,
-          price: Number(t.price),
-          totalTicket: Number(t.totalTicket),
-        })),
-        vouchers: formData.vouchers,
+        ticketTypes: formData.ticketTypes
+          .filter((t: any) => t.name && t.price >= 0)
+          .map((t: any) => ({
+            ...(t.id && { id: t.id }),
+            name: t.name,
+            price: Number(t.price),
+            totalTicket: Number(t.totalTicket),
+          })),
+        vouchers: formData.vouchers?.filter((v: any) => v.code),
       };
 
-      // Hanya masukkan bannerImage jika ada isinya
-      if (formData.bannerImage && formData.bannerImage.trim() !== "") {
+      if (formData.bannerImage?.trim()) {
         payload.bannerImage = formData.bannerImage;
-      }
-
-      // Bersihkan array relasi agar tidak ada entry null
-      if (formData.ticketTypes) {
-        payload.ticketTypes = formData.ticketTypes.filter(
-          (t: any) => t.name && t.price >= 0,
-        );
-      }
-
-      if (formData.vouchers) {
-        payload.vouchers = formData.vouchers.filter((v: any) => v.code);
       }
 
       await updateEvent(eventId, payload);
       toast.success("Event updated successfully!");
       navigate(`/events/${eventId}`);
     } catch (err: any) {
-      console.error("Update Error:", err);
-      toast.error(
-        err.response?.data?.message ||
-          "Failed to update event. Please check your input fields.",
-      );
+      toast.error(err.response?.data?.message || "Failed to update event.");
     } finally {
       setLoading(false);
     }
@@ -186,6 +178,11 @@ export default function EditEvent() {
         eventId={eventId}
         eventName={formData.name}
         onSuccess={() => navigate("/dashboard")}
+      />
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={executeSave}
       />
     </main>
   );

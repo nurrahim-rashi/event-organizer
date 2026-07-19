@@ -1,7 +1,7 @@
 import React from "react";
 
 interface Ticket {
-  id?: number; // Tambahkan id opsional untuk kebutuhan update database
+  id?: number;
   name: string;
   price: number;
   totalTicket: number;
@@ -58,17 +58,6 @@ export function TicketingForm({ formData, setFormData }: TicketingFormProps) {
       ...prev,
       ticketTypes: prev.ticketTypes.filter((_, i) => i !== index),
     }));
-  };
-
-  const totalRevenue = formData.ticketTypes.reduce(
-    (acc, t) => acc + (Number(t.price) || 0) * (Number(t.totalTicket) || 0),
-    0,
-  );
-  const serviceFee = totalRevenue * 0.05;
-  const netEarnings = totalRevenue - serviceFee;
-
-  const formatCurrency = (amount: number) => {
-    return "Rp " + amount.toLocaleString("id-ID");
   };
 
   return (
@@ -172,31 +161,6 @@ export function TicketingForm({ formData, setFormData }: TicketingFormProps) {
           </div>
         ))}
       </div>
-
-      {totalRevenue > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start pt-4 border-t border-[#4d4354]/40">
-          <div className="bg-[#1f1929] p-4 rounded-lg border border-[#4d4354] flex items-center justify-between">
-            <div>
-              <p className="text-sm text-[#cfc2d6]">Service Fee (5%)</p>
-              <p className="font-bold text-[#ffb4ab]">
-                {formatCurrency(serviceFee)}
-              </p>
-            </div>
-          </div>
-          <div className="bg-[#b76dff] p-6 rounded-xl border-l-4 border-[#ddb7ff] text-[#400071]">
-            <p className="text-xs uppercase tracking-widest font-bold mb-2">
-              Estimated Net Earnings
-            </p>
-            <p className="text-4xl font-extrabold">
-              {formatCurrency(netEarnings)}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-[#1f1929] p-6 rounded-xl border border-dashed border-[#4d4354] text-center">
-          <p className="text-[#cfc2d6]">Free events have zero platform fees.</p>
-        </div>
-      )}
     </section>
   );
 }
