@@ -8,9 +8,10 @@ export const transactionApi = {
     couponId?: number;
     usePoints?: boolean;
   }) => axiosInstance.post("/transactions/checkout", data),
-
+  cancel: (id: number) => axiosInstance.patch("/transactions/${id}/cancel"),
+  getActive: () => axiosInstance.get("/transactions/active"),
   getByEvent: (eventId: number) =>
-    axiosInstance.get(`/transactions/event/${eventId}`),
+    axiosInstance.get("/transactions/event/${eventId}"),
 };
 
 export const createTransaction = async (data: {

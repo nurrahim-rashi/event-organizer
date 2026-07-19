@@ -88,7 +88,7 @@ export default function EventDetail() {
     }
     if (!selectedTicket) return;
 
-    // Menambahkan argumen null untuk memenuhi interface store
+    console.log("Saving to store:", { event, selectedTicket });
     useCheckoutStore.getState().setCheckoutData(event, selectedTicket, null);
     navigate("/transactions/checkout");
   };
@@ -189,6 +189,7 @@ export default function EventDetail() {
 
           <div className="lg:col-span-4">
             <TicketSelection
+              event={event}
               tickets={event.ticketTypes}
               selectedTicket={selectedTicket}
               setSelectedTicket={setSelectedTicket}

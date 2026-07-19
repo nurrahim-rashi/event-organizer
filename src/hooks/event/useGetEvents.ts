@@ -1,5 +1,5 @@
 import { axiosInstance } from "../../api/axios";
-import type { Event } from "../../types/type";
+// import type { Event } from "../../types/type";
 import { useQuery } from "@tanstack/react-query";
 
 interface GetEventsQuery {
