@@ -7,3 +7,8 @@ export type Attendee = {
         email: string;
     };
 };
+
+export type GetEventAttendeesResponse = {
+    success: boolean;
+    data: Attendee[];
+};

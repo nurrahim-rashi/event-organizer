@@ -6,6 +6,7 @@ import Navbar from "../components/General/Navbar";
 import EventStatistics from "../components/Profile/EventStatistics";
 import { axiosInstance } from "../api/axios";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router";
 
 interface DashboardStats {
   activeEventCounts?: number;
@@ -116,7 +117,7 @@ const TransactionActionButtons: React.FC<ActionButtonsProps> = ({
 
 export default function DashboardPage() {
   const { user } = userAuth();
-  console.log("User yang login saat ini", user);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({});
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
@@ -329,7 +330,20 @@ export default function DashboardPage() {
                         <td className="py-4">0</td>
 
                         <td className="py-4 text-right pr-2">
-                          <button>Delete</button>
+                          <div className="flex justify-end gap-2">
+                              <button
+                              onClick={() => navigate(`/events/${event.id}/attendees`)}
+                              className="rounded-xl border border-purple-500/40 bg-purple-600/20 px-3 py-2 text-xs font-semibold text-purple-300 transition hover:bg-purple-600 hover:text-white"
+                              >
+                                View Attendees
+                              </button>
+
+                              <button
+                              className="rounded-xl border border-red-500/30 bg-red-600/10 px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-600 hover:text-white"
+                              >
+                                Delete
+                              </button>
+                          </div>
                         </td>
                       </tr>
                     ))

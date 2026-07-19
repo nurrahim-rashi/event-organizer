@@ -212,6 +212,7 @@ export default function Navbar() {
                     onClick={() => {
                       setIsOpen(false);
                       logout();
+                      navigate("/")
                     }}
                     className="w-full text-left block px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                   >
