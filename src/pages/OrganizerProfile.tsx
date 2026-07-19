@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router";
 import Navbar from "../components/General/Navbar";
 import { EventCard } from "../components/General/EventCard";
-import type { Organizer } from "../types/type";
+import type { Organizer } from "../types/organizer";
 import { getOrganizerProfile } from "../services/organizer.service";
 
 export default function OrganizerProfile() {

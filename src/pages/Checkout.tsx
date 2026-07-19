@@ -52,6 +52,17 @@ export default function CheckoutPage() {
         // 1. Coba ambil yang aktif
         const res = await transactionApi.getActive();
 
+        const refreshData = async () => {
+          try {
+            const res = await transactionApi.getActive();
+            setTransaction(res.data.data);
+          } catch (e) {
+            toast.error("Failed to refresh data.");
+          }
+        };
+
+        refreshData();
+
         if (res.data.data) {
           // Jika ada transaksi aktif, pakai itu
           setTransaction(res.data.data);
@@ -65,7 +76,7 @@ export default function CheckoutPage() {
             })),
             voucherId: appliedVoucher?.id || undefined,
             couponId: appliedCoupon?.id || undefined,
-            usePoints: usePoints || 0,
+            usePoints: Number(usePoints) || 0,
           };
           const created = await createTransaction(payload);
           setTransaction(created.data || created);

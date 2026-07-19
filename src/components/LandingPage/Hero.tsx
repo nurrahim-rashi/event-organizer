@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router";
 import { useEvents } from "../../hooks/event/useEvents";
-import type { Event } from "../../types/type";
+import type { Event } from "../../types/event";
 
 export default function Hero() {
   const navigate = useNavigate();

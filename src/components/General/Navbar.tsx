@@ -1,15 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { userAuth } from "../../stores/useAuth";
-import type { EventCategory } from "../../types/type";
+import type { EventCategory } from "../../types/event";
 import { toTitleCase } from "../../utils/toTitleCase";
 
 export default function Navbar() {
   const { user, logout } = userAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

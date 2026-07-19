@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { transactionApi } from "../services/transaction.service";
-import type { Transaction } from "../types/type";
+import type { Transaction } from "../types/transaction";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
 import { useNavigate } from "react-router";

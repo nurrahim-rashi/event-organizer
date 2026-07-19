@@ -1,4 +1,4 @@
-import type { Event } from "../../types/type";
+import type { Event } from "../../types/event";
 import { Link } from "react-router";
 
 export default function FeaturedBanner({ event }: { event: Event }) {

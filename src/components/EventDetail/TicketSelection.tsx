@@ -11,10 +11,8 @@ export const TicketSelection = ({
   appliedVoucher,
   appliedCoupon,
   usePoints,
-  setAppliedVoucher,
   setAppliedCoupon,
   setUsePoints,
-  voucherError,
   handleApplyVoucher,
   submitting,
 }: any) => {

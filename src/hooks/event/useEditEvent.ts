@@ -1,7 +1,24 @@
 import { useState, useEffect } from "react";
 import { getEvent, updateEvent } from "../../services/event.service";
-import type { Event, EventFormState } from "../../types/type";
+import type { Event, EventCategory } from "../../types/event";
 import toast from "react-hot-toast";
+
+interface EventFormState {
+  name: string;
+  category: EventCategory | "";
+  location: string;
+  description: string;
+  bannerImage: File | null;
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+  ticketTypes: {
+    name: string;
+    price: number;
+    totalTicket: number;
+  }[];
+}
 
 export const useEditEvent = (eventId: number) => {
   const [formData, setFormData] = useState<EventFormState>({
