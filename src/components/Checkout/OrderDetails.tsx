@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface OrderSummaryProps {
-  ticket: { id: number; name: string; price: number };
   transaction: any | null;
   onProceedToPayment: () => void;
   onCancelTransaction: () => void;
-  onApplyVoucher: (code: string) => void;
+  ticket?: any;
+  onApplyVoucher?: (code: string) => void;
 }
 
 export default function OrderSummary({
@@ -16,12 +16,17 @@ export default function OrderSummary({
   const items = transaction?.items || [];
   const [timeLeft, setTimeLeft] = useState("00m 00s");
 
+  // Logika kalkulasi disamakan dengan TicketSelection
   const subtotal = items.reduce(
     (acc: number, item: any) => acc + item.price * item.qty,
     0,
   );
-  const serviceFee = subtotal * 0.05;
-  const total = transaction?.totalPrice || subtotal + serviceFee;
+  const serviceFeePercent = 0.05;
+  const serviceFee = subtotal * serviceFeePercent;
+
+  // Jika ada voucher di transaksi, kurangi. Jika tidak, gunakan subtotal
+  const discount = transaction?.voucherDiscount || 0;
+  const total = subtotal - discount + serviceFee;
 
   useEffect(() => {
     if (!transaction?.expiredAt) return;
@@ -76,13 +81,24 @@ export default function OrderSummary({
         ))}
       </div>
 
-      <div className="text-sm border-t border-[#4d4354]/30 pt-4">
+      <div className="text-sm border-t border-[#4d4354]/30 pt-4 space-y-2">
+        {transaction?.voucherDiscount > 0 && (
+          <div className="flex justify-between text-green-400 font-medium">
+            <span>Discount</span>
+            <span>
+              -Rp{transaction.voucherDiscount.toLocaleString("id-ID")}
+            </span>
+          </div>
+        )}
         <div className="flex justify-between text-[#cfc2d6]">
           <span>Service Fee (5%)</span>
           <span>Rp{serviceFee.toLocaleString("id-ID")}</span>
-        </div>
-        <div className="text-2xl font-black text-[#ddb7ff] mt-2">
-          Rp{total.toLocaleString("id-ID")}
+        </div>{" "}
+        <div className="grid text-[#cfc2d6] border-t border-[#4d4354]/30 pt-4">
+          <span className="font-bold">TOTAL PRICE</span>
+          <span className="text-2xl font-black text-[#ddb7ff] mt-2">
+            Rp{total.toLocaleString("id-ID")}
+          </span>
         </div>
       </div>
 
@@ -98,6 +114,7 @@ export default function OrderSummary({
 
         {transaction && (
           <button
+            type="button"
             onClick={onCancelTransaction}
             className="w-full py-2 text-red-400 text-sm hover:underline"
           >

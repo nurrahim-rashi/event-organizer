@@ -7,20 +7,30 @@ import PaymentProofModal from "../components/Checkout/PaymentProofModal";
 import { useCheckoutStore } from "../stores/useCheckoutStore";
 import { createTransaction } from "../services/transaction.service";
 import { transactionApi } from "../services/transaction.service";
+import { axiosInstance } from "../api/axios";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { selectedEvent, cartItems, _hasHydrated } = useCheckoutStore();
   const [transaction, setTransaction] = useState<any>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const items = transaction?.items || [];
+  const subtotal = items.reduce(
+    (acc: number, item: any) => acc + item.price * item.qty,
+    0,
+  );
+  const serviceFee = subtotal * 0.05;
+  const totalFinal =
+    subtotal + serviceFee - (transaction?.voucherDiscount || 0);
 
   const fetchActiveTransaction = async () => {
     try {
       const res = await transactionApi.getActive();
       setTransaction(res.data.data);
     } catch (e) {
-      console.error("Gagal mengambil transaksi aktif", e);
+      console.error("Failed to get transactions", e);
       navigate("/");
     }
   };
@@ -63,6 +73,40 @@ export default function CheckoutPage() {
     navigate("/");
   };
 
+  const handleConfirmCancel = async () => {
+    if (!transaction?.id) return;
+    try {
+      await transactionApi.cancel(transaction.id);
+      useCheckoutStore.getState().clearCheckoutData();
+      setIsCancelModalOpen(false);
+      navigate("/events");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to cancel transaction. Please try again.");
+    }
+  };
+
+  const handleSubmitPayment = async (file: File) => {
+    const formData = new FormData();
+    formData.append("paymentProof", file);
+    try {
+      await axiosInstance.patch(
+        `/transactions/${transaction.id}/upload`,
+        formData,
+        {
+          headers: {},
+        },
+      );
+
+      alert("Payment proof successfully submitted!");
+      setIsPaymentModalOpen(false);
+      navigate("/transactions");
+    } catch (error: any) {
+      console.error("Gagal upload:", error.response?.data || error);
+      alert(error.response?.data?.message || "Failed to upload payment proof.");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#171021] mt-12 text-[#eadef6]">
       <Navbar />
@@ -71,14 +115,14 @@ export default function CheckoutPage() {
           <div className="lg:col-span-7 flex flex-col gap-10">
             <header>
               <div
-                onClick={() => navigate(-1)} // Navigasi mundur ke halaman sebelumnya
+                onClick={() => navigate(-1)}
                 className="flex items-center gap-2 text-[#ddb7ff] mb-2 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-sm">
                   arrow_back
                 </span>
                 <span className="text-xs font-semibold tracking-wider uppercase">
-                  Return to Event
+                  Return
                 </span>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold text-[#eadef6] tracking-tight">
@@ -90,19 +134,17 @@ export default function CheckoutPage() {
           <aside className="lg:col-span-5 sticky top-24">
             <OrderSummary
               transaction={transaction}
-              onProceedToPayment={() => setIsModalOpen(true)}
-              onCancelTransaction={handleCancel}
-            />{" "}
+              onProceedToPayment={() => setIsPaymentModalOpen(true)}
+              onCancelTransaction={() => setIsCancelModalOpen(true)}
+            />
           </aside>
         </div>
       </main>
-
-      {isModalOpen && (
+      {isPaymentModalOpen && (
         <PaymentProofModal
-          onClose={() => setIsModalOpen(false)}
-          onSubmit={(file: File, bank: string) =>
-            console.log("Upload...", file, bank)
-          }
+          totalPrice={totalFinal}
+          onClose={() => setIsPaymentModalOpen(false)}
+          onSubmit={handleSubmitPayment}
         />
       )}
     </div>

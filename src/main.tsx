@@ -18,6 +18,7 @@ import CheckoutPage from "./pages/Checkout";
 import { authLoader, userGuardLoader, adminGuardLoader } from "./loaders/auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import TransactionPage from "./pages/Transactions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,11 @@ const router = createBrowserRouter([
     path: "/dashboard",
     element: <DashboardPage />,
     loader: authLoader,
+  },
+  {
+    path: "/transactions",
+    element: <TransactionPage />,
+    loader: userGuardLoader,
   },
   {
     path: "/transactions/checkout",

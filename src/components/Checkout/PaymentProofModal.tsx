@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 export default function PaymentProofModal({
-  totalPrice,
+  totalPrice = 0,
   onClose,
   onSubmit,
 }: any) {
@@ -14,7 +14,7 @@ export default function PaymentProofModal({
           Upload Payment Proof
         </h2>
         <p className="text-[#cfc2d6] mb-6">
-          Total: Rp{totalPrice.toLocaleString("id-ID")}
+          Total: Rp{Number(totalPrice).toLocaleString("id-ID")}{" "}
         </p>
 
         <input
@@ -31,11 +31,12 @@ export default function PaymentProofModal({
             Cancel
           </button>
           <button
-            onClick={() => file && onSubmit(file, "Manual Bank Transfer")}
+            onClick={() => file && onSubmit(file)}
+            disabled={!file}
             className="flex-1 bg-[#ddb7ff] text-[#490080] font-bold py-3 rounded-lg"
           >
             Submit
-          </button>
+          </button>{" "}
         </div>
       </div>
     </div>

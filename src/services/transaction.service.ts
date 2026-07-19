@@ -8,10 +8,18 @@ export const transactionApi = {
     couponId?: number;
     usePoints?: boolean;
   }) => axiosInstance.post("/transactions/checkout", data),
-  cancel: (id: number) => axiosInstance.patch("/transactions/${id}/cancel"),
-  getActive: () => axiosInstance.get("/transactions/active"),
+  cancel: (id: number) => axiosInstance.patch(`/transactions/${id}/cancel`),
+  getActive: () => axiosInstance.get("/transactions/checkout"),
+  getAll: () => axiosInstance.get("/transactions"),
   getByEvent: (eventId: number) =>
-    axiosInstance.get("/transactions/event/${eventId}"),
+    axiosInstance.get(`/transactions/event/${eventId}`),
+  uploadPayment: (id: number, file: File) => {
+    const formData = new FormData();
+    formData.append("paymentProof", file);
+    return axiosInstance.patch(`/transactions/${id}/upload`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };
 
 export const createTransaction = async (data: {

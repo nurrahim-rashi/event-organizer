@@ -4,7 +4,6 @@ import { useCheckoutStore } from "../../stores/useCheckoutStore";
 export const TicketSelection = ({
   event,
   tickets,
-  qty,
   voucherCode,
   setVoucherCode,
   appliedVoucher,
@@ -31,7 +30,7 @@ export const TicketSelection = ({
     return { subtotal, discount, serviceFee, total };
   };
 
-  const { subtotal, discount, serviceFee, total } = calculateTotals();
+  const { discount, serviceFee, total } = calculateTotals();
 
   const handleUpdateCart = (ticket: any, delta: number) => {
     setCart((prev) => {
@@ -98,19 +97,21 @@ export const TicketSelection = ({
                         : `Rp${t.price.toLocaleString("id-ID")}`}
                     </span>
                   </div>
-                  <p className="text-xs text-[#cfc2d6] mb-3">
-                    Remaining: {remaining} tickets
-                  </p>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="text-xs text-[#cfc2d6] mb-3">
+                      Remaining: {remaining} tickets
+                    </p>
 
-                  <span
-                    className={`px-2 py-0.5 rounded font-bold text-[10px] tracking-widest uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
-                  >
-                    {isSoldOut
-                      ? "Sold Out"
-                      : isUnavailable
-                        ? "Unavailable"
-                        : "Available"}
-                  </span>
+                    <span
+                      className={`px-2 py-0.5 rounded font-bold text-[10px] tracking-widest uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
+                    >
+                      {isSoldOut
+                        ? "Sold Out"
+                        : isUnavailable
+                          ? "Unavailable"
+                          : "Available"}
+                    </span>
+                  </div>
 
                   {!isCheckoutMode ? (
                     <button
