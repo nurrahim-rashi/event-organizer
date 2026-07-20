@@ -19,10 +19,11 @@ interface StatItem {
 }
 
 interface EventStatisticsProps {
-  eventId: number;
+  eventId: number | null;
+  onFetchSuccess?: (totals: { ticketsSold: number; totalEarnings: number }) => void;
 }
 
-export default function EventStatistics({ eventId }: EventStatisticsProps) {
+export default function EventStatistics({ eventId, onFetchSuccess }: EventStatisticsProps) {
   const [filter, setFilter] = useState<"day" | "month" | "year">("month");
   const [chartData, setChartData] = useState<StatItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -33,13 +34,22 @@ export default function EventStatistics({ eventId }: EventStatisticsProps) {
         setLoading(true);
         const response = await axiosInstance.get(`/dashboard/stats`, {
           params: {
-            eventId: eventId,
+            eventId: eventId || undefined,
             filter: filter,
           },
         });
 
         if (response.data.success && response.data.data.statistics) {
           setChartData(response.data.data.statistics);
+
+          console.log("DATA DARI BACKEND:", response.data.data);
+
+          if (onFetchSuccess) {
+            onFetchSuccess({
+              ticketsSold: response.data.data.ticketsSold,
+              totalEarnings: response.data.data.totalEarnings,
+            });
+          }
         }
       } catch (error) {
         console.error("Failed to retrieve event statistics", error);
@@ -48,9 +58,7 @@ export default function EventStatistics({ eventId }: EventStatisticsProps) {
       }
     };
 
-    if (eventId) {
       fetchStatistics();
-    }
   }, [eventId, filter]); // Grafik otomatis me-render ulang setiap kali tombol filter diklik
 
   // Fungsi formatter mata uang Rupiah untuk YAxis dan Tooltip grafik pendapatan
