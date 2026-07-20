@@ -84,7 +84,6 @@ export default function CreateEvent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validasi session
     if (!user) {
       setError("Session expired. Please login again.");
       return;
@@ -92,6 +91,11 @@ export default function CreateEvent() {
 
     if (!formData.category) {
       setError("Please select an event category.");
+      return;
+    }
+
+    if (!(formData.bannerImage instanceof File)) {
+      setError("Please select an event banner image.");
       return;
     }
 
@@ -126,15 +130,16 @@ export default function CreateEvent() {
         category: formData.category,
         location: formData.location,
         description: formData.description,
-        bannerImage: formData.bannerImage ? "URL_CONVERTED_OR_UPLOADED" : "",
         startDate: startDateTime,
         endDate: endDateTime,
-        organizerId: user.id, // 👈 Menggunakan ID dari Zustand Store (Samantha = 4)
+        organizerId: user.id,
         ticketTypes: formattedTicketTypes,
         vouchers: formattedVouchers,
       };
 
-      const res = await createEvent(payload);
+      // KUNCI: formData.bannerImage dijamin File di sini
+      const res = await createEvent(payload, formData.bannerImage);
+
       if (res) {
         toast.success("🎉 Event successfully published!");
         navigate("/");
