@@ -1,25 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { getEvents } from "../../services/event.service";
+import { getEvents } from "../../services/event.service"; // Pastikan fungsi ini menerima params page
 import { EventCard } from "../General/EventCard";
 import type { Event } from "../../types/event";
+import type { PageableResponse } from "../../types/pagination"; // Sesuaikan path
+import GlobalPagination from "../General/GlobalPagination";
 
 export default function UpcomingEvents() {
-  const [events, setEvents] = useState<Event[]>([]);
+  // Simpan seluruh objek response (data + meta)
+  const [eventsData, setEventsData] = useState<PageableResponse<Event>>();
   const [loading, setLoading] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
 
   useEffect(() => {
     const fetchEvents = async () => {
+      setLoading(true);
       try {
-        const response = await getEvents();
-        // Menangani struktur data dari response API
-        const data =
-          response.data && Array.isArray(response.data)
-            ? response.data
-            : Array.isArray(response)
-              ? response
-              : [];
-        setEvents(data);
+        // Kirim page ke API service
+        const response = await getEvents(page);
+        setEventsData(response);
       } catch (error) {
         console.error("Failed to fetch upcoming events:", error);
       } finally {
@@ -28,17 +27,7 @@ export default function UpcomingEvents() {
     };
 
     fetchEvents();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center text-[#ddb7ff]">
-        <span className="animate-pulse font-medium">
-          Loading upcoming events...
-        </span>
-      </div>
-    );
-  }
+  }, [page]); // useEffect akan jalan lagi setiap kali page berubah
 
   return (
     <section className="max-w-[1280px] mx-auto px-6 py-24">
@@ -61,17 +50,35 @@ export default function UpcomingEvents() {
         </Link>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="min-h-[300px] flex items-center justify-center text-[#ddb7ff]">
+          <span className="animate-pulse font-medium">Loading events...</span>
+        </div>
+      )}
+
       {/* Grid Events */}
-      {events.length === 0 ? (
-        <div className="text-center py-12 text-[#cfc2d6]">
-          No upcoming events found.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+      {!loading && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {eventsData?.data?.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {eventsData && (
+            <div className="mt-12">
+              <GlobalPagination
+                currentPage={eventsData.meta.page}
+                totalPage={Math.ceil(
+                  eventsData.meta.total / eventsData.meta.take,
+                )}
+                onChangePage={(p) => setPage(p)}
+              />
+            </div>
+          )}
+        </>
       )}
     </section>
   );

@@ -11,17 +11,7 @@ import { PromotionForm } from "../components/CreateEvent/PromotionForm";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
 import toast from "react-hot-toast";
-
-export type EventCategory =
-  | "MUSIC"
-  | "SPORTS"
-  | "BUSINESS"
-  | "EDUCATION"
-  | "TECHNOLOGY"
-  | "FOOD"
-  | "ART"
-  | "HEALTH"
-  | "OTHER";
+import type { EventCategory } from "../types/event";
 
 export interface TicketTypeState {
   name: string;

@@ -9,14 +9,12 @@ export default function Hero() {
   const [searchInput, setSearchInput] = useState("");
   const [locationInput, setLocationInput] = useState("");
 
-  // State untuk melacak indeks banner yang sedang aktif
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   useEffect(() => {
     fetchEvents();
   }, []);
 
-  // Filter event: Hanya ambil yang tanggalnya >= hari ini, lalu urutkan dari yang paling dekat
   const upcomingEvents = useMemo(() => {
     if (!events) return [];
 

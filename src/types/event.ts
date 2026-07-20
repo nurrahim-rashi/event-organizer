@@ -27,5 +27,4 @@ export interface Event {
   updatedAt: string;
   deletedAt?: string | null;
   ticketTypes?: TicketType[];
-  city?: string;
 }
