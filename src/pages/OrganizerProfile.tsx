@@ -130,26 +130,48 @@ export default function OrganizerProfile() {
               </button>
             ))}
           </div>
-
           {activeTab === "upcoming" && renderEventList(upcomingEvents)}
           {activeTab === "past" && renderEventList(pastEvents)}
           {activeTab === "reviews" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {data.reviews.map((review) => (
+              {data.reviews.map((review: any) => (
                 <div
                   key={review.id}
                   className="bg-[#231d2e] rounded-xl p-6 border border-[#4d4354]/30"
                 >
-                  <p className="text-sm text-[#cfc2d6] mb-4">
+                  {/* User Info Section */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <img
+                      src={review.user.profilePic || "/default-avatar.png"} // Fallback ke image default
+                      alt={review.user.name}
+                      className="w-10 h-10 rounded-full object-cover border border-[#4d4354]"
+                    />
+                    <div>
+                      <h4 className="text-sm font-bold text-white">
+                        {review.user.name}
+                      </h4>
+                    </div>
+                  </div>
+                  <div className="flex text-[#ddb7ff]">
+                    {[...Array(review.rating)].map((_, i) => (
+                      <span
+                        key={i}
+                        className="text-[10px] material-symbols-outlined"
+                      >
+                        star
+                      </span>
+                    ))}{" "}
+                  </div>{" "}
+                  <p className="text-sm text-[#cfc2d6] mb-4 mt-4">
                     {review.comment}
                   </p>
-                  <p className="text-xs font-bold text-[#ddb7ff]">
+                  <p className="text-xs font-bold text-[#ddb7ff] pt-4 border-t border-[#4d4354]/30">
                     Attended: {review.transaction.event.name}
                   </p>
                 </div>
               ))}
             </div>
-          )}
+          )}{" "}
         </section>
       </main>
     </div>

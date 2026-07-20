@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { transactionApi } from "../services/transaction.service";
@@ -7,11 +8,13 @@ import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
 import { userAuth } from "../stores/useAuth";
 import { getStatusStyle } from "../utils/style";
+import { ReviewModal } from "../components/OrganizerProfile/ReviewModal";
 
 export default function TransactionDetail() {
   const { user } = userAuth();
   const { id } = useParams();
   const queryClient = useQueryClient();
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   const {
     data: transaction,
@@ -49,7 +52,12 @@ export default function TransactionDetail() {
   // Logika Authorization
   const isSuperAdmin = user?.role === "SUPERADMIN";
   const isEventOwner = transaction?.event?.organizerId === user?.id;
-  const canReview = isSuperAdmin || isEventOwner;
+  const canApproveorReject = isSuperAdmin || isEventOwner;
+
+  // Logika Review: DONE dan Event sudah lewat
+  const isDone = transaction.status === "DONE";
+  const isEventPast = new Date(transaction.event?.endDate) < new Date();
+  const canReview = isDone && isEventPast && !transaction.review; // Tambahkan !transaction.review agar tidak bisa review berkali-kali
 
   return (
     <div className="bg-[#171021] text-[#eadef6] min-h-screen pb-16 selection:bg-[#ddb7ff] selection:text-[#490080]">
@@ -96,35 +104,36 @@ export default function TransactionDetail() {
           </div>
 
           {/* Action Bar (Bento Style) */}
-          {transaction.status === "WAITING_CONFIRMATION" && canReview && (
-            <div className="bg-[#231d2e] border border-[#4d4354] rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#ddb7ff]/10 flex items-center justify-center text-[#ddb7ff]">
-                  <span className="material-symbols-outlined">image</span>
+          {transaction.status === "WAITING_CONFIRMATION" &&
+            canApproveorReject && (
+              <div className="bg-[#231d2e] border border-[#4d4354] rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#ddb7ff]/10 flex items-center justify-center text-[#ddb7ff]">
+                    <span className="material-symbols-outlined">image</span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold">Review Payment Proof</h4>
+                    <p className="text-sm text-[#cfc2d6]">
+                      Verify the user's bank transfer receipt.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold">Review Payment Proof</h4>
-                  <p className="text-sm text-[#cfc2d6]">
-                    Verify the user's bank transfer receipt.
-                  </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => statusMutation.mutate("DONE")}
+                    className="px-6 py-3 bg-[#5de6ff] text-[#00363e] rounded-xl font-bold hover:opacity-90"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => statusMutation.mutate("REJECTED")}
+                    className="px-6 py-3 bg-[#93000a] text-white rounded-xl font-bold hover:opacity-90"
+                  >
+                    Reject
+                  </button>
                 </div>
               </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => statusMutation.mutate("DONE")}
-                  className="px-6 py-3 bg-[#5de6ff] text-[#00363e] rounded-xl font-bold hover:opacity-90"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => statusMutation.mutate("REJECTED")}
-                  className="px-6 py-3 bg-[#93000a] text-white rounded-xl font-bold hover:opacity-90"
-                >
-                  Reject
-                </button>
-              </div>
-            </div>
-          )}
+            )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Event Summary */}
@@ -138,7 +147,17 @@ export default function TransactionDetail() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#171021] to-transparent" />
                 <h2 className="absolute bottom-4 left-6 text-2xl font-bold">
                   {transaction.event?.name}
-                </h2>
+                </h2>{" "}
+                {canReview && (
+                  <div className="p-6 pt-0">
+                    <button
+                      onClick={() => setIsReviewOpen(true)}
+                      className="px-6 py-3 bg-[#ddb7ff] text-[#400071] font-bold rounded-xl hover:bg-[#f0dbff] transition-all w-full"
+                    >
+                      Write a Review
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="p-6 grid grid-cols-2 gap-4">
                 <div>
@@ -164,7 +183,6 @@ export default function TransactionDetail() {
               <h3 className="font-bold border-b border-[#4d4354] pb-3">
                 Order Breakdown
               </h3>
-
               {/* List Items */}
               {transaction.items?.map((item: any) => (
                 <div key={item.id} className="flex justify-between">
@@ -176,7 +194,6 @@ export default function TransactionDetail() {
                   </span>
                 </div>
               ))}
-
               {/* Discount Sections (BARU) */}
               <div className="space-y-2 pt-2 ">
                 {transaction.voucher && (
@@ -204,15 +221,34 @@ export default function TransactionDetail() {
                   </div>
                 )}
               </div>
-
               {/* Total */}
               <div className="pt-4 border-t border-[#4d4354] flex justify-between text-lg font-bold">
                 <span>Total Payment</span>
                 <span className="text-[#ddb7ff]">
                   Rp{transaction.totalPrice.toLocaleString("id-ID")}
                 </span>
-              </div>
+              </div>{" "}
             </div>{" "}
+            {canReview && (
+              <div>
+                <button
+                  onClick={() => setIsReviewOpen(true)}
+                  className="px-6 py-3 bg-[#ddb7ff] text-[#400071] font-bold rounded-xl hover:bg-[#f0dbff] transition-all w-full"
+                >
+                  Write a Review
+                </button>
+              </div>
+            )}
+            <ReviewModal
+              transactionId={transaction.id}
+              isOpen={isReviewOpen}
+              onClose={() => {
+                setIsReviewOpen(false);
+                queryClient.invalidateQueries({
+                  queryKey: ["transaction", id],
+                });
+              }}
+            />
           </div>
         </div>
       </main>{" "}

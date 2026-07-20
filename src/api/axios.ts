@@ -3,7 +3,7 @@ import { userAuth } from "../stores/useAuth";
 
 export const axiosInstance = axios.create({
   baseURL: "http://localhost:8000",
-  withCredentials: true, // Pastikan server BE mengizinkan CORS dan cookie
+  withCredentials: true,
 });
 
 export const refreshInstance = axios.create({

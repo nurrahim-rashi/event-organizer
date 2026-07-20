@@ -96,10 +96,8 @@ export default function BrowseEvents() {
         selectedCategories.length === 0 ||
         selectedCategories.includes(eventCategoryUpper);
       const eventLocation = event.location?.toLowerCase() || "";
-      const eventCity = event.city?.toLowerCase() || "";
       const filterLoc = debouncedLocationQuery.toLowerCase();
-      const matchesLocation =
-        eventLocation.includes(filterLoc) || eventCity.includes(filterLoc);
+      const matchesLocation = eventLocation.includes(filterLoc);
 
       // Mengambil harga dari ticketTypes karena Event tidak punya properti price langsung
       const ticketPrices =
@@ -181,11 +179,9 @@ export default function BrowseEvents() {
       let score = 0;
       const eventName = (event.name || "").toLowerCase();
       const eventCategory = (event.category || "").toLowerCase();
-      const eventCity = (event.city || "").toLowerCase();
       searchWords.forEach((word) => {
         if (eventName.includes(word)) score += 10;
         if (eventCategory.includes(word)) score += 5;
-        if (eventCity.includes(word)) score += 3;
       });
       return { event, score };
     });

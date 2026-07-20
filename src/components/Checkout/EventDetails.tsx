@@ -27,7 +27,7 @@ export default function EventDetails({ event }: { event: any }) {
                 calendar_today
               </span>
               <span>
-                {new Date(event.startDate).toLocaleDateString("en-EN", {
+                {new Date(event.startDate).toLocaleDateString("id-ID", {
                   weekday: "long",
                   year: "numeric",
                   month: "long",

@@ -4,6 +4,7 @@ const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=1000&auto=format&fit=crop";
 
 export const eventApi = {
+  get: (url: string) => axiosInstance.get(url),
   getAll: () => axiosInstance.get("/events"),
   getById: (id: number) => axiosInstance.get(`/events/${id}`),
   create: (data: any) => axiosInstance.post("/events", data),
@@ -21,11 +22,14 @@ const withFallbackImage = (event: any) => {
   };
 };
 
-export const getEvents = async () => {
-  const res = await eventApi.getAll();
-  const events = Array.isArray(res.data) ? res.data : res.data.data || [];
+export const getEvents = async (page: number = 1) => {
+  const res = await eventApi.get(`/events?page=${page}&take=8`);
+  const data = res.data.data || [];
 
-  return events.map(withFallbackImage);
+  return {
+    ...res.data,
+    data: data.map(withFallbackImage),
+  };
 };
 
 export const getEvent = async (id: number) => {

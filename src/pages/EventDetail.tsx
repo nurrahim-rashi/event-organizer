@@ -54,7 +54,7 @@ export default function EventDetail() {
 
   const formatDate = (isoString: string) => {
     if (!isoString) return "Date not available";
-    return new Date(isoString).toLocaleDateString("en-EN", {
+    return new Date(isoString).toLocaleDateString("id-ID", {
       weekday: "short",
       year: "numeric",
       month: "short",
@@ -88,17 +88,6 @@ export default function EventDetail() {
     if (!selectedTicket) return;
 
     const cartItems = [{ ticket: selectedTicket, qty: 1 }];
-
-    console.log("Saving to store:", { event, selectedTicket });
-    useCheckoutStore
-      .getState()
-      .setCheckoutData(
-        event,
-        cartItems,
-        appliedVoucher,
-        appliedCoupon,
-        usePoints,
-      );
     navigate("/transactions/checkout");
   };
 
