@@ -1,4 +1,5 @@
 import { axiosInstance } from "../api/axios";
+import type { UpdateStatusPayload, UpdateStatusResponse } from "../types/transaction-status";
 
 export const transactionApi = {
   create: (data: {
@@ -55,6 +56,24 @@ export const updateTransactionStatus = async (
         Authorization: `Bearer ${token}`,
       },
     },
+  );
+
+  return response.data;
+};
+
+export const updateTransactionStatusMailer = async ({
+  transactionId,
+  status,
+  accessToken,
+} : UpdateStatusPayload) : Promise<UpdateStatusResponse> => {
+  const response = await axiosInstance.patch(
+    `/transactions/${transactionId}/update`,
+    {status},
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
   );
 
   return response.data;
