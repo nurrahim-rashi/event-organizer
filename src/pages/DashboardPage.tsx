@@ -6,6 +6,8 @@ import EventStatistics from "../components/Profile/EventStatistics";
 import { axiosInstance } from "../api/axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
+import { updateTransactionStatusMailer } from "../services/transaction.service";
+import type { TransactionActionProps } from "../types/transaction-status";
 
 interface DashboardStats {
   activeEventsCount?: number;
@@ -50,13 +52,7 @@ interface Transaction {
   };
 }
 
-interface ActionButtonsProps {
-  transactionId: number;
-  accessToken: string;
-  onSuccess: () => void;
-}
-
-const TransactionActionButtons: React.FC<ActionButtonsProps> = ({
+const TransactionActionButtons: React.FC<TransactionActionProps> = ({
   transactionId,
   accessToken,
   onSuccess,
@@ -74,18 +70,17 @@ const TransactionActionButtons: React.FC<ActionButtonsProps> = ({
 
     setIsLoading(true);
     try {
-      const response = await axiosInstance.patch(
-        `/transactions/${transactionId}/status`,
-        { newStatus: status },
-        { headers: { Authorization: `Bearer ${accessToken}` } },
-      );
+      const response = await updateTransactionStatusMailer({
+        transactionId,
+        status,
+        accessToken,
+      });
 
-      if (response.data.success) {
-        toast.success(
-          response.data.message || `Transaction successfully ${confirmText}ed!`,
-        );
-        onSuccess();
-      }
+      toast.success(
+        response?.data?.message || response?.message || `Transaction successfully ${confirmText}ed!`,
+      );
+      onSuccess?.();
+
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Something went wrong.");
     } finally {
