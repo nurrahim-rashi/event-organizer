@@ -2,7 +2,7 @@ import z from "zod";
 
 export const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.email(),
+  email: z.string().email("Invalid emil format"),
   password: z
     .string()
     .min(6, "Password must be at least 6 characters.")
@@ -15,7 +15,7 @@ export const registerSchema = z.object({
       "Password must contain at least one special character",
     ),
   role: z.enum(["USER", "ADMIN"], {message: "Please select a valid role"}),
-  referredByCode: z.string().optional().or(z.literal("")),
+  referredByCode: z.string().optional().or(z.literal("")).transform((val) => (val ? val.trim().toUpperCase() : undefined)),
 });
 
 export type RegisterSchema = z.infer<typeof registerSchema>;
