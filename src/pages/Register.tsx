@@ -5,22 +5,23 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterSchema } from "../schemas/auth/register";
 import toast from "react-hot-toast";
+import z from "zod";
 
 function Register() {
   const [show, setShow] = useState<boolean>(false);
   const [isPending, setIsPending] = useState<boolean>(false);
 
-  const form = useForm<RegisterSchema>({
+  const form = useForm<z.input<typeof registerSchema>, any, RegisterSchema>({
     resolver: zodResolver(registerSchema),
-    mode: "onChange",
+    mode:"onChange",
     defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      role: "USER",
-      referredByCode: "",
-    },
-  });
+       name: "",
+       email: "",
+       password: "",
+       role: "USER",
+       referredByCode: "",
+    }
+  })
 
   const navigate = useNavigate();
 
