@@ -1,5 +1,5 @@
 import { createBrowserRouter } from "react-router";
-import { authLoader, userGuardLoader, adminGuardLoader } from "./loaders/auth";
+import { authLoader, adminGuardLoader } from "./loaders/auth";
 
 export const router = createBrowserRouter([
   {

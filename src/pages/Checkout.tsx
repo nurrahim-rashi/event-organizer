@@ -12,14 +12,7 @@ import toast from "react-hot-toast";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const {
-    selectedEvent,
-    cartItems,
-    appliedVoucher,
-    appliedCoupon,
-    usePoints,
-    _hasHydrated,
-  } = useCheckoutStore();
+  const { _hasHydrated } = useCheckoutStore();
   const [transaction, setTransaction] = useState<any>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
