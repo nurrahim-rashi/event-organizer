@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useCheckoutStore } from "../../stores/useCheckoutStore";
+import { createTransaction } from "../../services/transaction.service";
+import toast from "react-hot-toast";
 
 export const TicketSelection = ({
   event,
@@ -55,28 +56,35 @@ export const TicketSelection = ({
     });
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!isCheckoutMode) {
       setIsCheckoutMode(true);
-    } else {
-      const items = Object.entries(cart).map(([id, qty]) => ({
-        ticket: tickets.find((t: any) => t.id === Number(id)),
-        qty: qty,
-      }));
+      return;
+    }
 
-      useCheckoutStore
-        .getState()
-        .setCheckoutData(
-          event,
-          items,
-          appliedVoucher,
-          appliedCoupon,
-          finalPoints,
-        );
+    const items = Object.entries(cart).map(([id, qty]) => ({
+      ticketTypeId: Number(id),
+      qty: qty,
+    }));
+
+    try {
+      // Buat transaksi langsung
+      const payload = {
+        eventId: event.id,
+        items: items,
+        voucherId: appliedVoucher?.id || undefined,
+        couponId: appliedCoupon?.id || undefined,
+        usePoints: Number(usePoints) || 0,
+      };
+
+      const res = await createTransaction(payload);
+
       window.location.href = "/transactions/checkout";
+    } catch (error) {
+      console.error("Gagal buat transaksi", error);
+      toast.error("Failed to create transaction.");
     }
   };
-
   return (
     <aside className="sticky top-24 bg-[#231d2e] rounded-xl shadow-lg border border-[#4d4354]/30 overflow-hidden">
       <div className="p-6 bg-[#b76dff] text-[#400071]">
