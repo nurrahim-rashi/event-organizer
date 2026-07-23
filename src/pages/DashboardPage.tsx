@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { userAuth } from "../stores/useAuth";
 import { Link } from "react-router";
-// import axios from "axios";
 import Navbar from "../components/General/Navbar";
 import EventStatistics from "../components/Profile/EventStatistics";
 import { axiosInstance } from "../api/axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
+import { updateTransactionStatusMailer } from "../services/transaction.service";
+import type { TransactionActionProps } from "../types/transaction-status";
 
 interface DashboardStats {
   activeEventsCount?: number;
@@ -42,7 +43,7 @@ interface Transaction {
   id: number;
   userId: number;
   eventId: number;
-  status: "WAITING_PAYMENT" | "DONE" | "REJECTED"; // Sesuaikan dengan tipe enum di backend
+  status: "WAITING_PAYMENT" | "DONE" | "REJECTED";
   totalPrice: number;
   paymentProof: string | null;
   createdAt: string;
@@ -51,13 +52,7 @@ interface Transaction {
   };
 }
 
-interface ActionButtonsProps {
-  transactionId: number;
-  accessToken: string;
-  onSuccess: () => void;
-}
-
-const TransactionActionButtons: React.FC<ActionButtonsProps> = ({
+const TransactionActionButtons: React.FC<TransactionActionProps> = ({
   transactionId,
   accessToken,
   onSuccess,
@@ -75,20 +70,17 @@ const TransactionActionButtons: React.FC<ActionButtonsProps> = ({
 
     setIsLoading(true);
     try {
-      const response = await axiosInstance.patch(
-        `/transactions/${transactionId}/status`,
-        { newStatus: status },
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
-      );
+      const response = await updateTransactionStatusMailer({
+        transactionId,
+        status,
+        accessToken,
+      });
 
-      if (response.data.success) {
-        toast.success(
-          response.data.message || `Transaction successfully ${confirmText}ed!`,
-        );
-        onSuccess();
-      }
+      toast.success(
+        response?.data?.message || response?.message || `Transaction successfully ${confirmText}ed!`,
+      );
+      onSuccess?.();
+
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Something went wrong.");
     } finally {
@@ -121,39 +113,24 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({});
-  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null); // null = Semua Event
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  // 🔥 STATE BARU: Menampung nominal dinamis kiriman dari komponen grafik
+  const [dynamicTotals, setDynamicTotals] = useState<{
+    ticketsSold: number;
+    totalEarnings: number;
+  } | null>(null);
+
+  // 1. Fetch data statistik global (Hanya dipanggil sekali saat load awal)
   const fetchDashboardData = async () => {
     if (!user?.accessToken) return;
-
     try {
       setLoading(true);
-      console.log("1. Sedang memanggil API stats...");
-
       const response = await axiosInstance.get("/dashboard/stats", {
-        headers: {
-          Authorization: `Bearer ${user.accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${user.accessToken}` },
       });
-
-      console.log("Response Data dari backend:", response.data);
       setStats(response.data.data);
-
-      const eventIdToFetch =
-        selectedEventId || response.data.data.managedEvents?.[0]?.id;
-
-      if (eventIdToFetch) {
-        const txResponse = await axiosInstance.get(
-          `/transactions/event/${eventIdToFetch}/incoming`,
-          {
-            headers: { Authorization: `Bearer ${user.accessToken}` },
-          },
-        );
-        setTransactions(txResponse.data.data);
-      } else {
-        setTransactions([]);
-      }
     } catch (error) {
       console.error("Failed to retrieve dashboard statistic data", error);
     } finally {
@@ -163,7 +140,44 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [user?.accessToken]);
+
+  // 🔥 2. EFFECT BARU: Re-fetch transaksi otomatis setiap kali user mengubah dropdown event
+  useEffect(() => {
+    const fetchIncomingTransactions = async () => {
+      if (!user?.accessToken) return;
+
+      // Jika selectedEventId null (All Events), default ke data transaksi event pertama milik EO tersebut
+      const eventIdToFetch = selectedEventId || stats.managedEvents?.[0]?.id;
+
+      if (!eventIdToFetch) {
+        setTransactions([]);
+        return;
+      }
+
+      try {
+        const txResponse = await axiosInstance.get(
+          `/transactions/event/${eventIdToFetch}/incoming`,
+          { headers: { Authorization: `Bearer ${user.accessToken}` } },
+        );
+        setTransactions(txResponse.data.data);
+      } catch (error) {
+        console.error("Failed to fetch incoming transactions", error);
+      }
+    };
+
+    if (stats.managedEvents) {
+      fetchIncomingTransactions();
+    }
+  }, [selectedEventId, stats.managedEvents, user?.accessToken]);
+
+  // 🔥 3. LOGIKA SINKRONISASI ANGKA KARTU UTAMA
+  const displayEarnings = dynamicTotals
+    ? dynamicTotals.totalEarnings
+    : (stats.totalEarnings ?? 0);
+  const displayTickets = dynamicTotals
+    ? dynamicTotals.ticketsSold
+    : (stats.ticketsSold ?? 0);
 
   if (loading) {
     return (
@@ -175,9 +189,6 @@ export default function DashboardPage() {
     );
   }
 
-  console.log("=== ISI STATE STATS SAAT RENDER ===", stats);
-
-  // Pelindung jika user belum login atau loading state global belum selesai
   if (!user) {
     return (
       <div className="min-h-screen bg-[#0d0a16] text-white flex items-center justify-center">
@@ -204,25 +215,24 @@ export default function DashboardPage() {
               </p>
             </div>
             <Link to="/events/create">
-              <button className="bg-linear-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-2.5 px-5 rounded-xl shadow-lg shadow-purple-900/20 active:scale-[0.98] transition-all text-sm">
+              <button className="bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-2.5 px-5 rounded-xl shadow-lg shadow-purple-900/20 active:scale-[0.98] transition-all text-sm">
                 + Create New Event
               </button>
             </Link>
           </div>
 
-          {/* Kartu Analitik Angka Utama (EO Metrics) */}
+          {/* Kartu Analitik Angka Utama (Menggunakan nilai display yang dinamis) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl">
               <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">
                 Total Earnings
               </p>
               <p className="text-2xl font-bold text-gray-100 mt-2">
-                {" "}
                 {new Intl.NumberFormat("id-ID", {
                   style: "currency",
                   currency: "IDR",
                   maximumFractionDigits: 0,
-                }).format(stats.totalEarnings ?? 0)}
+                }).format(displayEarnings)}
               </p>
             </div>
             <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl">
@@ -230,7 +240,7 @@ export default function DashboardPage() {
                 Tickets Sold
               </p>
               <p className="text-2xl font-bold text-gray-100 mt-2">
-                {stats.ticketsSold ?? 0}{" "}
+                {displayTickets}{" "}
                 <span className="text-xs text-gray-500 font-normal">
                   tickets
                 </span>
@@ -247,27 +257,24 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/*STATISTICS*/}
+          {/* SECTION STATISTICS */}
           <div className="space-y-4 mt-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <h3 className="text-lg font-bold text-white">
                 Event Performance Analytics
               </h3>
-
               <div className="w-full sm:w-72">
                 <select
                   className="w-full bg-[#161224] border border-purple-900/30 text-purple-300 text-xs rounded-xl px-4 py-2.5 focus:outline-none focus:border-purple-600 transition-all cursor-pointer"
                   value={selectedEventId || ""}
-                  onChange={(e) =>
-                    setSelectedEventId(
-                      e.target.value ? Number(e.target.value) : null,
-                    )
-                  }
+                  onChange={(e) => {
+                    const val = e.target.value ? Number(e.target.value) : null;
+                    setSelectedEventId(val);
+                    if (val === null) setDynamicTotals(null); // Reset ke total global jika pilih All Events
+                  }}
                 >
-                  <option value="" disabled>
-                    -- Select an Event to View Stats --
-                  </option>
-                  {/* Menggunakan stats?.events berdasarkan struktur objek 'stats' kamu */}
+                  {/* Diubah menjadi opsi All Events yang valid (tidak di-disabled) */}
+                  <option value="">-- All Managed Events --</option>
                   {stats?.managedEvents?.map((evt: any) => (
                     <option
                       key={evt.id}
@@ -281,14 +288,11 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {selectedEventId ? (
-              <EventStatistics eventId={selectedEventId} />
-            ) : (
-              <div className="p-10 text-center bg-purple-950/10 rounded-2xl border border-dashed border-purple-900/20 text-purple-300/60 text-sm">
-                Please select an event from the dropdown above to visualize its
-                sales and ticket analytics.
-              </div>
-            )}
+            {/* Render langsung komponen statistik dengan menyuntikkan callback onFetchSuccess */}
+            <EventStatistics
+              eventId={selectedEventId}
+              onFetchSuccess={(totals) => setDynamicTotals(totals)}
+            />
           </div>
 
           {/* Tabel Manajemen Event Kreator */}
@@ -313,12 +317,9 @@ export default function DashboardPage() {
                         key={event.id}
                         className="border-b border-purple-950/40 text-sm text-gray-300"
                       >
-                        {/*NAMA EVENT*/}
                         <td className="py-4 font-medium text-white pl-2">
                           {event.name}
                         </td>
-
-                        {/*TANGGA: EVENT*/}
                         <td>
                           {new Date(event.startDate).toLocaleDateString(
                             "id-ID",
@@ -329,23 +330,20 @@ export default function DashboardPage() {
                             },
                           )}
                         </td>
-
                         <td className="py-4">{event.ticketsSold || 0}</td>
-
                         <td className="py-4 text-right pr-2">
                           <div className="flex justify-end gap-2">
-                              <button
-                              onClick={() => navigate(`/events/${event.id}/attendees`)}
+                            <button
+                              onClick={() =>
+                                navigate(`/events/${event.id}/attendees`)
+                              }
                               className="rounded-xl border border-purple-500/40 bg-purple-600/20 px-3 py-2 text-xs font-semibold text-purple-300 transition hover:bg-purple-600 hover:text-white"
-                              >
-                                View Attendees
-                              </button>
-
-                              <button
-                              className="rounded-xl border border-red-500/30 bg-red-600/10 px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-600 hover:text-white"
-                              >
-                                Delete
-                              </button>
+                            >
+                              View Attendees
+                            </button>
+                            <button className="rounded-xl border border-red-500/30 bg-red-600/10 px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-600 hover:text-white">
+                              Delete
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -365,9 +363,17 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Tabel Transaksi Masuk */}
           <div className="bg-[#161224] border border-purple-900/20 rounded-2xl p-6 shadow-xl mt-8">
             <h3 className="text-lg font-bold mb-4 text-gray-200">
               Incoming Transactions & Payment Proofs
+              <span className="text-xs font-normal text-purple-400 ml-2">
+                (
+                {selectedEventId
+                  ? "Filtered"
+                  : `Showing: ${stats.managedEvents?.[0]?.name || "First Event"}`}
+                )
+              </span>
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -451,7 +457,7 @@ export default function DashboardPage() {
                         colSpan={6}
                         className="py-8 text-center text-gray-500 italic"
                       >
-                        No incoming transactions found.
+                        No incoming transactions found for this event.
                       </td>
                     </tr>
                   )}
@@ -464,13 +470,13 @@ export default function DashboardPage() {
     );
   }
 
-  // JIKA LOGIN SEBAGAI: CUSTOMER / USER BIASA
+  {
+    /* JIKA LOGIN SEBAGAI CUSTOMER */
+  }
   return (
     <div className="min-h-screen bg-[#0d0a16] text-white p-6 md:p-10">
-      {" "}
       <Navbar />
       <div className="max-w-5xl mx-auto space-y-8">
-        {/* Header Dashboard Customer */}
         <div className="border-b border-purple-950 pb-6">
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-indigo-400 mt-16">
             Welcome Back, {user.name}! 👋
@@ -481,7 +487,6 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Kartu Ringkasan Aktivitas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl flex items-center justify-between">
             <div>
@@ -518,18 +523,17 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/*RECOMMENED EVENTS*/}
-        <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl flex items-center justify-between">
+        {/* RECOMMENDED EVENTS */}
+        <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl">
           <h3 className="text-lg font-bold text-white mb-4">
             Recommended for you
           </h3>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {stats.recommendedEvents && stats.recommendedEvents.length > 0 ? (
               stats.recommendedEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="bg-[#161224] border border-purple-900/30 rounded-2xl p-5 shadow-xl flex flex-col justify-between"
+                  className="bg-[#120e1c] border border-purple-900/20 rounded-2xl p-5 shadow-xl flex flex-col justify-between"
                 >
                   <div>
                     <h4 className="font-semibold text-white text-base">
@@ -546,7 +550,6 @@ export default function DashboardPage() {
                       })}
                     </p>
                   </div>
-
                   <div className="flex items-center justify-between mt-5 pt-4 border-t border-purple-950/40">
                     <span className="text-sm font-bold text-gray-200">
                       {event.price === 0
@@ -555,7 +558,6 @@ export default function DashboardPage() {
                           ? `Rp ${event.price.toLocaleString("id-ID")}`
                           : "Tickets Available"}
                     </span>
-
                     <Link
                       to={`/events/${event.id}`}
                       className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl transition-all font-semibold shadow-md shadow-purple-900/20"
@@ -575,19 +577,16 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* List Tiket Terdekat (Upcoming Events) */}
+        {/* UPCOMING EVENTS */}
         <div className="bg-[#161224] border border-purple-900/20 rounded-2xl p-6 shadow-xl">
           <h3 className="text-lg font-bold mb-4 text-gray-200">
             Your Upcoming Events
           </h3>
-
           <div className="space-y-4">
-            {/* EVENT CARD */}
             {stats.upcomingTickets && stats.upcomingTickets.length > 0 ? (
               stats.upcomingTickets.map((ticket) => {
                 const eventDate = new Date(ticket.event.startDate);
                 const day = eventDate.getDate();
-
                 const month = eventDate
                   .toLocaleDateString("id-ID", { month: "short" })
                   .toUpperCase();
@@ -598,12 +597,9 @@ export default function DashboardPage() {
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#1e1932] border border-purple-950 rounded-xl"
                   >
                     <div className="flex items-center space-x-4">
-                      {/*KOTAK TANGGAL*/}
                       <div className="bg-purple-600/20 text-purple-400 p-3 rounded-xl text-center font-bold text-xs w-14">
                         {month} <span className="block text-lg">{day}</span>
                       </div>
-
-                      {/*EVENT DETAIL*/}
                       <div>
                         <h4 className="font-semibold text-white">
                           {ticket.event.name}
@@ -613,8 +609,6 @@ export default function DashboardPage() {
                         </p>
                       </div>
                     </div>
-
-                    {/*BUTTON ACTION*/}
                     <button className="bg-purple-600 hover:bg-purple-700 text-xs font-semibold px-4 py-2 rounded-xl text-white transition-all mt-4 sm:mt-0">
                       View ticket QR
                     </button>

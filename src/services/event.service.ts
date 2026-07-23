@@ -38,18 +38,42 @@ export const getEvent = async (id: number) => {
   return withFallbackImage(data);
 };
 
-export const createEvent = async (data: any) => {
-  const res = await eventApi.create(data);
+export const createEvent = async (data: any, file: File) => {
+  const formData = new FormData();
+
+  Object.keys(data).forEach((key) => {
+    if (key === "ticketTypes" || key === "vouchers") {
+      formData.append(key, JSON.stringify(data[key]));
+    } else {
+      formData.append(key, data[key]);
+    }
+  });
+  formData.append("file", file);
+
+  // Hapus manual Content-Type agar browser menangani boundary-nya
+  const res = await axiosInstance.post("/events", formData);
   return res.data;
 };
 
-export const updateEvent = async (id: number, data: any) => {
-  const payload = { ...data };
-  if (payload.bannerImage === FALLBACK_IMAGE) {
-    delete payload.bannerImage;
+export const updateEvent = async (id: number, data: any, file?: File) => {
+  const formData = new FormData();
+
+  Object.keys(data).forEach((key) => {
+    if (data[key] !== undefined && data[key] !== null) {
+      if (typeof data[key] === "object" && !(data[key] instanceof File)) {
+        formData.append(key, JSON.stringify(data[key]));
+      } else {
+        formData.append(key, data[key]);
+      }
+    }
+  });
+
+  if (file) {
+    formData.append("file", file); // Key harus "file"
   }
 
-  const res = await eventApi.update(id, payload);
+  // Gunakan PATCH sesuai dengan route di backend
+  const res = await axiosInstance.patch(`/events/${id}`, formData);
   return res.data;
 };
 

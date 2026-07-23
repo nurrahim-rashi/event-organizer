@@ -51,6 +51,7 @@ export default function EditEvent() {
   };
 
   // 3. Buat fungsi baru untuk proses simpan sebenarnya
+  // ... (di dalam EditEvent)
   const executeSave = async () => {
     setLoading(true);
     setIsConfirmModalOpen(false);
@@ -58,6 +59,7 @@ export default function EditEvent() {
       const startDateTime = new Date(formData.startDate).toISOString();
       const endDateTime = new Date(formData.endDate).toISOString();
 
+      // 1. Siapkan payload objek dasar
       const payload: any = {
         name: formData.name,
         category: formData.category,
@@ -76,11 +78,17 @@ export default function EditEvent() {
         vouchers: formData.vouchers?.filter((v: any) => v.code),
       };
 
-      if (formData.bannerImage?.trim()) {
-        payload.bannerImage = formData.bannerImage;
+      // 2. Ambil file jika user menggantinya
+      // bannerImage di state sekarang bisa berupa File (jika baru di-upload)
+      // atau string URL (jika gambar lama)
+      let fileToUpload: File | undefined = undefined;
+      if (formData.bannerImage instanceof File) {
+        fileToUpload = formData.bannerImage;
       }
 
-      await updateEvent(eventId, payload);
+      // 3. Panggil service dengan file jika ada
+      await updateEvent(eventId, payload, fileToUpload);
+
       toast.success("Event updated successfully!");
       navigate(`/events/${eventId}`);
     } catch (err: any) {
