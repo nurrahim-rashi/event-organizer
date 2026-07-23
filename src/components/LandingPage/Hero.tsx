@@ -1,47 +1,32 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate, Link } from "react-router";
-import { useEvents } from "../../hooks/event/useEvents";
+import { useState, useEffect } from "react";
+import { Link } from "react-router";
 import type { Event } from "../../types/event";
 
-export default function Hero() {
-  const navigate = useNavigate();
-  const { events, fetchEvents } = useEvents();
-  const [searchInput, setSearchInput] = useState("");
-  const [locationInput, setLocationInput] = useState("");
+interface HeroProps {
+  search: string;
+  setSearch: (s: string) => void;
+  location: string;
+  setLocation: (s: string) => void;
+  onSearch: () => void;
+  setCategory: (c: string) => void;
+  searchParams: URLSearchParams;
+  setSearchParams: (params: URLSearchParams) => void;
+  upcomingEvents: Event[];
+}
 
+export default function Hero({
+  search,
+  setSearch,
+  location,
+  setLocation,
+  onSearch,
+  setCategory,
+  searchParams,
+  setSearchParams,
+  upcomingEvents,
+}: HeroProps) {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  const upcomingEvents = useMemo(() => {
-    if (!events) return [];
-
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-
-    const safeEvents: Event[] = Array.isArray(events)
-      ? events
-      : typeof events === "object" &&
-          "data" in events &&
-          Array.isArray((events as any).data)
-        ? (events as any).data
-        : [];
-
-    return safeEvents
-      .filter((event) => {
-        if (!event.startDate) return false;
-        return new Date(event.startDate) >= now;
-      })
-      .sort((a, b) => {
-        const dateA = new Date(a.startDate!).getTime();
-        const dateB = new Date(b.startDate!).getTime();
-        return dateA - dateB;
-      });
-  }, [events]);
-
-  // Efek untuk rotasi otomatis banner setiap 5 detik
   useEffect(() => {
     if (upcomingEvents.length <= 1) return;
 
@@ -54,20 +39,21 @@ export default function Hero() {
     return () => clearInterval(interval);
   }, [upcomingEvents]);
 
-  const handleSearchSubmit = (categoryOverride?: string) => {
-    const params = new URLSearchParams();
-
-    if (searchInput.trim()) params.append("search", searchInput.trim());
-    if (locationInput.trim()) params.append("location", locationInput.trim());
-
-    if (categoryOverride) {
-      params.append("category", categoryOverride);
-    }
-
-    navigate(`/events?${params.toString()}`);
-  };
-
   const currentEvent = upcomingEvents[currentBannerIndex];
+
+  const handleCategoryClick = (category: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    const currentCats = newParams.getAll("category");
+
+    if (currentCats.includes(category)) {
+      const filteredCats = currentCats.filter((c) => c !== category);
+      newParams.delete("category");
+      filteredCats.forEach((c) => newParams.append("category", c));
+    } else {
+      newParams.append("category", category);
+    }
+    setSearchParams(newParams);
+  };
 
   return (
     <section className="relative min-h-[600px] flex items-center overflow-hidden px-6 py-24 bg-gradient-to-tr from-[#171021] via-[#231d2e] to-[#171021]">
@@ -106,31 +92,18 @@ export default function Hero() {
                 className="w-full border-none focus:ring-0 bg-transparent text-[#eadef6] placeholder-[#cfc2d6]/50 outline-none py-3"
                 placeholder="Search concerts, festivals, workshops..."
                 type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && onSearch()}
               />
-            </div>
+            </div>{" "}
             <div className="h-8 w-[1px] bg-[#4d4354]/50 hidden md:block mx-2"></div>
-            <div className="flex flex-1 items-center px-4 gap-3 w-full">
-              <span className="material-symbols-outlined text-[#cfc2d6]">
-                location_on
-              </span>
-              <input
-                className="w-full border-none focus:ring-0 bg-transparent text-[#eadef6] placeholder-[#cfc2d6]/50 outline-none py-3"
-                placeholder="All Locations"
-                type="text"
-                value={locationInput}
-                onChange={(e) => setLocationInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
-              />
-            </div>
             <button
-              onClick={() => handleSearchSubmit()}
-              className="w-full md:w-auto bg-[#ddb7ff] text-[#490080] px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-[#ddb7ff]/10"
+              onClick={onSearch}
+              className="px-6 py-3 bg-[#ddb7ff] text-[#171021] font-bold rounded-lg hover:bg-white transition"
             >
               Search
-            </button>
+            </button>{" "}
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -143,7 +116,10 @@ export default function Hero() {
             ].map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => handleSearchSubmit(cat.id)}
+                onClick={() => {
+                  setCategory(cat.id);
+                  onSearch();
+                }}
                 className="px-4 py-2 rounded-full border border-[#4d4354] bg-[#1f1929] text-[#cfc2d6] hover:border-[#ddb7ff] hover:text-[#ddb7ff] transition-all text-sm flex items-center gap-2"
               >
                 <span className="material-symbols-outlined text-[18px]">

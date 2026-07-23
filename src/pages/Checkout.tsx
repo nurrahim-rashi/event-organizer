@@ -56,7 +56,7 @@ export default function CheckoutPage() {
             couponId: appliedCoupon?.id || undefined,
             usePoints: Number(usePoints) || 0,
           };
-          const created = await createTransaction(payload);
+          const created = await createTransaction(payload); // pindahin
           setTransaction(created.data || created);
         } else {
           navigate("/");

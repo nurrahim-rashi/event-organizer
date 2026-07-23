@@ -1,19 +1,19 @@
+import type { SetURLSearchParams } from "react-router";
 import type { EventCategory } from "../../types/event";
 
 interface SidebarFilterProps {
   searchParams: URLSearchParams;
-  setSearchParams: (params: URLSearchParams) => void;
+  setSearchParams: SetURLSearchParams;
 }
 
 export default function SidebarFilter({
   searchParams,
   setSearchParams,
 }: SidebarFilterProps) {
+  // Retrieve current values
   const searchQuery = searchParams.get("search") || "";
   const locationQuery = searchParams.get("location") || "";
   const selectedCategories = searchParams.getAll("category") as EventCategory[];
-  const priceRange = searchParams.get("price") || "20000000";
-  const dateFilter = searchParams.get("date") || "";
 
   const availableCategories: EventCategory[] = [
     "MUSIC",
@@ -27,6 +27,7 @@ export default function SidebarFilter({
     "OTHER",
   ];
 
+  // Logic Handlers
   const handleSearchChange = (value: string) => {
     const newParams = new URLSearchParams(searchParams);
     if (value) newParams.set("search", value);
@@ -57,22 +58,6 @@ export default function SidebarFilter({
       filteredCats.forEach((c) => newParams.append("category", c));
     } else {
       newParams.append("category", category);
-    }
-    setSearchParams(newParams);
-  };
-
-  const handlePriceChange = (value: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set("price", value);
-    setSearchParams(newParams);
-  };
-
-  const handleDateChange = (type: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (dateFilter === type) {
-      newParams.delete("date");
-    } else {
-      newParams.set("date", type);
     }
     setSearchParams(newParams);
   };
@@ -173,75 +158,17 @@ export default function SidebarFilter({
             </div>
           </div>
 
-          {/* Price Range Slider */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-semibold text-[#988d9f]">
-                Price Range
-              </label>
-              <span className="text-xs font-bold text-[#ddb7ff]">
-                {Number(priceRange) === 0
-                  ? "Free"
-                  : `IDR 0 - IDR ${Number(priceRange).toLocaleString("id-ID")}`}
-              </span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="20000000"
-              step="100000"
-              value={priceRange}
-              onChange={(e) => handlePriceChange(e.target.value)}
-              className="w-full h-1.5 bg-[#393244] rounded-lg appearance-none cursor-pointer accent-[#ddb7ff]"
-            />
-          </div>
-
-          {/* Date Options (English UI) */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#988d9f]">Date</label>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => handleDateChange("this-week")}
-                className={`w-full py-2.5 text-center rounded-lg text-xs font-medium border transition-all ${
-                  dateFilter === "this-week"
-                    ? "bg-[#ddb7ff]/20 border-[#ddb7ff] text-[#ddb7ff] font-bold"
-                    : "bg-[#2e2738] border-[#4d4354] text-[#cfc2d6] hover:border-[#ddb7ff]/30"
-                }`}
-              >
-                This Week
-              </button>
-              <button
-                onClick={() => handleDateChange("this-month")}
-                className={`w-full py-2.5 text-center rounded-lg text-xs font-medium border transition-all ${
-                  dateFilter === "this-month"
-                    ? "bg-[#ddb7ff]/20 border-[#ddb7ff] text-[#ddb7ff] font-bold"
-                    : "bg-[#2e2738] border-[#4d4354] text-[#cfc2d6] hover:border-[#ddb7ff]/30"
-                }`}
-              >
-                This Month
-              </button>
-              <button
-                onClick={() => handleDateChange("next-3-months")}
-                className={`w-full py-2.5 text-center rounded-lg text-xs font-medium border transition-all ${
-                  dateFilter === "next-3-months"
-                    ? "bg-[#ddb7ff]/20 border-[#ddb7ff] text-[#ddb7ff] font-bold"
-                    : "bg-[#2e2738] border-[#4d4354] text-[#cfc2d6] hover:border-[#ddb7ff]/30"
-                }`}
-              >
-                Next 3 Months
-              </button>
-            </div>
-          </div>
+          {/* Reset Button Section */}
+          <button
+            onClick={() => setSearchParams(new URLSearchParams())}
+            className="w-full mt-6 py-3 rounded-lg bg-[#393244] hover:bg-[#3d3648] text-white font-bold transition-all flex items-center justify-center gap-2 border border-white/5 text-sm"
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              refresh
+            </span>
+            Reset All Filters
+          </button>
         </div>
-
-        {/* Reset Button Section */}
-        <button
-          onClick={() => setSearchParams(new URLSearchParams())}
-          className="w-full mt-6 py-3 rounded-lg bg-[#393244] hover:bg-[#3d3648] text-white font-bold transition-all flex items-center justify-center gap-2 border border-white/5 text-sm"
-        >
-          <span className="material-symbols-outlined text-[18px]">refresh</span>
-          Reset All Filters
-        </button>
       </div>
     </aside>
   );
