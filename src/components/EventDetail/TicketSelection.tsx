@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { createTransaction } from "../../services/transaction.service";
-import toast from "react-hot-toast";
 
 export const TicketSelection = ({
-  event,
   tickets,
   user,
   coupons,
@@ -60,29 +57,6 @@ export const TicketSelection = ({
     if (!isCheckoutMode) {
       setIsCheckoutMode(true);
       return;
-    }
-
-    const items = Object.entries(cart).map(([id, qty]) => ({
-      ticketTypeId: Number(id),
-      qty: qty,
-    }));
-
-    try {
-      // Buat transaksi langsung
-      const payload = {
-        eventId: event.id,
-        items: items,
-        voucherId: appliedVoucher?.id || undefined,
-        couponId: appliedCoupon?.id || undefined,
-        usePoints: Number(usePoints) || 0,
-      };
-
-      const res = await createTransaction(payload);
-
-      window.location.href = "/transactions/checkout";
-    } catch (error) {
-      console.error("Gagal buat transaksi", error);
-      toast.error("Failed to create transaction.");
     }
   };
   return (

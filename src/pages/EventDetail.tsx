@@ -19,8 +19,6 @@ export default function EventDetail() {
   // State
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
-  const [appliedCoupon] = useState<any>(null);
-  const [usePoints] = useState<any>(null);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [moreEvents, setMoreEvents] = useState<any[]>([]);
 
@@ -86,7 +84,6 @@ export default function EventDetail() {
     }
     if (!selectedTicket) return;
 
-    const cartItems = [{ ticket: selectedTicket, qty: 1 }];
     navigate("/transactions/checkout");
   };
 
