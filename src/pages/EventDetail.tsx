@@ -2,7 +2,6 @@ import { useParams, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { useEventDetail } from "../hooks/event/useEventDetail";
 import { userAuth } from "../stores/useAuth";
-import { useCheckoutStore } from "../stores/useCheckoutStore";
 import { getTransactionsByEvent } from "../services/transaction.service";
 import { getOrganizerProfile } from "../services/organizer.service";
 import { toTitleCase } from "../utils/toTitleCase";

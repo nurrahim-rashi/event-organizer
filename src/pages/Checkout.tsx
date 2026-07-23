@@ -6,7 +6,6 @@ import OrderSummary from "../components/Checkout/OrderDetails";
 import CancelTransactionModal from "../components/Checkout/CancelTransactionModal";
 import PaymentProofModal from "../components/Checkout/PaymentProofModal";
 import { useCheckoutStore } from "../stores/useCheckoutStore";
-import { createTransaction } from "../services/transaction.service";
 import { transactionApi } from "../services/transaction.service";
 import { axiosInstance } from "../api/axios";
 import toast from "react-hot-toast";
@@ -36,47 +35,25 @@ export default function CheckoutPage() {
     subtotal + serviceFee - (transaction?.voucherDiscount || 0);
 
   useEffect(() => {
-    if (!_hasHydrated || isInitialized.current) return;
-
-    const init = async () => {
-      isInitialized.current = true; // Set flag langsung agar tidak terpanggil 2x
+    if (!_hasHydrated || isInitialized.current) return; // Tambahkan pengecekan ini
+    const fetchActiveTransaction = async () => {
       try {
         const res = await transactionApi.getActive();
-
         if (res.data.data) {
           setTransaction(res.data.data);
-        } else if (selectedEvent && cartItems.length > 0) {
-          const payload = {
-            eventId: selectedEvent.id,
-            items: cartItems.map((item) => ({
-              ticketTypeId: item.ticket.id,
-              qty: item.qty,
-            })),
-            voucherId: appliedVoucher?.id || undefined,
-            couponId: appliedCoupon?.id || undefined,
-            usePoints: Number(usePoints) || 0,
-          };
-          const created = await createTransaction(payload); // pindahin
-          setTransaction(created.data || created);
         } else {
-          navigate("/");
+          // Jika tidak ada transaksi aktif, berarti user tidak sengaja masuk ke url ini
+          toast.error("No active transaction found.");
+          navigate("/events");
         }
       } catch (e) {
         console.error(e);
-        navigate("/");
+        navigate("/events");
       }
     };
 
-    init();
-  }, [
-    _hasHydrated,
-    navigate,
-    selectedEvent,
-    cartItems,
-    appliedVoucher,
-    appliedCoupon,
-    usePoints,
-  ]);
+    fetchActiveTransaction();
+  }, [_hasHydrated, navigate]);
 
   const handleConfirmCancel = async () => {
     if (!transaction?.id) return;
