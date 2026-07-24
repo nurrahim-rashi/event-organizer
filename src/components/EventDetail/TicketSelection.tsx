@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { transactionApi } from "../../services/transaction.service";
+import { useNavigate } from "react-router";
+import toast from "react-hot-toast";
 
 export const TicketSelection = ({
   tickets,
@@ -14,6 +17,7 @@ export const TicketSelection = ({
   handleApplyVoucher,
   submitting,
 }: any) => {
+  const navigate = useNavigate();
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   const [cart, setCart] = useState<Record<number, number>>({});
 
@@ -54,11 +58,62 @@ export const TicketSelection = ({
   };
 
   const handleCheckout = async () => {
+    console.log(">>>>> CHECKOOUT DICLICK<<<<<<<");
+
     if (!isCheckoutMode) {
       setIsCheckoutMode(true);
       return;
     }
-  };
+
+    try {
+      const items = Object.entries(cart).map(([ticketId, qty]) => ({
+        ticketTypeId: Number(ticketId),
+        qty: Number(qty),
+      }));
+
+      if (items.length === 0) {
+        toast.error("Choose at least one ticket");
+        return;
+      }
+
+      const payload = {
+        eventId: tickets[0]?.eventId, // Ambil eventId dari tiket
+        items,
+        voucherId: appliedVoucher?.id,
+        couponId: appliedCoupon?.id,
+        usePoints: finalPoints > 0 ? finalPoints : undefined,
+      };
+
+      console.log("Mengirim payload checkout:", payload);
+      const response = await transactionApi.create(payload);
+
+      console.log("Hasil Transaksi:", response.data);
+
+      const transactionId = response.data?.data?.id ?? response.data?.data ?? response.data?.id;
+
+      if (!transactionId || isNaN(Number(transactionId))) {
+        toast.error("Invalid transaction ID received from server!");
+        console.error("Gagal mendapatkan transactionId dari response:", response.data);
+        return;
+      }
+
+      toast.success("Checkout success");
+      setCart({});
+      navigate(`/transactions/${transactionId}`);
+
+    } catch (error: any) {
+      const errorMessage =
+      error.response?.data?.message ||
+      (typeof error.response?.data === "string" ? error.response?.data : null) ||
+      "Failed to do checkout, please try again.";
+
+      console.error("Checkout Error:", error);
+      toast.error(errorMessage);
+    } finally {
+      setIsCheckoutMode(false);
+    }
+   };
+
   return (
     <aside className="sticky top-24 bg-[#231d2e] rounded-xl shadow-lg border border-[#4d4354]/30 overflow-hidden">
       <div className="p-6 bg-[#b76dff] text-[#400071]">

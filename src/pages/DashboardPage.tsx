@@ -13,21 +13,26 @@ interface DashboardStats {
   activeEventsCount?: number;
   ticketsSold?: number;
   totalEarnings?: number;
-  totalAvailableEvents?: number;
-  totalTicketsOwned?: number;
   managedEvents?: Array<{
     id: number;
     name: string;
     startDate: string;
     ticketsSold?: number;
   }>;
-  upcomingTickets?: Array<{
+  totalAvailableEvents?: number;
+  totalTicketsOwned?: number;
+  upcomingEvents?: Array<{
     id: number;
-    event: {
+    name?: string;
+    startDate?: string;
+    location?: string;
+    description?: string;
+    event?: {
       id: number;
       name: string;
       startDate: string;
       location: string;
+      bannerUrl?: string;
     };
   }>;
   recommendedEvents?: Array<{
@@ -36,6 +41,7 @@ interface DashboardStats {
     startDate: string;
     location: string;
     price?: number;
+    bannerUrl?: string;
   }>;
 }
 
@@ -130,6 +136,7 @@ export default function DashboardPage() {
       const response = await axiosInstance.get("/dashboard/stats", {
         headers: { Authorization: `Bearer ${user.accessToken}` },
       });
+      console.log("RESPONSE DASHBOARD STATS:", response.data.data);
       setStats(response.data.data);
     } catch (error) {
       console.error("Failed to retrieve dashboard statistic data", error);
@@ -144,6 +151,7 @@ export default function DashboardPage() {
 
   // 🔥 2. EFFECT BARU: Re-fetch transaksi otomatis setiap kali user mengubah dropdown event
   useEffect(() => {
+    if (!user || user.role === "CUSTOMER" || user.role === "USER") return;
     const fetchIncomingTransactions = async () => {
       if (!user?.accessToken) return;
 
@@ -477,18 +485,21 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#0d0a16] text-white p-6 md:p-10">
       <Navbar />
       <div className="max-w-5xl mx-auto space-y-8">
-        <div className="border-b border-purple-950 pb-6">
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-indigo-400 mt-16">
+        
+        {/* Header Welcome */}
+        <div className="border-b border-purple-950 pb-6 mt-16">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
             Welcome Back, {user.name}! 👋
           </h1>
           <p className="text-gray-400 text-sm mt-1">
-            Ready for your next experience? Track your tickets and saved events
-            here.
+            Ready for your next experience? Track your tickets and explore upcoming events here.
           </p>
         </div>
 
+        {/* Ringkasan Kartu Utama */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl flex items-center justify-between">
+          {/* Card 1: Tiket Dimiliki */}
+          <div className="bg-[#161224] border border-purple-900/30 hover:border-purple-600/40 transition-all rounded-2xl p-6 shadow-xl flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">
                 Your Tickets
@@ -499,57 +510,131 @@ export default function DashboardPage() {
             </div>
             <Link
               to="/transactions"
-              className="text-xs text-purple-400 hover:underline"
+              className="text-xs font-semibold bg-purple-600/20 text-purple-300 hover:bg-purple-600 hover:text-white px-3.5 py-2 rounded-xl transition-all"
             >
-              View All &rarr;
+              My Tickets &rarr;
             </Link>
           </div>
 
-          <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl flex items-center justify-between">
+          {/* Card 2: Event Tersedia */}
+          <div className="bg-[#161224] border border-purple-900/30 hover:border-purple-600/40 transition-all rounded-2xl p-6 shadow-xl flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider">
                 Active Events
               </p>
               <p className="text-3xl font-bold text-gray-100 mt-1">
-                {stats.totalAvailableEvents ?? 0}
+                {stats.activeEventsCount ?? stats.totalAvailableEvents ?? 0}
               </p>
             </div>
             <Link
-              to="/favorites"
-              className="text-xs text-purple-400 hover:underline"
+              to="/events"
+              className="text-xs font-semibold bg-purple-600/20 text-purple-300 hover:bg-purple-600 hover:text-white px-3.5 py-2 rounded-xl transition-all"
             >
-              Browse &rarr;
+              Browse Events &rarr;
             </Link>
           </div>
         </div>
 
-        {/* RECOMMENDED EVENTS */}
+        {/* SECTION: UPCOMING EVENTS (Tiket Pengguna yang Akan Datang) */}
+        <div className="bg-[#161224] border border-purple-900/20 rounded-2xl p-6 shadow-xl">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-gray-200">
+              Your Upcoming Events
+            </h3>
+            {stats.upcomingEvents && stats.upcomingEvents.length > 0 && (
+              <Link to="/transactions" className="text-xs text-purple-400 hover:underline">
+                View All Transactions &rarr;
+              </Link>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            {stats.upcomingEvents && stats.upcomingEvents.length > 0 ? (
+              stats.upcomingEvents.map((item) => {
+                const name = item.event?.name || item.name || "Unnamed Event";
+                const location = item.event?.location || item.location || "Location TBD";
+                const rawDate = item.event?.startDate || item.startDate;
+
+                const eventDate = rawDate ? new Date(rawDate) : null;
+                const day = eventDate ? eventDate.getDate() : "-";
+                const month = eventDate ? eventDate.toLocaleDateString("id-ID", { month: "short" }).toUpperCase() : "";
+
+                return (
+                  <div
+                    key={item.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#1e1932] border border-purple-950 hover:border-purple-800/50 rounded-xl transition-all gap-4"
+                  >
+                    <div className="flex items-center space-x-4">
+                      {/* Box Tanggal */}
+                      <div className="bg-purple-600/20 text-purple-400 p-3 rounded-xl text-center font-bold text-xs w-14 shrink-0">
+                        {month} <span className="block text-lg">{day}</span>
+                      </div>
+                      
+                      {/* Info Event */}
+                      <div>
+                        <h4 className="font-semibold text-white text-base">
+                          {name}
+                        </h4>
+                        <p className="text-gray-400 text-xs mt-1 flex items-center gap-1">
+                          📍 {location}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <button 
+                      onClick={() => navigate(`/tickets/${item.id}`)}
+                      className="bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-xs font-semibold px-4 py-2.5 rounded-xl text-white transition-all shadow-md shadow-purple-900/30 shrink-0 self-start sm:self-auto"
+                    >
+                      View Ticket QR
+                    </button>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8 px-4 bg-[#120e1c]/50 border border-dashed border-purple-900/30 rounded-xl">
+                <p className="text-sm text-gray-400">
+                  You don't have any upcoming event tickets.
+                </p>
+                <Link 
+                  to="/events" 
+                  className="inline-block mt-3 text-xs bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-md shadow-purple-900/20"
+                >
+                  Explore Events
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* SECTION: RECOMMENDED EVENTS */}
         <div className="bg-[#161224] border border-purple-900/30 rounded-2xl p-6 shadow-xl">
           <h3 className="text-lg font-bold text-white mb-4">
-            Recommended for you
+            Recommended for You
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {stats.recommendedEvents && stats.recommendedEvents.length > 0 ? (
               stats.recommendedEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="bg-[#120e1c] border border-purple-900/20 rounded-2xl p-5 shadow-xl flex flex-col justify-between"
+                  className="bg-[#120e1c] border border-purple-900/20 hover:border-purple-600/30 rounded-2xl p-5 shadow-xl flex flex-col justify-between transition-all"
                 >
                   <div>
-                    <h4 className="font-semibold text-white text-base">
+                    <h4 className="font-semibold text-white text-base line-clamp-1">
                       {event.name}
                     </h4>
                     <p className="text-gray-400 text-xs mt-1.5 flex items-center gap-1">
-                      {event.location}
+                      📍 {event.location}
                     </p>
-                    <p className="text-purple-400 text-xs mt-3 font-medium">
-                      {new Date(event.startDate).toLocaleDateString("id-ID", {
+                    <p className="text-purple-400 text-xs mt-3 font-medium flex items-center gap-1">
+                      📅 {new Date(event.startDate).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "short",
                         year: "numeric",
                       })}
                     </p>
                   </div>
+
                   <div className="flex items-center justify-between mt-5 pt-4 border-t border-purple-950/40">
                     <span className="text-sm font-bold text-gray-200">
                       {event.price === 0
@@ -560,7 +645,7 @@ export default function DashboardPage() {
                     </span>
                     <Link
                       to={`/events/${event.id}`}
-                      className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl transition-all font-semibold shadow-md shadow-purple-900/20"
+                      className="text-xs bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-white px-4 py-2 rounded-xl transition-all font-semibold shadow-md shadow-purple-900/20"
                     >
                       Buy Ticket
                     </Link>
@@ -568,7 +653,7 @@ export default function DashboardPage() {
                 </div>
               ))
             ) : (
-              <div className="col-span-1 md:col-span-2 text-center py-8 px-4 bg-[#161224]/50 border border-dashed border-purple-900/20 rounded-2xl">
+              <div className="col-span-1 md:col-span-2 text-center py-8 px-4 bg-[#120e1c]/50 border border-dashed border-purple-900/20 rounded-2xl">
                 <p className="text-sm text-gray-500 italic">
                   No recommended events available right now.
                 </p>
@@ -577,51 +662,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* UPCOMING EVENTS */}
-        <div className="bg-[#161224] border border-purple-900/20 rounded-2xl p-6 shadow-xl">
-          <h3 className="text-lg font-bold mb-4 text-gray-200">
-            Your Upcoming Events
-          </h3>
-          <div className="space-y-4">
-            {stats.upcomingTickets && stats.upcomingTickets.length > 0 ? (
-              stats.upcomingTickets.map((ticket) => {
-                const eventDate = new Date(ticket.event.startDate);
-                const day = eventDate.getDate();
-                const month = eventDate
-                  .toLocaleDateString("id-ID", { month: "short" })
-                  .toUpperCase();
-
-                return (
-                  <div
-                    key={ticket.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#1e1932] border border-purple-950 rounded-xl"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="bg-purple-600/20 text-purple-400 p-3 rounded-xl text-center font-bold text-xs w-14">
-                        {month} <span className="block text-lg">{day}</span>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-white">
-                          {ticket.event.name}
-                        </h4>
-                        <p className="text-gray-400 text-xs mt-0.5">
-                          {ticket.event.location}
-                        </p>
-                      </div>
-                    </div>
-                    <button className="bg-purple-600 hover:bg-purple-700 text-xs font-semibold px-4 py-2 rounded-xl text-white transition-all mt-4 sm:mt-0">
-                      View ticket QR
-                    </button>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-sm text-gray-500 italic text-center py-4">
-                You don't have any upcoming events
-              </p>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );
