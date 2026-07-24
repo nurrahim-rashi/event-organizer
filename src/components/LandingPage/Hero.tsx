@@ -17,12 +17,8 @@ interface HeroProps {
 export default function Hero({
   search,
   setSearch,
-  location,
-  setLocation,
   onSearch,
   setCategory,
-  searchParams,
-  setSearchParams,
   upcomingEvents,
 }: HeroProps) {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
@@ -41,19 +37,19 @@ export default function Hero({
 
   const currentEvent = upcomingEvents[currentBannerIndex];
 
-  const handleCategoryClick = (category: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    const currentCats = newParams.getAll("category");
+  // const handleCategoryClick = (category: string) => {
+  //   const newParams = new URLSearchParams(searchParams);
+  //   const currentCats = newParams.getAll("category");
 
-    if (currentCats.includes(category)) {
-      const filteredCats = currentCats.filter((c) => c !== category);
-      newParams.delete("category");
-      filteredCats.forEach((c) => newParams.append("category", c));
-    } else {
-      newParams.append("category", category);
-    }
-    setSearchParams(newParams);
-  };
+  //   if (currentCats.includes(category)) {
+  //     const filteredCats = currentCats.filter((c) => c !== category);
+  //     newParams.delete("category");
+  //     filteredCats.forEach((c) => newParams.append("category", c));
+  //   } else {
+  //     newParams.append("category", category);
+  //   }
+  //   setSearchParams(newParams);
+  // };
 
   return (
     <section className="relative min-h-[600px] flex items-center overflow-hidden px-6 py-24 bg-gradient-to-tr from-[#171021] via-[#231d2e] to-[#171021]">
