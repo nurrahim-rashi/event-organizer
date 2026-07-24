@@ -21,6 +21,8 @@ export const TicketSelection = ({
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   const [cart, setCart] = useState<Record<number, number>>({});
 
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const calculateTotals = () => {
     let subtotal = 0;
     Object.keys(cart).forEach((id) => {
@@ -57,13 +59,20 @@ export const TicketSelection = ({
     });
   };
 
-  const handleCheckout = async () => {
-    console.log(">>>>> CHECKOOUT DICLICK<<<<<<<");
+  const handleCheckout = async (e?: React.MouseEvent) => {
+    // 1. Mencegah event bubbling jika dipanggil dari form
+    e?.preventDefault();
+
+    // 2. Mencegah klik ganda
+    if (isProcessing || submitting) return;
 
     if (!isCheckoutMode) {
       setIsCheckoutMode(true);
       return;
     }
+
+    // 3. Set loading status
+    setIsProcessing(true);
 
     try {
       const items = Object.entries(cart).map(([ticketId, qty]) => ({
@@ -73,46 +82,47 @@ export const TicketSelection = ({
 
       if (items.length === 0) {
         toast.error("Choose at least one ticket");
+        setIsProcessing(false);
         return;
       }
 
       const payload = {
-        eventId: tickets[0]?.eventId, // Ambil eventId dari tiket
+        eventId: tickets[0]?.eventId,
         items,
         voucherId: appliedVoucher?.id,
         couponId: appliedCoupon?.id,
         usePoints: finalPoints > 0 ? finalPoints : undefined,
       };
 
-      console.log("Mengirim payload checkout:", payload);
+      // Melakukan API Call
       const response = await transactionApi.create(payload);
 
-      console.log("Hasil Transaksi:", response.data);
-
-      const transactionId = response.data?.data?.id ?? response.data?.data ?? response.data?.id;
+      const transactionId =
+        response.data?.data?.id ?? response.data?.data ?? response.data?.id;
 
       if (!transactionId || isNaN(Number(transactionId))) {
-        toast.error("Invalid transaction ID received from server!");
-        console.error("Gagal mendapatkan transactionId dari response:", response.data);
-        return;
+        throw new Error("Invalid transaction ID received from server!");
       }
 
       toast.success("Checkout success");
       setCart({});
-      navigate(`/transactions/${transactionId}`);
-
+      navigate(`/transactions/checkout`);
     } catch (error: any) {
       const errorMessage =
-      error.response?.data?.message ||
-      (typeof error.response?.data === "string" ? error.response?.data : null) ||
-      "Failed to do checkout, please try again.";
+        error.response?.data?.message ||
+        (typeof error.response?.data === "string"
+          ? error.response?.data
+          : null) ||
+        "Failed to do checkout, please try again.";
 
       console.error("Checkout Error:", error);
       toast.error(errorMessage);
     } finally {
+      // 4. Reset loading status di akhir
+      setIsProcessing(false);
       setIsCheckoutMode(false);
     }
-   };
+  };
 
   return (
     <aside className="sticky top-24 bg-[#231d2e] rounded-xl shadow-lg border border-[#4d4354]/30 overflow-hidden">
@@ -293,15 +303,20 @@ export const TicketSelection = ({
             </div>
           </div>
         )}
-
         <button
           onClick={handleCheckout}
           disabled={
-            submitting || (isCheckoutMode && Object.keys(cart).length === 0)
+            submitting ||
+            isProcessing ||
+            (isCheckoutMode && Object.keys(cart).length === 0)
           }
           className="w-full py-4 bg-[#ddb7ff] text-[#490080] rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#f0dbff] transition-all disabled:opacity-40"
         >
-          {isCheckoutMode ? "Checkout Tickets" : "Buy Tickets Now"}
+          {isProcessing
+            ? "Processing..."
+            : isCheckoutMode
+              ? "Checkout Tickets"
+              : "Buy Tickets Now"}
         </button>
       </div>
     </aside>
