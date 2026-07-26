@@ -41,7 +41,7 @@ function ProfilePage({ userId }: ProfilePageProps) {
     const fetchUserData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/users/${userId}`
+          `https://event-organizer-backend-ten.vercel.app/users/${userId}`,
         );
         setUser(response.data.data || response.data);
         console.log("Console penuh dari backend", response.data);
@@ -64,8 +64,12 @@ function ProfilePage({ userId }: ProfilePageProps) {
     }
   };
 
-  if (loading) return <div className="text-white text-center py-10">Loading profile...</div>;
-  if (!user) return <div className="text-white text-center py-10">No user found</div>;
+  if (loading)
+    return (
+      <div className="text-white text-center py-10">Loading profile...</div>
+    );
+  if (!user)
+    return <div className="text-white text-center py-10">No user found</div>;
 
   return (
     <div className="px-6 py-24 flex items-center justify-center">
@@ -153,7 +157,7 @@ function ProfilePage({ userId }: ProfilePageProps) {
                         Exp:{" "}
                         {new Date(coupon.expiredAt).toLocaleDateString(
                           "id-ID",
-                          { day: "numeric", month: "short", year: "numeric" }
+                          { day: "numeric", month: "short", year: "numeric" },
                         )}
                       </p>
                     </div>
