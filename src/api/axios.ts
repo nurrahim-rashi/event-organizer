@@ -2,12 +2,12 @@ import axios from "axios";
 import { userAuth } from "../stores/useAuth";
 
 export const axiosInstance = axios.create({
-  baseURL: "https://event-organizer-omega.vercel.app",
+  baseURL: "https://event-organizer-backend-ten.vercel.app/",
   withCredentials: true,
 });
 
 export const refreshInstance = axios.create({
-  baseURL: "https://event-organizer-omega.vercel.app",
+  baseURL: "https://event-organizer-backend-ten.vercel.app/",
   withCredentials: true,
 });
 
