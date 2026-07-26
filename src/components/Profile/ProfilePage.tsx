@@ -41,7 +41,7 @@ function ProfilePage({ userId }: ProfilePageProps) {
     const fetchUserData = async () => {
       try {
         const response = await axios.get(
-          `https://event-organizer-backend-ten.vercel.app/users/${userId}`,
+          `https://event-organizer-backend-production-110e.up.railway.app/users/${userId}`,
         );
         setUser(response.data.data || response.data);
         console.log("Console penuh dari backend", response.data);

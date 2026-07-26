@@ -60,7 +60,7 @@ function ProfileEdit() {
 
     try {
       const response = await axios.patch(
-        `https://event-organizer-backend-ten.vercel.app/users/${user.id}`,
+        `https://event-organizer-backend-production-110e.up.railway.app/users/${user.id}`,
         formData,
         {
           headers: {
