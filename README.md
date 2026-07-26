@@ -79,8 +79,8 @@ npm run dev
 
 ## 🔑 Demo Accounts
 
-| Role           | Email                   | Password      |
-| -------------- | ----------------------- | ------------- |
-| **Superadmin** | `admin@example.com`     | `password123` |
-| **Organizer**  | `organizer@example.com` | `password123` |
-| **User**       | `user@example.com`      | `password123` |
+| Role           | Email                    | Password      |
+| -------------- | ------------------------ | ------------- |
+| **Superadmin** | `superadmin@yopmail.com` | `P@ssword123` |
+| **Organizer**  | `organizer@yopmail.com`  | `P@ssword123` |
+| **User**       | `cheri@yopmail.com`      | `P@ssword123` |
