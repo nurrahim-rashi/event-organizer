@@ -17,12 +17,12 @@ export default function EventDetail() {
   const { user } = userAuth();
 
   // State untuk Coupon & Points
+  const [userCoupons, setUserCoupons] = useState<any[]>([]);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [usePoints, setUsePoints] = useState(0);
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
   const [voucherError, setVoucherError] = useState<string | null>(null);
-
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
-  const [usePoints, setUsePoints] = useState(0);
 
   const [moreEvents, setMoreEvents] = useState<any[]>([]);
 
@@ -45,6 +45,11 @@ export default function EventDetail() {
         .catch(console.error);
     }
   }, [event?.organizerId]);
+
+  useEffect(() => {
+    if (user) {
+    }
+  }, [user]);
 
   const handleApplyVoucher = () => {
     const foundVoucher = (event as any)?.vouchers?.find(
