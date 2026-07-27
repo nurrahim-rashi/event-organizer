@@ -1,4 +1,3 @@
-// EventDetail.tsx
 import { useParams } from "react-router";
 import { useEffect, useState } from "react";
 import { useEventDetail } from "../hooks/event/useEventDetail";
@@ -9,38 +8,22 @@ import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
 import { OrganizerSection } from "../components/EventDetail/OrganizerSection";
 import { TicketSelection } from "../components/EventDetail/TicketSelection";
+import { axiosInstance } from "../api/axios";
 import toast from "react-hot-toast";
-import { axiosInstance } from "../api/axios"; // Pastikan import ini
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = userAuth();
-
-  // State baru untuk data user yang sudah "fresh" (ada poin & kupon)
-  const [enrichedUser, setEnrichedUser] = useState<any>(user);
 
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [usePoints, setUsePoints] = useState(0);
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
   const [moreEvents, setMoreEvents] = useState<any[]>([]);
+  const [userDetails, setUserDetails] = useState<any>(null);
 
   const { event, loading } = useEventDetail(id ?? "");
   const isOwner = user && event && user.id === event.organizerId;
-
-  // FETCH DATA USER LENGKAP
-  useEffect(() => {
-    if (user?.id) {
-      axiosInstance
-        .get(`/users/${user.id}`)
-        .then((res) => {
-          // Map activePoints dari backend ke 'points' biar TicketSelection jalan
-          const fullData = { ...res.data, points: res.data.activePoints };
-          setEnrichedUser(fullData);
-        })
-        .catch(console.error);
-    }
-  }, [user?.id]);
 
   useEffect(() => {
     if (event?.organizerId) {
@@ -49,6 +32,27 @@ export default function EventDetail() {
         .catch(console.error);
     }
   }, [event?.organizerId]);
+
+  // Fetch ulang data user biar dapet activePoints dan coupons asli dari DB
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (user?.id) {
+        try {
+          const res = await axiosInstance.get(`/users/${user.id}`);
+          setUserDetails(res.data.data);
+        } catch (error) {
+          console.error("Failed to fetch user details:", error);
+        }
+      }
+    };
+    fetchUser();
+  }, [user?.id]);
+
+  // Gunakan data segar jika ada, kalau belum fallback ke data dari store login
+  const currentUser = userDetails || user;
+  // Backend lo pakai "activePoints" di response getUserService, jadi kita map ke "points"
+  const currentPoints = userDetails?.activePoints ?? currentUser?.points ?? 0;
+  const currentCoupons = userDetails?.coupons ?? currentUser?.coupons ?? [];
 
   const handleApplyVoucher = () => {
     const foundVoucher = (event as any)?.vouchers?.find(
@@ -98,9 +102,9 @@ export default function EventDetail() {
           </div>
           <div className="lg:col-span-4">
             <TicketSelection
-              user={enrichedUser} // <-- PAKAI DATA LENGKAP
+              user={{ ...currentUser, points: currentPoints }}
               tickets={event.ticketTypes}
-              coupons={enrichedUser?.coupons || []} // <-- PAKAI DATA LENGKAP
+              coupons={currentCoupons}
               voucherCode={voucherCode}
               setVoucherCode={setVoucherCode}
               appliedVoucher={appliedVoucher}

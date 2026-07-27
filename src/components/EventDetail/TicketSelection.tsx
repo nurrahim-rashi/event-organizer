@@ -100,6 +100,7 @@ export const TicketSelection = ({
         </h3>
       </div>
       <div className="p-6 space-y-6">
+        {/* Ticket List */}
         <div className="space-y-4">
           {tickets.map((t: any) => {
             const remaining = (t.totalTicket ?? 0) - (t.booked ?? 0);
@@ -157,6 +158,7 @@ export const TicketSelection = ({
           })}
         </div>
 
+        {/* Checkout Section */}
         {isCheckoutMode && (
           <div className="pt-4 border-t border-[#4d4354]/30 space-y-6">
             <div className="space-y-2">
@@ -179,12 +181,12 @@ export const TicketSelection = ({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-[#cfc2d6] uppercase">
-                My Coupons
-              </label>
-              {coupons && coupons.length > 0 ? (
-                coupons.map((c: any) => (
+            {coupons?.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-[#cfc2d6] uppercase">
+                  My Coupons
+                </label>
+                {coupons.map((c: any) => (
                   <div
                     key={c.id}
                     className="flex justify-between items-center bg-[#171021] p-3 rounded-lg border border-[#4d4354]"
@@ -205,33 +207,29 @@ export const TicketSelection = ({
                       </button>
                     )}
                   </div>
-                ))
-              ) : (
-                <p className="text-xs text-[#4d4354] italic">
-                  No coupons available
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs text-[#cfc2d6]">
-                <span>
-                  Use Points (Bal: {user?.points?.toLocaleString() || 0})
-                </span>
-                <span>Rp{finalPoints.toLocaleString()}</span>
+                ))}
               </div>
-              <input
-                type="range"
-                min="0"
-                max={Math.min(
-                  user?.points || 0,
-                  Math.max(0, subtotal - vDiscount - cDiscount),
-                )}
-                value={usePoints}
-                onChange={(e) => setUsePoints(Number(e.target.value))}
-                className="w-full accent-[#ddb7ff]"
-              />
-            </div>
+            )}
+
+            {user?.points > 0 && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-[#cfc2d6]">
+                  <span>Use Points (Bal: {user.points.toLocaleString()})</span>
+                  <span>Rp{finalPoints.toLocaleString()}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max={Math.min(
+                    user.points,
+                    Math.max(0, subtotal - vDiscount - cDiscount),
+                  )}
+                  value={usePoints}
+                  onChange={(e) => setUsePoints(Number(e.target.value))}
+                  className="w-full accent-[#ddb7ff]"
+                />
+              </div>
+            )}
 
             <div className="flex justify-between pt-4 border-t border-[#4d4354] text-white font-bold text-lg">
               <span>Total</span>
