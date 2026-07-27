@@ -1,8 +1,7 @@
-import { useParams, useNavigate } from "react-router";
+import { useParams } from "react-router";
 import { useEffect, useState } from "react";
 import { useEventDetail } from "../hooks/event/useEventDetail";
 import { userAuth } from "../stores/useAuth";
-import { getTransactionsByEvent } from "../services/transaction.service";
 import { getOrganizerProfile } from "../services/organizer.service";
 import { toTitleCase } from "../utils/toTitleCase";
 import Navbar from "../components/General/Navbar";
@@ -13,7 +12,6 @@ import toast from "react-hot-toast";
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { user } = userAuth();
 
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
