@@ -11,10 +11,11 @@ export const TicketSelection = ({
   setVoucherCode,
   appliedVoucher,
   appliedCoupon,
-  setAppliedCoupon,
   usePoints,
+  setAppliedCoupon,
   setUsePoints,
   handleApplyVoucher,
+  submitting,
 }: any) => {
   const navigate = useNavigate();
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
@@ -30,7 +31,11 @@ export const TicketSelection = ({
 
     const vDiscount = appliedVoucher ? appliedVoucher.discount : 0;
     const cDiscount = appliedCoupon ? appliedCoupon.discount : 0;
+
+    // Hitung sisa setelah diskon
     const afterDiscounts = Math.max(0, subtotal - vDiscount - cDiscount);
+
+    // Poin tidak boleh melebihi sisa setelah diskon
     const finalPoints = Math.min(usePoints || 0, afterDiscounts);
     const total = Math.max(0, afterDiscounts - finalPoints);
 
@@ -42,7 +47,8 @@ export const TicketSelection = ({
 
   const handleUpdateCart = (ticket: any, delta: number) => {
     setCart((prev) => {
-      const newQty = Math.max(0, Math.min(3, (prev[ticket.id] || 0) + delta));
+      const currentQty = prev[ticket.id] || 0;
+      const newQty = Math.max(0, Math.min(3, currentQty + delta));
       if (newQty === 0) {
         const newState = { ...prev };
         delete newState[ticket.id];
@@ -52,128 +58,189 @@ export const TicketSelection = ({
     });
   };
 
-  const handleCheckout = async () => {
-    if (!isCheckoutMode) return setIsCheckoutMode(true);
+  const handleCheckout = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    if (isProcessing || submitting) return;
+
+    if (!isCheckoutMode) {
+      setIsCheckoutMode(true);
+      return;
+    }
+
     setIsProcessing(true);
+
     try {
+      const items = Object.entries(cart).map(([ticketId, qty]) => ({
+        ticketTypeId: Number(ticketId),
+        qty: Number(qty),
+      }));
+
       const payload = {
         eventId: tickets[0]?.eventId,
-        items: Object.entries(cart).map(([id, qty]) => ({
-          ticketTypeId: Number(id),
-          qty,
-        })),
+        items,
         voucherId: appliedVoucher?.id,
         couponId: appliedCoupon?.id,
         usePoints: finalPoints > 0 ? finalPoints : undefined,
       };
-      await transactionApi.create(payload);
+
+      const response = await transactionApi.create(payload);
+      const transactionId =
+        response.data?.data?.id ?? response.data?.data ?? response.data?.id;
+
       toast.success("Checkout success");
+      setCart({});
       navigate(`/transactions/checkout`);
-    } catch (e) {
-      toast.error("Checkout failed");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Checkout failed");
     } finally {
       setIsProcessing(false);
+      setIsCheckoutMode(false);
     }
   };
 
   return (
-    <aside className="sticky top-24 bg-[#231d2e] rounded-xl p-6 border border-[#4d4354]/30">
-      <h3 className="text-xl font-bold mb-4">
-        {isCheckoutMode ? "Your Cart" : "Choose Tickets"}
-      </h3>
-      {tickets.map((t: any) => (
-        <div
-          key={t.id}
-          className="p-3 border border-[#4d4354] rounded-lg mb-2 flex justify-between items-center"
-        >
-          <span>{t.name}</span>
-          {!isCheckoutMode ? (
-            <button
-              onClick={() => handleUpdateCart(t, 1)}
-              className="bg-[#ddb7ff] text-[#400071] px-3 py-1 rounded"
-            >
-              Add
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button onClick={() => handleUpdateCart(t, -1)}>-</button>
-              <span>{cart[t.id] || 0}</span>
-              <button onClick={() => handleUpdateCart(t, 1)}>+</button>
-            </div>
-          )}
+    <aside className="sticky top-24 bg-[#231d2e] rounded-xl shadow-lg border border-[#4d4354]/30 overflow-hidden">
+      <div className="p-6 bg-[#b76dff] text-[#400071]">
+        <h3 className="text-xl font-bold">
+          {isCheckoutMode ? "Your Cart" : "Choose your experience"}
+        </h3>
+      </div>
+      <div className="p-6 space-y-6">
+        <div className="space-y-4">
+          {tickets.map((t: any) => {
+            const remaining = (t.totalTicket ?? 0) - (t.booked ?? 0);
+            const isSoldOut = remaining <= 0;
+            const qtyInCart = cart[t.id] || 0;
+            return (
+              <div
+                key={t.id}
+                className={`block p-4 border-2 rounded-xl ${isSoldOut ? "opacity-40 border-[#4d4354]" : "border-[#4d4354]"}`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-bold text-[#eadef6]">{t.name}</span>
+                  <span className="text-[#ddb7ff] font-black text-lg">
+                    Rp{t.price.toLocaleString("id-ID")}
+                  </span>
+                </div>
+                {!isCheckoutMode ? (
+                  <button
+                    onClick={() => handleUpdateCart(t, 1)}
+                    disabled={isSoldOut}
+                    className="mt-4 w-full py-2 bg-[#ddb7ff] text-[#400071] font-bold text-xs rounded-lg uppercase"
+                  >
+                    Add to Cart
+                  </button>
+                ) : (
+                  <div className="mt-4 flex items-center justify-center gap-4 bg-[#171021] p-2 rounded-lg">
+                    <button
+                      onClick={() => handleUpdateCart(t, -1)}
+                      className="text-[#ddb7ff] font-bold text-lg"
+                    >
+                      -
+                    </button>
+                    <span className="text-white font-bold">{qtyInCart}</span>
+                    <button
+                      onClick={() => handleUpdateCart(t, 1)}
+                      className="text-[#ddb7ff] font-bold text-lg"
+                    >
+                      +
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      ))}
 
-      {isCheckoutMode && (
-        <div className="mt-6 space-y-4 border-t border-[#4d4354] pt-4">
-          {/* Voucher */}
-          <div className="flex gap-2">
-            <input
-              className="bg-[#171021] border border-[#4d4354] p-2 flex-1 rounded"
-              value={voucherCode}
-              onChange={(e) => setVoucherCode(e.target.value)}
-              placeholder="VOUCHER"
-            />
-            <button
-              onClick={handleApplyVoucher}
-              className="bg-[#32293d] p-2 rounded"
-            >
-              Apply
-            </button>
-          </div>
-
-          {/* Coupons */}
-          {coupons?.map((c: any) => (
-            <div
-              key={c.id}
-              className="flex justify-between items-center bg-[#171021] p-3 rounded"
-            >
-              <span>Rp{c.discount.toLocaleString()}</span>
-              {appliedCoupon?.id === c.id ? (
-                <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-bold uppercase">
-                  Applied
-                </span>
-              ) : (
+        {isCheckoutMode && (
+          <div className="pt-4 border-t border-[#4d4354]/30 space-y-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-[#cfc2d6] uppercase">
+                Event Voucher
+              </label>
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 bg-[#171021] border border-[#4d4354] rounded-lg px-3 py-2 text-sm"
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value)}
+                />
                 <button
-                  onClick={() => setAppliedCoupon(c)}
-                  className="bg-[#ddb7ff] text-[#400071] px-2 py-1 rounded text-xs"
+                  onClick={handleApplyVoucher}
+                  className="px-4 py-2 bg-[#32293d] text-[#ddb7ff] rounded-lg text-xs font-bold uppercase"
                 >
                   Apply
                 </button>
-              )}
-            </div>
-          ))}
-
-          {/* Points Slider */}
-          {user?.points > 0 && (
-            <div>
-              <div className="flex justify-between text-xs">
-                <span>Use Points (Bal: {user.points})</span>
-                <span>Rp{finalPoints.toLocaleString()}</span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max={Math.min(user.points, subtotal - vDiscount - cDiscount)}
-                value={usePoints}
-                onChange={(e) => setUsePoints(Number(e.target.value))}
-                className="w-full accent-[#ddb7ff]"
-              />
             </div>
-          )}
 
-          <div className="flex justify-between text-xl font-bold mt-4">
-            <span>Total</span>
-            <span className="text-[#ddb7ff]">Rp{total.toLocaleString()}</span>
+            {coupons?.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-[#cfc2d6] uppercase">
+                  Use Coupon
+                </label>
+                {coupons.map((c: any) => (
+                  <div
+                    key={c.id}
+                    className="flex justify-between items-center bg-[#171021] p-3 rounded-lg border border-[#4d4354]"
+                  >
+                    <span className="text-sm text-[#eadef6]">
+                      Rp{c.discount.toLocaleString()}
+                    </span>
+                    <button
+                      onClick={() =>
+                        setAppliedCoupon(appliedCoupon?.id === c.id ? null : c)
+                      }
+                      className={`text-xs px-2 py-1 rounded font-bold ${appliedCoupon?.id === c.id ? "bg-green-500/20 text-green-400" : "bg-[#ddb7ff] text-[#400071]"}`}
+                    >
+                      {appliedCoupon?.id === c.id ? "APPLIED" : "USE"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {user?.points > 0 && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-[#cfc2d6]">
+                  <span>Use Points (Bal: {user.points.toLocaleString()})</span>
+                  <span>Rp{finalPoints.toLocaleString()}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max={Math.min(
+                    user.points,
+                    Math.max(0, subtotal - vDiscount - cDiscount),
+                  )}
+                  value={usePoints}
+                  onChange={(e) => setUsePoints(Number(e.target.value))}
+                  className="w-full accent-[#ddb7ff]"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2 border-t border-[#4d4354] pt-4">
+              <div className="flex justify-between pt-2 text-white font-bold text-lg">
+                <span>Total</span>
+                <span className="text-[#ddb7ff]">
+                  Rp{total.toLocaleString()}
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-      <button
-        onClick={handleCheckout}
-        className="w-full mt-6 py-3 bg-[#ddb7ff] text-[#490080] rounded-xl font-bold"
-      >
-        {isProcessing ? "Processing..." : "Checkout"}
-      </button>
+        )}
+        <button
+          onClick={handleCheckout}
+          disabled={submitting || isProcessing}
+          className="w-full py-4 bg-[#ddb7ff] text-[#490080] rounded-xl font-black text-sm uppercase tracking-widest"
+        >
+          {isProcessing
+            ? "Processing..."
+            : isCheckoutMode
+              ? "Checkout Tickets"
+              : "Buy Tickets Now"}
+        </button>
+      </div>
     </aside>
   );
 };
