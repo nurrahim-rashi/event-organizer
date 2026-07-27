@@ -43,6 +43,8 @@ function Login() {
         profilePic: response.data.user.profilePic,
         role: response.data.user.role,
         accessToken: response.data.accessToken,
+        points: response.data.user.points || 0,
+        coupons: response.data.user.coupons || [],
       });
 
       navigate("/");
@@ -118,7 +120,7 @@ function Login() {
 
         <div>
           <Link to="/register" className="text-xs underline">
-            Don't have an account? sign-up here
+            Don't have an account? Sign-up here.
           </Link>
         </div>
       </div>
