@@ -11,8 +11,8 @@ export const TicketSelection = ({
   setVoucherCode,
   appliedVoucher,
   appliedCoupon,
-  usePoints,
   setAppliedCoupon,
+  usePoints,
   setUsePoints,
   handleApplyVoucher,
   submitting,
@@ -32,12 +32,12 @@ export const TicketSelection = ({
     const vDiscount = appliedVoucher ? appliedVoucher.discount : 0;
     const cDiscount = appliedCoupon ? appliedCoupon.discount : 0;
 
-    // Hitung sisa setelah diskon
-    const afterDiscounts = Math.max(0, subtotal - vDiscount - cDiscount);
-
-    // Poin tidak boleh melebihi sisa setelah diskon
-    const finalPoints = Math.min(usePoints || 0, afterDiscounts);
-    const total = Math.max(0, afterDiscounts - finalPoints);
+    const remainingAfterDiscounts = Math.max(
+      0,
+      subtotal - vDiscount - cDiscount,
+    );
+    const finalPoints = Math.min(usePoints || 0, remainingAfterDiscounts);
+    const total = Math.max(0, remainingAfterDiscounts - finalPoints);
 
     return { subtotal, vDiscount, cDiscount, finalPoints, total };
   };
@@ -75,6 +75,12 @@ export const TicketSelection = ({
         qty: Number(qty),
       }));
 
+      if (items.length === 0) {
+        toast.error("Choose at least one ticket");
+        setIsProcessing(false);
+        return;
+      }
+
       const payload = {
         eventId: tickets[0]?.eventId,
         items,
@@ -84,14 +90,25 @@ export const TicketSelection = ({
       };
 
       const response = await transactionApi.create(payload);
+
       const transactionId =
         response.data?.data?.id ?? response.data?.data ?? response.data?.id;
 
+      if (!transactionId || isNaN(Number(transactionId))) {
+        throw new Error("Invalid transaction ID received from server!");
+      }
+
       toast.success("Checkout success");
       setCart({});
-      navigate(`/transactions/checkout`);
+      navigate(`/transactions/${transactionId}`);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Checkout failed");
+      const errorMessage =
+        error.response?.data?.message ||
+        (typeof error.response?.data === "string"
+          ? error.response?.data
+          : null) ||
+        "Failed to do checkout, please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
       setIsCheckoutMode(false);
@@ -160,7 +177,8 @@ export const TicketSelection = ({
               </label>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 bg-[#171021] border border-[#4d4354] rounded-lg px-3 py-2 text-sm"
+                  className="flex-1 bg-[#171021] border border-[#4d4354] rounded-lg px-3 py-2 text-sm uppercase"
+                  placeholder="PROMO CODE"
                   value={voucherCode}
                   onChange={(e) => setVoucherCode(e.target.value)}
                 />
@@ -187,12 +205,10 @@ export const TicketSelection = ({
                       Rp{c.discount.toLocaleString()}
                     </span>
                     <button
-                      onClick={() =>
-                        setAppliedCoupon(appliedCoupon?.id === c.id ? null : c)
-                      }
+                      onClick={() => setAppliedCoupon(c)}
                       className={`text-xs px-2 py-1 rounded font-bold ${appliedCoupon?.id === c.id ? "bg-green-500/20 text-green-400" : "bg-[#ddb7ff] text-[#400071]"}`}
                     >
-                      {appliedCoupon?.id === c.id ? "APPLIED" : "USE"}
+                      {appliedCoupon?.id === c.id ? "Applied" : "Apply"}
                     </button>
                   </div>
                 ))}
@@ -229,10 +245,15 @@ export const TicketSelection = ({
             </div>
           </div>
         )}
+
         <button
           onClick={handleCheckout}
-          disabled={submitting || isProcessing}
-          className="w-full py-4 bg-[#ddb7ff] text-[#490080] rounded-xl font-black text-sm uppercase tracking-widest"
+          disabled={
+            submitting ||
+            isProcessing ||
+            (isCheckoutMode && Object.keys(cart).length === 0)
+          }
+          className="w-full py-4 bg-[#ddb7ff] text-[#490080] rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#f0dbff] transition-all disabled:opacity-40"
         >
           {isProcessing
             ? "Processing..."
