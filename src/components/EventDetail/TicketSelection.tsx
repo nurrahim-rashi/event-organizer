@@ -20,18 +20,23 @@ export const TicketSelection = ({
   const navigate = useNavigate();
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   const [cart, setCart] = useState<Record<number, number>>({});
+
   const [isProcessing, setIsProcessing] = useState(false);
 
   const calculateTotals = () => {
     let subtotal = 0;
     Object.keys(cart).forEach((id) => {
       const ticket = tickets.find((t: any) => t.id === Number(id));
-      if (ticket) subtotal += ticket.price * (cart[Number(id)] || 0);
+      if (ticket) subtotal += ticket.price * cart[Number(id)];
     });
 
     const vDiscount = appliedVoucher ? appliedVoucher.discount : 0;
     const cDiscount = appliedCoupon ? appliedCoupon.discount : 0;
+
+    // Hitung total sisa setelah voucher dan coupon
     const afterDiscounts = Math.max(0, subtotal - vDiscount - cDiscount);
+
+    // Poin tidak boleh melebihi sisa pembayaran setelah diskon
     const finalPoints = Math.min(usePoints || 0, afterDiscounts);
     const total = Math.max(0, afterDiscounts - finalPoints);
 
@@ -55,19 +60,31 @@ export const TicketSelection = ({
   };
 
   const handleCheckout = async (e?: React.MouseEvent) => {
+    // 1. Mencegah event bubbling jika dipanggil dari form
     e?.preventDefault();
+
+    // 2. Mencegah klik ganda
     if (isProcessing || submitting) return;
+
     if (!isCheckoutMode) {
       setIsCheckoutMode(true);
       return;
     }
 
+    // 3. Set loading status
     setIsProcessing(true);
+
     try {
       const items = Object.entries(cart).map(([ticketId, qty]) => ({
         ticketTypeId: Number(ticketId),
         qty: Number(qty),
       }));
+
+      if (items.length === 0) {
+        toast.error("Choose at least one ticket");
+        setIsProcessing(false);
+        return;
+      }
 
       const payload = {
         eventId: tickets[0]?.eventId,
@@ -77,16 +94,31 @@ export const TicketSelection = ({
         usePoints: finalPoints > 0 ? finalPoints : undefined,
       };
 
+      // Melakukan API Call
       const response = await transactionApi.create(payload);
-      const tid =
+
+      const transactionId =
         response.data?.data?.id ?? response.data?.data ?? response.data?.id;
 
-      if (!tid) throw new Error("Invalid ID");
+      if (!transactionId || isNaN(Number(transactionId))) {
+        throw new Error("Invalid transaction ID received from server!");
+      }
+
       toast.success("Checkout success");
-      navigate(`/transactions/${tid}`);
+      setCart({});
+      navigate(`/transactions/checkout`);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Checkout failed");
+      const errorMessage =
+        error.response?.data?.message ||
+        (typeof error.response?.data === "string"
+          ? error.response?.data
+          : null) ||
+        "Failed to do checkout, please try again.";
+
+      console.error("Checkout Error:", error);
+      toast.error(errorMessage);
     } finally {
+      // 4. Reset loading status di akhir
       setIsProcessing(false);
       setIsCheckoutMode(false);
     }
@@ -105,21 +137,22 @@ export const TicketSelection = ({
           {tickets.map((t: any) => {
             const remaining = (t.totalTicket ?? 0) - (t.booked ?? 0);
             const isSoldOut = remaining <= 0;
+            const qtyInCart = cart[t.id] || 0;
             return (
               <div
                 key={t.id}
-                className={`p-4 border-2 rounded-xl ${isSoldOut ? "opacity-40 border-[#4d4354]" : "border-[#4d4354]"}`}
+                className={`block p-4 border-2 rounded-xl ${isSoldOut ? "opacity-40 border-[#4d4354]" : "border-[#4d4354]"}`}
               >
                 <div className="flex justify-between items-start mb-2">
                   <span className="font-bold text-[#eadef6]">{t.name}</span>
-                  <span className="text-[#ddb7ff] font-black">
-                    Rp{t.price.toLocaleString()}
+                  <span className="text-[#ddb7ff] font-black text-lg">
+                    Rp{t.price.toLocaleString("id-ID")}
                   </span>
                 </div>
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-xs text-[#cfc2d6]">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-[#cfc2d6]">
                     Remaining: {remaining}
-                  </span>
+                  </p>
                   <span
                     className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
                   >
@@ -130,24 +163,22 @@ export const TicketSelection = ({
                   <button
                     onClick={() => handleUpdateCart(t, 1)}
                     disabled={isSoldOut}
-                    className="w-full py-2 bg-[#ddb7ff] text-[#400071] font-bold text-xs rounded-lg uppercase"
+                    className="mt-4 w-full py-2 bg-[#ddb7ff] text-[#400071] font-bold text-xs rounded-lg uppercase"
                   >
                     Add to Cart
                   </button>
                 ) : (
-                  <div className="flex items-center justify-center gap-4 bg-[#171021] p-2 rounded-lg">
+                  <div className="mt-4 flex items-center justify-center gap-4 bg-[#171021] p-2 rounded-lg">
                     <button
                       onClick={() => handleUpdateCart(t, -1)}
-                      className="text-[#ddb7ff] font-bold"
+                      className="text-[#ddb7ff] font-bold text-lg"
                     >
                       -
                     </button>
-                    <span className="text-white font-bold">
-                      {cart[t.id] || 0}
-                    </span>
+                    <span className="text-white font-bold">{qtyInCart}</span>
                     <button
                       onClick={() => handleUpdateCart(t, 1)}
-                      className="text-[#ddb7ff] font-bold"
+                      className="text-[#ddb7ff] font-bold text-lg"
                     >
                       +
                     </button>
@@ -158,19 +189,19 @@ export const TicketSelection = ({
           })}
         </div>
 
-        {/* Checkout Section */}
         {isCheckoutMode && (
           <div className="pt-4 border-t border-[#4d4354]/30 space-y-6">
+            {/* Voucher */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-[#cfc2d6] uppercase">
                 Event Voucher
               </label>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 bg-[#171021] border border-[#4d4354] rounded-lg px-3 py-2 text-sm"
+                  className="flex-1 bg-[#171021] border border-[#4d4354] rounded-lg px-3 py-2 text-sm uppercase"
+                  placeholder="PROMO CODE"
                   value={voucherCode}
                   onChange={(e) => setVoucherCode(e.target.value)}
-                  placeholder="PROMO CODE"
                 />
                 <button
                   onClick={handleApplyVoucher}
@@ -181,10 +212,11 @@ export const TicketSelection = ({
               </div>
             </div>
 
+            {/* Coupons */}
             {coupons?.length > 0 && (
               <div className="space-y-2">
                 <label className="text-xs font-bold text-[#cfc2d6] uppercase">
-                  My Coupons
+                  Use Coupon
                 </label>
                 {coupons.map((c: any) => (
                   <div
@@ -194,23 +226,20 @@ export const TicketSelection = ({
                     <span className="text-sm text-[#eadef6]">
                       Rp{c.discount.toLocaleString()}
                     </span>
-                    {appliedCoupon?.id === c.id ? (
-                      <span className="text-xs font-bold text-green-400 bg-green-900/30 px-2 py-1 rounded">
-                        APPLIED
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => setAppliedCoupon(c)}
-                        className="text-xs px-2 py-1 bg-[#ddb7ff] text-[#400071] rounded font-bold"
-                      >
-                        USE
-                      </button>
-                    )}
+                    <button
+                      onClick={() =>
+                        setAppliedCoupon(appliedCoupon?.id === c.id ? null : c)
+                      }
+                      className={`text-xs px-2 py-1 rounded font-bold ${appliedCoupon?.id === c.id ? "bg-red-500/20 text-red-400" : "bg-[#ddb7ff] text-[#400071]"}`}
+                    >
+                      {appliedCoupon?.id === c.id ? "Cancel" : "Use"}
+                    </button>
                   </div>
                 ))}
               </div>
             )}
 
+            {/* Points Slider */}
             {user?.points > 0 && (
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-[#cfc2d6]">
@@ -231,16 +260,55 @@ export const TicketSelection = ({
               </div>
             )}
 
-            <div className="flex justify-between pt-4 border-t border-[#4d4354] text-white font-bold text-lg">
-              <span>Total</span>
-              <span className="text-[#ddb7ff]">Rp{total.toLocaleString()}</span>
+            {/* Breakdown */}
+            <div className="space-y-2 border-t border-[#4d4354] pt-4">
+              {Object.entries(cart).map(([id, qty]) => {
+                const ticket = tickets.find((t: any) => t.id === Number(id));
+                return ticket ? (
+                  <div
+                    key={id}
+                    className="flex justify-between text-sm text-[#cfc2d6]"
+                  >
+                    <span>
+                      {ticket.name} x {qty}
+                    </span>
+                    <span>Rp{(ticket.price * qty).toLocaleString()}</span>
+                  </div>
+                ) : null;
+              })}
+              {vDiscount > 0 && (
+                <div className="flex justify-between text-sm text-green-400">
+                  <span>Voucher</span>
+                  <span>-Rp{vDiscount.toLocaleString()}</span>
+                </div>
+              )}
+              {cDiscount > 0 && (
+                <div className="flex justify-between text-sm text-green-400">
+                  <span>Coupon</span>
+                  <span>-Rp{cDiscount.toLocaleString()}</span>
+                </div>
+              )}
+              {finalPoints > 0 && (
+                <div className="flex justify-between text-sm text-green-400">
+                  <span>Points</span>
+                  <span>-Rp{finalPoints.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex justify-between pt-2 text-white font-bold text-lg">
+                <span>Total</span>
+                <span className="text-[#ddb7ff]">
+                  Rp{total.toLocaleString()}
+                </span>
+              </div>
             </div>
           </div>
         )}
         <button
           onClick={handleCheckout}
           disabled={
-            isProcessing || (isCheckoutMode && Object.keys(cart).length === 0)
+            submitting ||
+            isProcessing ||
+            (isCheckoutMode && Object.keys(cart).length === 0)
           }
           className="w-full py-4 bg-[#ddb7ff] text-[#490080] rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#f0dbff] transition-all disabled:opacity-40"
         >
