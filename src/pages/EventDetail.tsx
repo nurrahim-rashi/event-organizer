@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useEventDetail } from "../hooks/event/useEventDetail";
 import { userAuth } from "../stores/useAuth";
 import { getOrganizerProfile } from "../services/organizer.service";
+import { axiosInstance } from "../api/axios"; // Pastikan import ini
 import { toTitleCase } from "../utils/toTitleCase";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
@@ -14,6 +15,9 @@ export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = userAuth();
 
+  // State baru untuk menampung data user yang SEBENARNYA (dari database)
+  const [currentUser, setCurrentUser] = useState(user);
+
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [usePoints, setUsePoints] = useState(0);
   const [voucherCode, setVoucherCode] = useState("");
@@ -22,6 +26,22 @@ export default function EventDetail() {
 
   const { event, loading } = useEventDetail(id ?? "");
   const isOwner = user && event && user.id === event.organizerId;
+
+  // FETCH DATA USER LENGKAP SAAT MOUNT
+  useEffect(() => {
+    const fetchFullProfile = async () => {
+      if (user) {
+        try {
+          // Ganti endpoint ini sesuai dengan endpoint backend kamu untuk get detail user/profile
+          const res = await axiosInstance.get(`/users/profile`);
+          setCurrentUser(res.data.data || res.data); // Update state dengan data terbaru
+        } catch (error) {
+          console.error("Gagal fetch profile:", error);
+        }
+      }
+    };
+    fetchFullProfile();
+  }, [user]);
 
   useEffect(() => {
     if (event?.organizerId) {
@@ -60,16 +80,15 @@ export default function EventDetail() {
         />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
           <div className="lg:col-span-8 space-y-8">
-            <section className="space-y-6">
-              <div className="w-full h-[400px] rounded-xl overflow-hidden relative shadow-lg">
-                <img
-                  src={event.bannerImage}
-                  className="w-full h-full object-cover"
-                  alt={event.name}
-                />
-              </div>
-              <h1 className="text-4xl font-black">{event.name}</h1>
-            </section>
+            {/* ... section foto & organizer sama ... */}
+            <div className="w-full h-[400px] rounded-xl overflow-hidden relative shadow-lg">
+              <img
+                src={event.bannerImage}
+                className="w-full h-full object-cover"
+                alt={event.name}
+              />
+            </div>
+            <h1 className="text-4xl font-black">{event.name}</h1>
             <OrganizerSection
               event={event}
               toTitleCase={toTitleCase}
@@ -78,10 +97,11 @@ export default function EventDetail() {
             />
           </div>
           <div className="lg:col-span-4">
+            {/* PENTING: Gunakan currentUser (yang sudah difetch) bukan user dari store */}
             <TicketSelection
-              user={user} // Ini objek user, harus ada .points
+              user={currentUser}
               tickets={event.ticketTypes}
-              coupons={user?.coupons || []} // Ini array coupons
+              coupons={currentUser?.coupons || []}
               voucherCode={voucherCode}
               setVoucherCode={setVoucherCode}
               appliedVoucher={appliedVoucher}
@@ -91,7 +111,7 @@ export default function EventDetail() {
               usePoints={usePoints}
               setUsePoints={setUsePoints}
               handleApplyVoucher={handleApplyVoucher}
-            />{" "}
+            />
           </div>
         </div>
       </main>
