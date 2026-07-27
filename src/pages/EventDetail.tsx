@@ -16,27 +16,14 @@ export default function EventDetail() {
   const navigate = useNavigate();
   const { user } = userAuth();
 
-  // State untuk Coupon & Points
-  const [userCoupons, setUserCoupons] = useState<any[]>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [usePoints, setUsePoints] = useState(0);
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
-  const [voucherError, setVoucherError] = useState<string | null>(null);
-
   const [moreEvents, setMoreEvents] = useState<any[]>([]);
 
-  const { event, loading, selectedTicket, setSelectedTicket } = useEventDetail(
-    id ?? "",
-  );
-
+  const { event, loading } = useEventDetail(id ?? "");
   const isOwner = user && event && user.id === event.organizerId;
-
-  useEffect(() => {
-    if (user && id) {
-      getTransactionsByEvent(Number(id)).catch(console.error);
-    }
-  }, [user, id]);
 
   useEffect(() => {
     if (event?.organizerId) {
@@ -46,11 +33,6 @@ export default function EventDetail() {
     }
   }, [event?.organizerId]);
 
-  useEffect(() => {
-    if (user) {
-    }
-  }, [user]);
-
   const handleApplyVoucher = () => {
     const foundVoucher = (event as any)?.vouchers?.find(
       (v: any) => v.code.toUpperCase() === voucherCode.trim().toUpperCase(),
@@ -59,18 +41,7 @@ export default function EventDetail() {
     if (new Date() > new Date(foundVoucher.endDate))
       return toast.error("Voucher expired.");
     setAppliedVoucher(foundVoucher);
-  };
-
-  const formatDate = (isoString: string) => {
-    if (!isoString) return "Date not available";
-    return new Date(isoString).toLocaleDateString("id-ID", {
-      weekday: "short",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    toast.success("Voucher applied!");
   };
 
   if (loading)
@@ -89,7 +60,6 @@ export default function EventDetail() {
         <Breadcrumb
           items={[{ label: "Events", path: "/events" }, { label: event.name }]}
         />
-
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
           <div className="lg:col-span-8 space-y-8">
             <section className="space-y-6">
@@ -102,7 +72,6 @@ export default function EventDetail() {
               </div>
               <h1 className="text-4xl font-black">{event.name}</h1>
             </section>
-
             <OrganizerSection
               event={event}
               toTitleCase={toTitleCase}
@@ -110,12 +79,11 @@ export default function EventDetail() {
               moreEvents={moreEvents}
             />
           </div>
-
           <div className="lg:col-span-4">
             <TicketSelection
-              user={user} // <-- INI DITAMBAHKAN agar data user/points terbaca
+              user={user}
               tickets={event.ticketTypes}
-              coupons={user?.coupons} // <-- INI DITAMBAHKAN agar kupon muncul
+              coupons={user?.coupons || []}
               voucherCode={voucherCode}
               setVoucherCode={setVoucherCode}
               appliedVoucher={appliedVoucher}
@@ -125,7 +93,6 @@ export default function EventDetail() {
               usePoints={usePoints}
               setUsePoints={setUsePoints}
               handleApplyVoucher={handleApplyVoucher}
-              submitting={false}
             />
           </div>
         </div>
