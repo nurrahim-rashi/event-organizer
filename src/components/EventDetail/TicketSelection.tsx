@@ -11,8 +11,8 @@ export const TicketSelection = ({
   setVoucherCode,
   appliedVoucher,
   appliedCoupon,
-  setAppliedCoupon,
   usePoints,
+  setAppliedCoupon,
   setUsePoints,
   handleApplyVoucher,
   submitting,
@@ -26,18 +26,14 @@ export const TicketSelection = ({
     let subtotal = 0;
     Object.keys(cart).forEach((id) => {
       const ticket = tickets.find((t: any) => t.id === Number(id));
-      if (ticket) subtotal += ticket.price * cart[Number(id)];
+      if (ticket) subtotal += ticket.price * (cart[Number(id)] || 0);
     });
 
     const vDiscount = appliedVoucher ? appliedVoucher.discount : 0;
     const cDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-
-    const remainingAfterDiscounts = Math.max(
-      0,
-      subtotal - vDiscount - cDiscount,
-    );
-    const finalPoints = Math.min(usePoints || 0, remainingAfterDiscounts);
-    const total = Math.max(0, remainingAfterDiscounts - finalPoints);
+    const afterDiscounts = Math.max(0, subtotal - vDiscount - cDiscount);
+    const finalPoints = Math.min(usePoints || 0, afterDiscounts);
+    const total = Math.max(0, afterDiscounts - finalPoints);
 
     return { subtotal, vDiscount, cDiscount, finalPoints, total };
   };
@@ -61,25 +57,17 @@ export const TicketSelection = ({
   const handleCheckout = async (e?: React.MouseEvent) => {
     e?.preventDefault();
     if (isProcessing || submitting) return;
-
     if (!isCheckoutMode) {
       setIsCheckoutMode(true);
       return;
     }
 
     setIsProcessing(true);
-
     try {
       const items = Object.entries(cart).map(([ticketId, qty]) => ({
         ticketTypeId: Number(ticketId),
         qty: Number(qty),
       }));
-
-      if (items.length === 0) {
-        toast.error("Choose at least one ticket");
-        setIsProcessing(false);
-        return;
-      }
 
       const payload = {
         eventId: tickets[0]?.eventId,
@@ -90,25 +78,14 @@ export const TicketSelection = ({
       };
 
       const response = await transactionApi.create(payload);
-
-      const transactionId =
+      const tid =
         response.data?.data?.id ?? response.data?.data ?? response.data?.id;
 
-      if (!transactionId || isNaN(Number(transactionId))) {
-        throw new Error("Invalid transaction ID received from server!");
-      }
-
+      if (!tid) throw new Error("Invalid ID");
       toast.success("Checkout success");
-      setCart({});
-      navigate(`/transactions/${transactionId}`);
+      navigate(`/transactions/${tid}`);
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        (typeof error.response?.data === "string"
-          ? error.response?.data
-          : null) ||
-        "Failed to do checkout, please try again.";
-      toast.error(errorMessage);
+      toast.error(error.response?.data?.message || "Checkout failed");
     } finally {
       setIsProcessing(false);
       setIsCheckoutMode(false);
@@ -123,42 +100,54 @@ export const TicketSelection = ({
         </h3>
       </div>
       <div className="p-6 space-y-6">
+        {/* Ticket List */}
         <div className="space-y-4">
           {tickets.map((t: any) => {
             const remaining = (t.totalTicket ?? 0) - (t.booked ?? 0);
             const isSoldOut = remaining <= 0;
-            const qtyInCart = cart[t.id] || 0;
             return (
               <div
                 key={t.id}
-                className={`block p-4 border-2 rounded-xl ${isSoldOut ? "opacity-40 border-[#4d4354]" : "border-[#4d4354]"}`}
+                className={`p-4 border-2 rounded-xl ${isSoldOut ? "opacity-40 border-[#4d4354]" : "border-[#4d4354]"}`}
               >
                 <div className="flex justify-between items-start mb-2">
                   <span className="font-bold text-[#eadef6]">{t.name}</span>
-                  <span className="text-[#ddb7ff] font-black text-lg">
-                    Rp{t.price.toLocaleString("id-ID")}
+                  <span className="text-[#ddb7ff] font-black">
+                    Rp{t.price.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-xs text-[#cfc2d6]">
+                    Remaining: {remaining}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${!isSoldOut ? "bg-[#5de6ff]/20 text-[#5de6ff]" : "bg-[#ffb4ab]/20 text-[#ffb4ab]"}`}
+                  >
+                    {isSoldOut ? "Sold Out" : "Available"}
                   </span>
                 </div>
                 {!isCheckoutMode ? (
                   <button
                     onClick={() => handleUpdateCart(t, 1)}
                     disabled={isSoldOut}
-                    className="mt-4 w-full py-2 bg-[#ddb7ff] text-[#400071] font-bold text-xs rounded-lg uppercase"
+                    className="w-full py-2 bg-[#ddb7ff] text-[#400071] font-bold text-xs rounded-lg uppercase"
                   >
                     Add to Cart
                   </button>
                 ) : (
-                  <div className="mt-4 flex items-center justify-center gap-4 bg-[#171021] p-2 rounded-lg">
+                  <div className="flex items-center justify-center gap-4 bg-[#171021] p-2 rounded-lg">
                     <button
                       onClick={() => handleUpdateCart(t, -1)}
-                      className="text-[#ddb7ff] font-bold text-lg"
+                      className="text-[#ddb7ff] font-bold"
                     >
                       -
                     </button>
-                    <span className="text-white font-bold">{qtyInCart}</span>
+                    <span className="text-white font-bold">
+                      {cart[t.id] || 0}
+                    </span>
                     <button
                       onClick={() => handleUpdateCart(t, 1)}
-                      className="text-[#ddb7ff] font-bold text-lg"
+                      className="text-[#ddb7ff] font-bold"
                     >
                       +
                     </button>
@@ -169,6 +158,7 @@ export const TicketSelection = ({
           })}
         </div>
 
+        {/* Checkout Section */}
         {isCheckoutMode && (
           <div className="pt-4 border-t border-[#4d4354]/30 space-y-6">
             <div className="space-y-2">
@@ -177,10 +167,10 @@ export const TicketSelection = ({
               </label>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 bg-[#171021] border border-[#4d4354] rounded-lg px-3 py-2 text-sm uppercase"
-                  placeholder="PROMO CODE"
+                  className="flex-1 bg-[#171021] border border-[#4d4354] rounded-lg px-3 py-2 text-sm"
                   value={voucherCode}
                   onChange={(e) => setVoucherCode(e.target.value)}
+                  placeholder="PROMO CODE"
                 />
                 <button
                   onClick={handleApplyVoucher}
@@ -194,7 +184,7 @@ export const TicketSelection = ({
             {coupons?.length > 0 && (
               <div className="space-y-2">
                 <label className="text-xs font-bold text-[#cfc2d6] uppercase">
-                  Use Coupon
+                  My Coupons
                 </label>
                 {coupons.map((c: any) => (
                   <div
@@ -204,12 +194,18 @@ export const TicketSelection = ({
                     <span className="text-sm text-[#eadef6]">
                       Rp{c.discount.toLocaleString()}
                     </span>
-                    <button
-                      onClick={() => setAppliedCoupon(c)}
-                      className={`text-xs px-2 py-1 rounded font-bold ${appliedCoupon?.id === c.id ? "bg-green-500/20 text-green-400" : "bg-[#ddb7ff] text-[#400071]"}`}
-                    >
-                      {appliedCoupon?.id === c.id ? "Applied" : "Apply"}
-                    </button>
+                    {appliedCoupon?.id === c.id ? (
+                      <span className="text-xs font-bold text-green-400 bg-green-900/30 px-2 py-1 rounded">
+                        APPLIED
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => setAppliedCoupon(c)}
+                        className="text-xs px-2 py-1 bg-[#ddb7ff] text-[#400071] rounded font-bold"
+                      >
+                        USE
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -235,23 +231,16 @@ export const TicketSelection = ({
               </div>
             )}
 
-            <div className="space-y-2 border-t border-[#4d4354] pt-4">
-              <div className="flex justify-between pt-2 text-white font-bold text-lg">
-                <span>Total</span>
-                <span className="text-[#ddb7ff]">
-                  Rp{total.toLocaleString()}
-                </span>
-              </div>
+            <div className="flex justify-between pt-4 border-t border-[#4d4354] text-white font-bold text-lg">
+              <span>Total</span>
+              <span className="text-[#ddb7ff]">Rp{total.toLocaleString()}</span>
             </div>
           </div>
         )}
-
         <button
           onClick={handleCheckout}
           disabled={
-            submitting ||
-            isProcessing ||
-            (isCheckoutMode && Object.keys(cart).length === 0)
+            isProcessing || (isCheckoutMode && Object.keys(cart).length === 0)
           }
           className="w-full py-4 bg-[#ddb7ff] text-[#490080] rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#f0dbff] transition-all disabled:opacity-40"
         >
