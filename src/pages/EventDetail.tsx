@@ -1,22 +1,23 @@
+// EventDetail.tsx
 import { useParams } from "react-router";
 import { useEffect, useState } from "react";
 import { useEventDetail } from "../hooks/event/useEventDetail";
 import { userAuth } from "../stores/useAuth";
 import { getOrganizerProfile } from "../services/organizer.service";
-import { axiosInstance } from "../api/axios"; // Pastikan import ini
 import { toTitleCase } from "../utils/toTitleCase";
 import Navbar from "../components/General/Navbar";
 import Breadcrumb from "../components/General/Breadcrumb";
 import { OrganizerSection } from "../components/EventDetail/OrganizerSection";
 import { TicketSelection } from "../components/EventDetail/TicketSelection";
 import toast from "react-hot-toast";
+import { axiosInstance } from "../api/axios"; // Pastikan import ini
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = userAuth();
-  const { user: authUser } = userAuth(); // Data statis dari login
 
-  const [userData, setUserData] = useState<any>(null);
+  // State baru untuk data user yang sudah "fresh" (ada poin & kupon)
+  const [enrichedUser, setEnrichedUser] = useState<any>(user);
 
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [usePoints, setUsePoints] = useState(0);
@@ -27,24 +28,19 @@ export default function EventDetail() {
   const { event, loading } = useEventDetail(id ?? "");
   const isOwner = user && event && user.id === event.organizerId;
 
-  // FETCH DATA USER LENGKAP SAAT MOUNT
+  // FETCH DATA USER LENGKAP
   useEffect(() => {
-    const fetchFreshUser = async () => {
-      if (!authUser?.id) return;
-      try {
-        const res = await axiosInstance.get(`/users/${authUser.id}`);
-        // Map activePoints (dari backend) ke points (yang dibutuhkan interface)
-        const freshUser = {
-          ...res.data,
-          points: res.data.activePoints || 0,
-        };
-        setUserData(freshUser);
-      } catch (err) {
-        console.error("Gagal ambil data user:", err);
-      }
-    };
-    fetchFreshUser();
-  }, [authUser?.id]);
+    if (user?.id) {
+      axiosInstance
+        .get(`/users/${user.id}`)
+        .then((res) => {
+          // Map activePoints dari backend ke 'points' biar TicketSelection jalan
+          const fullData = { ...res.data, points: res.data.activePoints };
+          setEnrichedUser(fullData);
+        })
+        .catch(console.error);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (event?.organizerId) {
@@ -83,15 +79,16 @@ export default function EventDetail() {
         />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
           <div className="lg:col-span-8 space-y-8">
-            {/* ... section foto & organizer sama ... */}
-            <div className="w-full h-[400px] rounded-xl overflow-hidden relative shadow-lg">
-              <img
-                src={event.bannerImage}
-                className="w-full h-full object-cover"
-                alt={event.name}
-              />
-            </div>
-            <h1 className="text-4xl font-black">{event.name}</h1>
+            <section className="space-y-6">
+              <div className="w-full h-[400px] rounded-xl overflow-hidden relative shadow-lg">
+                <img
+                  src={event.bannerImage}
+                  className="w-full h-full object-cover"
+                  alt={event.name}
+                />
+              </div>
+              <h1 className="text-4xl font-black">{event.name}</h1>
+            </section>
             <OrganizerSection
               event={event}
               toTitleCase={toTitleCase}
@@ -101,9 +98,9 @@ export default function EventDetail() {
           </div>
           <div className="lg:col-span-4">
             <TicketSelection
-              user={userData}
-              tickets={event?.ticketTypes || []}
-              coupons={userData?.coupons || []}
+              user={enrichedUser} // <-- PAKAI DATA LENGKAP
+              tickets={event.ticketTypes}
+              coupons={enrichedUser?.coupons || []} // <-- PAKAI DATA LENGKAP
               voucherCode={voucherCode}
               setVoucherCode={setVoucherCode}
               appliedVoucher={appliedVoucher}
@@ -113,7 +110,7 @@ export default function EventDetail() {
               usePoints={usePoints}
               setUsePoints={setUsePoints}
               handleApplyVoucher={handleApplyVoucher}
-            />{" "}
+            />
           </div>
         </div>
       </main>
