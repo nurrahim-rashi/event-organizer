@@ -22,6 +22,10 @@ export const TicketSelection = ({
   const [cart, setCart] = useState<Record<number, number>>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // DEBUGGING: Cek data di console
+  console.log("Current User Data:", user);
+  console.log("Coupons available:", coupons);
+
   const calculateTotals = () => {
     let subtotal = 0;
     Object.keys(cart).forEach((id) => {
@@ -32,6 +36,7 @@ export const TicketSelection = ({
     const vDiscount = appliedVoucher ? appliedVoucher.discount : 0;
     const cDiscount = appliedCoupon ? appliedCoupon.discount : 0;
     const afterDiscounts = Math.max(0, subtotal - vDiscount - cDiscount);
+    // Slider points max limit
     const finalPoints = Math.min(usePoints || 0, afterDiscounts);
     const total = Math.max(0, afterDiscounts - finalPoints);
 
@@ -100,7 +105,6 @@ export const TicketSelection = ({
         </h3>
       </div>
       <div className="p-6 space-y-6">
-        {/* Ticket List */}
         <div className="space-y-4">
           {tickets.map((t: any) => {
             const remaining = (t.totalTicket ?? 0) - (t.booked ?? 0);
@@ -158,7 +162,6 @@ export const TicketSelection = ({
           })}
         </div>
 
-        {/* Checkout Section */}
         {isCheckoutMode && (
           <div className="pt-4 border-t border-[#4d4354]/30 space-y-6">
             <div className="space-y-2">
@@ -181,7 +184,8 @@ export const TicketSelection = ({
               </div>
             </div>
 
-            {coupons?.length > 0 && (
+            {/* COUPON CARD SECTION */}
+            {coupons && coupons.length > 0 && (
               <div className="space-y-2">
                 <label className="text-xs font-bold text-[#cfc2d6] uppercase">
                   My Coupons
@@ -192,7 +196,7 @@ export const TicketSelection = ({
                     className="flex justify-between items-center bg-[#171021] p-3 rounded-lg border border-[#4d4354]"
                   >
                     <span className="text-sm text-[#eadef6]">
-                      Rp{c.discount.toLocaleString()}
+                      Discount Rp{c.discount.toLocaleString()}
                     </span>
                     {appliedCoupon?.id === c.id ? (
                       <span className="text-xs font-bold text-green-400 bg-green-900/30 px-2 py-1 rounded">
@@ -211,11 +215,14 @@ export const TicketSelection = ({
               </div>
             )}
 
+            {/* POINT SLIDER SECTION */}
             {user?.points > 0 && (
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-[#cfc2d6]">
-                  <span>Use Points (Bal: {user.points.toLocaleString()})</span>
-                  <span>Rp{finalPoints.toLocaleString()}</span>
+                  <span>
+                    Use Points (Balance: {user.points.toLocaleString()})
+                  </span>
+                  <span>-Rp{finalPoints.toLocaleString()}</span>
                 </div>
                 <input
                   type="range"
@@ -226,13 +233,13 @@ export const TicketSelection = ({
                   )}
                   value={usePoints}
                   onChange={(e) => setUsePoints(Number(e.target.value))}
-                  className="w-full accent-[#ddb7ff]"
+                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#ddb7ff]"
                 />
               </div>
             )}
 
             <div className="flex justify-between pt-4 border-t border-[#4d4354] text-white font-bold text-lg">
-              <span>Total</span>
+              <span>Total Payment</span>
               <span className="text-[#ddb7ff]">Rp{total.toLocaleString()}</span>
             </div>
           </div>

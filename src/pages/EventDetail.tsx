@@ -79,9 +79,9 @@ export default function EventDetail() {
           </div>
           <div className="lg:col-span-4">
             <TicketSelection
-              user={user}
+              user={user} // Ini objek user, harus ada .points
               tickets={event.ticketTypes}
-              coupons={user?.coupons || []}
+              coupons={user?.coupons || []} // Ini array coupons
               voucherCode={voucherCode}
               setVoucherCode={setVoucherCode}
               appliedVoucher={appliedVoucher}
@@ -91,7 +91,7 @@ export default function EventDetail() {
               usePoints={usePoints}
               setUsePoints={setUsePoints}
               handleApplyVoucher={handleApplyVoucher}
-            />
+            />{" "}
           </div>
         </div>
       </main>
