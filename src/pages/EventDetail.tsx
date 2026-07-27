@@ -14,9 +14,9 @@ import toast from "react-hot-toast";
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = userAuth();
+  const { user: authUser } = userAuth(); // Data statis dari login
 
-  // State baru untuk menampung data user yang SEBENARNYA (dari database)
-  const [currentUser, setCurrentUser] = useState(user);
+  const [userData, setUserData] = useState<any>(null);
 
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [usePoints, setUsePoints] = useState(0);
@@ -29,19 +29,22 @@ export default function EventDetail() {
 
   // FETCH DATA USER LENGKAP SAAT MOUNT
   useEffect(() => {
-    const fetchFullProfile = async () => {
-      if (user) {
-        try {
-          // Ganti endpoint ini sesuai dengan endpoint backend kamu untuk get detail user/profile
-          const res = await axiosInstance.get(`/users/profile`);
-          setCurrentUser(res.data.data || res.data); // Update state dengan data terbaru
-        } catch (error) {
-          console.error("Gagal fetch profile:", error);
-        }
+    const fetchFreshUser = async () => {
+      if (!authUser?.id) return;
+      try {
+        const res = await axiosInstance.get(`/users/${authUser.id}`);
+        // Map activePoints (dari backend) ke points (yang dibutuhkan interface)
+        const freshUser = {
+          ...res.data,
+          points: res.data.activePoints || 0,
+        };
+        setUserData(freshUser);
+      } catch (err) {
+        console.error("Gagal ambil data user:", err);
       }
     };
-    fetchFullProfile();
-  }, [user]);
+    fetchFreshUser();
+  }, [authUser?.id]);
 
   useEffect(() => {
     if (event?.organizerId) {
@@ -97,11 +100,10 @@ export default function EventDetail() {
             />
           </div>
           <div className="lg:col-span-4">
-            {/* PENTING: Gunakan currentUser (yang sudah difetch) bukan user dari store */}
             <TicketSelection
-              user={currentUser}
-              tickets={event.ticketTypes}
-              coupons={currentUser?.coupons || []}
+              user={userData}
+              tickets={event?.ticketTypes || []}
+              coupons={userData?.coupons || []}
               voucherCode={voucherCode}
               setVoucherCode={setVoucherCode}
               appliedVoucher={appliedVoucher}
@@ -111,7 +113,7 @@ export default function EventDetail() {
               usePoints={usePoints}
               setUsePoints={setUsePoints}
               handleApplyVoucher={handleApplyVoucher}
-            />
+            />{" "}
           </div>
         </div>
       </main>
